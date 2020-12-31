@@ -1,0 +1,58 @@
+\begin{thebibliography}{}
+
+\bibitem[Ait-Sahalia and Kimmel, 2007]{ai2007maximum}
+Ait-Sahalia, Y. and Kimmel, R. (2007).
+\newblock Maximum likelihood estimation of stochastic volatility models.
+\newblock {\em Journal of financial economics}, 83(2):413--452.
+
+\bibitem[Bardgett et~al., 2014]{bardgett2014inferring}
+Bardgett, C., Gourier, E., and Leippold, M. (2014).
+\newblock Inferring volatility dynamics and risk premia from the s\&p 500 and
+  vix markets.
+
+\bibitem[Bates, 2006]{bates2006maximum}
+Bates, D.~S. (2006).
+\newblock Maximum likelihood estimation of latent affine processes.
+\newblock {\em The Review of Financial Studies}, 19(3):909--965.
+
+\bibitem[Christoffersen et~al., 2010]{christoffersen2010volatility}
+Christoffersen, P., Jacobs, K., and Mimouni, K. (2010).
+\newblock Volatility dynamics for the s\&p500: evidence from realized
+  volatility, daily returns, and option prices.
+\newblock {\em The Review of Financial Studies}, 23(8):3141--3189.
+
+\bibitem[Garcia et~al., 2011]{garcia2011estimation}
+Garcia, R., Lewis, M.-A., Pastorello, S., and Renault, {\'E}. (2011).
+\newblock Estimation of objective and risk-neutral distributions based on
+  moments of integrated volatility.
+\newblock {\em Journal of Econometrics}, 160(1):22--32.
+
+\bibitem[Heston, 1993]{heston}
+Heston, S.~L. (1993).
+\newblock A closed-form solution for options with stochastic volatility with
+  applications to bond and currency options.
+\newblock {\em Review of Financial Studies}, 6(2):327--343.
+
+\bibitem[Johannes et~al., 2009]{johannes2009optimal}
+Johannes, M.~S., Polson, N.~G., and Stroud, J.~R. (2009).
+\newblock Optimal filtering of jump diffusions: Extracting latent states from
+  asset prices.
+\newblock {\em The Review of Financial Studies}, 22(7):2759--2799.
+
+\bibitem[Pan, 2002]{pan2002jump}
+Pan, J. (2002).
+\newblock The jump-risk premia implicit in options: Evidence from an integrated
+  time-series study.
+\newblock {\em Journal of financial economics}, 63(1):3--50.
+
+\bibitem[Protter, 2005]{protterstochastic}
+Protter, P.~E. (2005).
+\newblock {\em Stochastic integration and differential equations}.
+\newblock Springer.
+
+\bibitem[Sundaresan, 2000]{sundaresan2000continuous}
+Sundaresan, S.~M. (2000).
+\newblock Continuous-time methods in finance: A review and an assessment.
+\newblock {\em The Journal of Finance}, 55(4):1569--1622.
+
+\end{thebibliography}

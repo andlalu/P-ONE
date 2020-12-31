@@ -1,0 +1,222 @@
+\documentclass[11pt,a4paper,notitlepage]{article}
+
+%usepackage inclusions:
+\usepackage{mathtools} %package that allows math formatting
+\usepackage{commath} %package that allows for nice differential operators
+\usepackage{bigints} %package that allows for bigger integral signs
+\usepackage{amsfonts}   %package that allows for more math characters
+\usepackage{amssymb}  %package that allows for more math symbols
+\usepackage{shadethm}  %package that allows for shaded definitions&proofs
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor} %package that allows colored text
+\usepackage{booktabs}\usepackage{float} % by Jakob
+\usepackage[table]{xcolor} %to color table rows & columns
+\usepackage{setspace} %to allow for the insertion line spaces at will
+\usepackage{wrapfig} %to allow for figures to be captioned
+\usepackage{mdframed} % to allow for wide frames and boxes around math&text
+\usepackage[makeroom]{cancel} %to allow for strike-out text
+\usepackage{pdflscape} %to allow for both portrait&landscape pages within the same file
+\usepackage{epstopdf}
+\usepackage{subfigure}
+\usepackage{parskip}
+\usepackage{url} %to allow citing url addresses
+\usepackage{rotating}
+\usepackage{nameref}
+\usepackage{geometry}
+\usepackage[margin=1cm]{caption}
+\usepackage{changepage}
+
+%define own operators&theorems&proofs
+\newcommand{\expect}[1]{\mathbb{E} \left[ {#1} \right] } %define expectation symbol 
+\newtheorem{proof}{Proof} %define proofs within the shadethm environment
+\newcommand{\vect}[1]{\boldsymbol{#1}} %define  BOLD vectors.
+\newcommand{\expe}[1]{\mathbb{E}\left[#1\right]} %define  BOLD vectors.
+\newcommand{\HRule}{\rule{\linewidth}{0.01mm}} %define horizontal thin line
+\newcommand{\red}[1]{{\color{red}{#1}}}
+
+%set page margins
+\usepackage{fullpage}  %package which by default allows for narrower margins (also add [cm])
+%\addtolength{\textheight}{2cm} 
+%\addtolength{\voffset}{-1cm}
+%\addtolength{\textwidth}{2cm}
+%\addtolength{\hoffset}{-3cm}
+\setlength{\oddsidemargin}{0pt} %set left & right margins
+\setlength{\evensidemargin}{0pt} %set left & right margins
+%set headers and footers
+%\usepackage{fancyhdr}  
+%\setlength{\headheight}{0pt}
+%\pagestyle{fancy}
+%\fancyhf{}
+\usepackage{indentfirst}
+\numberwithin{equation}{section}
+%set fonts used
+%\usepackage{lmodern}
+%\usepackage{kpfonts}
+%can check http://www.tug.dk/FontCatalogue/mathfonts.html for font alternatives
+%set authoring details
+\author{ %name under title %email in footnote \thanks{a.lalu@tinbergen.nl} 
+	    }
+\title{\Large \textbf{[P-ONE] Ongoing Roadmap\vspace*{-25pt}}
+}
+%start file content
+\begin{document}
+\maketitle
+%\abstract{
+\tableofcontents
+%}
+
+\onehalfspacing
+\newpage
+\section{Introduction \& Purpose}
+\emph{Tentative Title:}\\
+{\sc{Asymptotic properties of extremum estimators and latent states in option price panels}}\\
+
+\noindent\emph{Broad goals:}
+\begin{enumerate} 
+	\item Derive asymptotic distribution (consistency/bias/asymptotic distribution) for the parameters of an AJD.
+	\item Find a better way to do specification testing.
+	\item Apply framework for a couple of well-established AJD models.\\
+\end{enumerate}
+
+\noindent\emph{Specific goals:}
+\begin{enumerate}
+	\item Derive consistency for estimator with latent vol state in SV (Heston) model.
+	\item Extend set-up to cover:
+	\begin{itemize}
+		\item 1 noisy option price;
+		\item noisy option price panels;
+		\item several latent states states/extensions of SV model;\\
+	\end{itemize}
+\end{enumerate}
+
+\noindent\emph{Roadmap:}\\
+\emph{Tentative:} Express $v_t(C,\theta)$ analytically $\longrightarrow$ compute derivative of moment condition analytically $\longrightarrow$ derive asymptotic distribution for a generic extremum criterion function. 
+
+\newpage
+\section{Literature Review}
+
+\subsection{Jarrow \& Kwok (JoEctrcs, 2015) \\ - Specification tests of calibrated option pricing models -}
+
+This paper proposes sets of assumptions under which the consistency and asymptotic distribution for estimators of option pricing model parameters can be established.\footnote{Sample counterparts of the asymptotic variance expressions would not constitute feasible estimators (?).} Most results are directly applicable for the Black-Scholes option pricing (uni-variate option pricing model with implied volatility as the estimated parameter). 
+
+Under the null assumption of a correctly specified model, statistical tests for misspecification are formulated for both the case in which the parameter estimate is obtained by inverting the option pricing function (e.g., backing out Black-Scholes implied volatility) and the case in which the parameter is estimated using a non-linear least squares procedure aimed at minimizing model pricing errors over a time-series of option prices.
+
+Some of the assumptions needed for the asymptotics (notably in the set-up in which the option pricing function is inverted to obtain parameter estimates) are difficult to check, even in the univariate Black-Scholes set-up. 
+
+\subsubsection{Set-up \& Notation}
+We observe a panel of option prices over a cross-section of $n$ options and a sample period $[0,T]$. Let $m_{it} (i=1,\dots,n; t=1,\dots,T)$ be the observed price of the $i$th option at time $t$, with strike price $K_{it}$ and time to maturity $\tau_{it}$. Suppose all options are written on the same underlying $S_t$, with dividend rate $q_t$. Let $r_t$ denote the risk free interest rate. 
+Collect all the observables in a vector $z_{it}=\left(K_{it},\tau_{it},S_t,q_t,r_t\right)$.  
+
+Modeler chooses a parametric option pricing model $M(\theta)$ indexed by a parameter $\theta$ so that $M_{it}(\theta)\coloneqq M(\theta;z_{it})$ is the theoretical model price for the option. 
+
+Observed option prices $m_t$ are assumed to be noisy, in the following sense:
+\begin{equation}
+m_t = \mathring{m}_t+v_t.
+\end{equation}
+$v_t$ denotes the observation noise. 
+
+A necessary assumption for the results to be derived is: 
+\begin{adjustwidth}{30 pt}{0 pt}
+\underline{Assumption SM}: The option pricing function $M_t(\theta)$ is strictly monotone in $\theta$. 
+\end{adjustwidth}
+
+\subsubsection*{Error Minimization Calibration}
+$\theta$ is assumed constant across the entire sample\footnote{Latent state models are claimed to be accommodated within this framework (?).}. 
+
+The modeler defines a loss function, e.g., $L_2$ with equal weights:\footnote{The cross-section $i=1,\dots,n$ dimension of the option panel is dropped in the derivations(?).} $L_2=\sum_{t=1}^T (M_t(\theta)-m_t)^2$, which it then minimizes w.r.t. $\theta$ to obtain an estimator based on the F.O.C.:
+\begin{align}
+0&=\sum\limits_{t=1}^T\underbrace{\frac{\partial M_t(\hat{\theta})}{\partial \theta}}_{\coloneqq \nabla_t(\hat{\theta})} (M_t(\hat{\theta})-m_t)\notag\\
+&= \sum\limits_{t=1}^T \nabla_t(\hat{\theta}) \left(\underbrace{M_t(\theta_0)+\nabla_t(\tilde{\theta})^\top(\hat{\theta}-\theta_0)}_{\text{Taylor expansion of}~M_t(\hat{\theta})}-m_t\right)\notag\\
+&= \sum\limits_{t=1}^T \nabla_t(\hat{\theta}) \left(M_t(\theta_0)+\nabla_t(\tilde{\theta})^\top(\hat{\theta}-\theta_0)-\underbrace{\mathring{m}_t+v_t}_{= m_t~\text{cf. (2.1)}}\right)
+\label{eq:kwok_FOC}
+\end{align}
+
+For this derivation to hold it is required that:
+\begin{adjustwidth}{30 pt}{0 pt}
+\underline{Assumption D}: The model $M_t(\theta)$ is continuously differentiable in $\theta$ so that $\nabla_t=\nabla_t(\theta)\coloneqq\frac{\partial M_t(\theta)}{\partial \theta}$ exists. 
+\end{adjustwidth}
+
+By further assuming: 
+\begin{adjustwidth}{30 pt}{0 pt}
+\underline{Assumption H$_0$}: No model misspecification, i.e. $\mathring{m_t}=M_t(\theta_0)$,
+\end{adjustwidth}
+
+the F.O.C. in \eqref{eq:kwok_FOC} further simplifies to:
+
+\begin{align}
+0 &= \sum\limits_{t=1}^T \nabla_t(\hat{\theta}) \left(\nabla_t(\tilde{\theta})^\top(\hat{\theta}-\theta_0)-v_t\right)\notag\\
+\sum\limits_{t=1}^T \nabla_t(\hat{\theta})v_t &= \sum\limits_{t=1}^T \nabla_t(\hat{\theta})\nabla_t(\tilde{\theta})^\top(\hat{\theta}-\theta_0)
+\label{eq:kwok_FOC2}
+\end{align}
+
+Using the following additional assumptions:
+\begin{adjustwidth}{30 pt}{0 pt}
+\underline{Assumption SE}: $\mathbb{E}(v_t|z)=0$, $\forall t=1,\dots,T, \mathbb{P}$-a.s.\\
+or \underline{Assumption WE}: $\mathbb{E}(v_t|z_{\color{red}t})=0$, $\forall t=1,\dots,T, \mathbb{P}$-a.s.
+
+\underline{Assumption CV$_1$}: Var$(v_t|z_t)=\sigma^2$ and Cov$(v_s,v_t|z_s,z_t)=0$, $\forall t\neq s, \mathbb{P}$-a.s.\\
+or \underline{Assumption CV$_2$}: Var$(v_t|z_t)=\sigma^2_{\color{red}t})$ and Cov$(v_s,v_t|z_s,z_t)=0$, $\forall t\neq s, \mathbb{P}$-a.s.
+
+\underline{Assumption LC}: The model $M_t(\theta)$ is strictly convex in $\theta$ in a neighborhood around $\theta_0$.
+
+\underline{Assumption PL$_{a}^{errmin}$}: A uniform weak LLN applies to $\hat{S}_{\nabla\nabla}\coloneqq\frac{1}{T}\sum_{t=1}^T \nabla_t(\theta)\nabla_t(\theta)^\top$ (for $a=1$) or $\hat{S}_{\nabla\nabla}\coloneqq\frac{1}{T}\sum_{t=1}^T \sigma_t^2\nabla_t(\theta)\nabla_t(\theta)^\top$ (for $a=2$), so that their probability limits $S_{\nabla\nabla}$ and $S_{\sigma^2\nabla\nabla}$ exist in a neighborhood $\Theta_0$ of $\theta_0$. Furthermore, $S_{\nabla\nabla}$ is invertible.
+\end{adjustwidth}
+
+the following theorems can be stated: 
+\begin{adjustwidth}{30 pt}{0 pt}
+\emph{Theorem 1}: Under Assumptions SE, LC, and H$_0$, $\hat{\theta}$ is biased ``in finite samples", i.e., $\mathbb{E}(\hat{\theta})\neq\theta_0$.
+\end{adjustwidth}
+
+\begin{adjustwidth}{30 pt}{0 pt}
+\emph{Theorem 2}: Under Assumptions WE and H$_0$, $\hat{\theta}$ is consistent in large samples, i.e., $\hat{\theta}\overset{p}{\rightarrow} \theta_0$ as $T\rightarrow\infty$.
+\end{adjustwidth}
+
+\begin{adjustwidth}{30 pt}{0 pt}
+\emph{Theorem 3}: Under Assumptions WE, D, CV$_a$, PL$_a^{errmin}$ (a=1,2) and H$_0$, $\hat{\theta}$ is asymptotically normally distributed:\\
+
+ $\sqrt{T}\left(\hat{\theta}-\theta_0\right) \overset{d}{\rightarrow} \mathrm{N}(0, 
+V_a^{errmin})$ as $T\rightarrow\infty$, with asymptotic variance:
+ 
+$ V_a^{errmin}=
+ \begin{cases} 
+ \sigma^2S_{\nabla\nabla}^{-1},& \text{for}~ a=1. \\ 
+  S_{\nabla\nabla}^{-1}S_{\sigma^2\nabla\nabla}S_{\nabla\nabla}^{-1},& \text{for}~ a=2.
+ \end{cases}  
+$
+\end{adjustwidth}
+
+\subsubsection*{Exact calibration}
+
+Exact calibration finds a solution for each $t$. The solution $\hat{\theta}_t$ varies across observations such that $\hat{\theta}_t$ satisfies for each $t$:
+
+\begin{equation}
+M_t(\hat{\theta_t})= m_t = \mathring{m}_t + v_t
+\end{equation}
+
+
+The estimator for $\theta_0$ is then defined to be the sample mean of the calibrated parameters: 
+
+\begin{align}
+\bar{\theta}& =\sum\limits_{t=1}^T \hat{\theta_t}\\
+&= \sum\limits_{t=1}^T M_t^{-1}(m_t)\notag\\
+&= \sum\limits_{t=1}^T \left( \underbrace{M_t^{-1}(\mathring{m}_t) + \frac{\partial M_t^{-1}(\tilde{m_t})}{\partial m_t} \left(m_t-\mathring{m_t}\right)}_{\text{Taylor expansion}} \right) \notag\\
+&= \sum\limits_{t=1}^T \left( M_t^{-1}(\mathring{m}_t) + \frac{\partial M_t^{-1}(\tilde{m_t})}{\partial m_t} v_t \right)
+\end{align}
+
+
+
+Further assuming H$_0$ (no misspecification) leads to the simplified expression for the estimator: 
+\begin{align}
+\bar{\theta}& = \sum\limits_{t=1}^T \theta_0 + \sum\limits_{t=1}^T \frac{\partial M_t^{-1}(\tilde{m_t})}{\partial m_t} v_t \notag\\
+&= \theta_0 + \sum\limits_{t=1}^T \frac{\partial M_t^{-1}(\tilde{m_t})}{\partial m_t} v_t
+\end{align}
+ 
+The observation noise $v_t$ is therefore transferred to the parameter space through this estimation approach. 
+
+
+
+
+\newpage
+\section{Modeling}
+
+
+\end{document}
