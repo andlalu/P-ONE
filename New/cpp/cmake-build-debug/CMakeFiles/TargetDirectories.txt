@@ -1,0 +1,3 @@
+/Users/andrei/Library/Mobile Documents/com~apple~CloudDocs/Transfer/P-ONE/New/cpp/cmake-build-debug/CMakeFiles/cpp.dir
+/Users/andrei/Library/Mobile Documents/com~apple~CloudDocs/Transfer/P-ONE/New/cpp/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/andrei/Library/Mobile Documents/com~apple~CloudDocs/Transfer/P-ONE/New/cpp/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,173 @@
+\documentclass[11pt,a4paper,notitlepage]{article}
+
+%usepackage inclusions:
+\usepackage{mathtools} %package that allows math formatting
+\usepackage{commath} %package that allows for nice differential operators
+\usepackage{bigints} %package that allows for bigger integral signs
+\usepackage{amsfonts}   %package that allows for more math characters
+\usepackage{amssymb}  %package that allows for more math symbols
+\usepackage{shadethm}  %package that allows for shaded definitions&proofs
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor} %package that allows colored text
+\usepackage{booktabs}
+\usepackage{float} % by Jakob
+\usepackage[table]{xcolor} %to color table rows & columns
+\usepackage{setspace} %to allow for the insertion line spaces at will
+\usepackage{wrapfig} %to allow for figures to be captioned
+\usepackage{mdframed} % to allow for wide frames and boxes around math&text
+\usepackage[makeroom]{cancel} %to allow for strike-out text
+\usepackage{subfigure}
+\usepackage{parskip}
+\usepackage{url} %to allow citing url addresses
+\usepackage{rotating}
+\usepackage{nameref}
+\usepackage{geometry}
+\usepackage[margin=1cm]{caption}
+\usepackage{changepage}
+\usepackage{natbib}
+
+%define own operators&theorems&proofs
+\newcommand{\expect}[1]{\mathbb{E} \left[ {#1} \right] } %define expectation symbol 
+\newtheorem{proof}{Proof} %define proofs within the shadethm environment
+\newcommand{\vect}[1]{\boldsymbol{#1}} %define  BOLD vectors.
+\newcommand{\expe}[1]{\mathbb{E}\left[#1\right]} %define  BOLD vectors.
+\newcommand{\HRule}{\rule{\linewidth}{0.01mm}} %define horizontal thin line
+\newcommand{\red}[1]{{\color{red}{#1}}}
+
+%set page margins
+%\addtolength{\textheight}{2cm} 
+%\addtolength{\voffset}{-1cm}
+%\addtolength{\textwidth}{2cm}
+%\addtolength{\hoffset}{-3cm}
+\setlength{\oddsidemargin}{0pt} %set left & right margins
+\setlength{\evensidemargin}{0pt} %set left & right margins
+%set headers and footers
+%\usepackage{fancyhdr}  
+%\setlength{\headheight}{0pt}
+%\pagestyle{fancy}
+%\fancyhf{}
+\usepackage{indentfirst}
+\numberwithin{equation}{section}
+%set fonts used
+%\usepackage{lmodern}
+%\usepackage{kpfonts}
+%can check http://www.tug.dk/FontCatalogue/mathfonts.html for font alternatives
+%set authoring details
+\author{ %name under title %email in footnote \thanks{a.lalu@tinbergen.nl} 
+	    }
+\title{Risk Premium Inference from Option Price Panels: Monte Carlo Evidence \vspace*{-25pt}}
+\date{First version:}
+%start file content
+\begin{document}
+\maketitle
+%\abstract{
+%\tableofcontents
+%}
+
+\onehalfspacing
+
+
+\section{Introduction}
+The aim of this paper is to implement and compare two approaches for the estimation of parameters of continuous-time stochastic models used to describe equity index returns and corresponding option prices. The comparison focuses on the relationship between parameter estimate attributes and the manner in which the option price data is employed in the estimation. We focus on models which feature latent stochastic state variables and investigate whether using option price data as a direct input in the econometric criterion function versus using it as an intermediary input to filter out the latent state variable levels leads to more accurate parameter estimates for the assumed data-generating process. ***[Why is this relevant?]*** To answer this question, we conduct a series of simulation exercises in a typical estimation context using different assumptions regarding the option price input data.
+
+\subsection{Background and goals}
+Since the introduction of stochastic volatility models for equity returns, a large body of academic literature dedicated to the study of econometric estimators for discretely sampled continuous time processes has been developed. Many of the approaches are geared towards obtaining parameter estimates for the data-generating process assumed to describe return process dynamics under the historical probability measure. The ever-increasing availability of rich data-sets containing equity option prices together with the development of richer model specifications generates research interest for alternative estimation procedures aimed at making use of option price panel data to improve parameter identification and estimator precision. 
+
+Depending on the aim of the econometric exercise, estimation can also be carried out from option price panel data without including return time-series data. This approach requires defining the return process dynamics under the pricing measure featured in a risk-neutral pricing framework. Doing so sidesteps any additional assumptions needed to link the historical probability measure to the risk neutral one\footnote{***[include references from Eric Renault and Paul Schneider measure change plausibility]***}. Model estimates obtained from option prices alone are best-suited to be used in other pricing applications with the same underlying asset. For example a \citet{heston} model calibrated on plain vanilla European option prices can be used to determine the price of an exotic option, e.g., a cliquet, and to compare this price with the corresponding market quote. If the process dynamics adequately represent market pricing considerations, model based prices should closely match market prices\footnote{***[Add bakshi cao chen as prototypical study of this type]***}. This type of out-of-sample exercise can offer important clues about a model's specification shortcomings.  
+
+Subject to additional assumptions\footnote{E.g., assuming a functional form for the state price density (also referred to as ``pricing kernel'').} about the relationship between the two  probability measures, the use of option price panels in addition to index return time series provides additional information about the model behavior under the historical probability measure as well as under the risk neutral probability measure. This in turn allows for additional insights on the characteristics of risk premiums. This modeling approach is more complete and well suited for empirical time-series applications aimed at studying the evolution of risk premiums over time. 
+
+Several approaches have been developed to estimate the full set of parameters that characterize the model under both probability measures. \cite{pan2002jump} coined this approach as joint time series and option price estimation and used at-the-money option prices to imply the latent stochastic volatility state level to be used together with a time series of returns to estimate parameters, a procedure which we also investigate at in this study. Since the development of particle filters tailored for stochastic models employed in option pricing (e.g., \cite{bates2006maximum}, \cite{johannes2009optimal}), particle filtering methods have also been employed to conduct joint estimation as in e.g., \cite{christoffersen2010volatility}, \cite{bardgett2014inferring}. This simulation study aims to complement the literature by comparing estimator and fit properties across these approaches. As one of the main attractive features of joint estimation is getting estimates for the parameters governing risk premiums we focus on analyzing the upshots of using either approach to recover risk premium dynamics.  
+
+\subsection{Literature Review}
+Given the popularity of continuous time stochastic models in financial econometrics and option pricing applications, many studies have been conducted to analyze estimator performance. This paper focuses on the subset of joint estimation approaches. Therefore we do not provide a comprehensive overview of existing procedures that estimate model parameters using option prices or the ones  which only characterize the dynamics under the risk neutral pricing measure. 
+
+Closest to the spirit of our investigation is the simulation study by \cite{ai2007maximum} in which they investigate the impact of various option-based plug-in proxy alternatives for the level of stochastic volatility on the (approximated) maximum likelihood estimators for the Heston and CEV models. 
+
+***[Other papers that I still need to discuss/mention: \cite{garcia2011estimation}]***
+
+
+
+
+\section{Base model specification and Monte Carlo design}
+To investigate the estimator's characteristics in different estimation set-ups which employ both equity index return time series and corresponding option prices we use the prototypical \citep{heston} model specification with an affine risk premium specification\footnote{***[introduce reference to appendix about pricing kernel here]***}. We consider a filtered probability space $\left(\Omega, \mathcal{F}, \lbrace\mathcal{F}\rbrace_{t\geq0}, \mathbb{P} \right)$ satisfying the usual conditions\footnote{See e.g., \citet{protterstochastic}, p. 3.}. Under the historical probability measure, $\mathbb{P}$, the dynamics of the log-price process $\log(S_t)$ and of the stochastic volatility process $V_t$, which make up the state vector $X_t = [\log(S_t), V_t]$, are assumed to be described by the pair of s.d.e.:
+\begin{align}
+	\dif{\log(S_t)} &= \left((r_t-q_t)+ \left(\eta-1/2\right) V_t \right)\dif t + \sqrt{V_t} \dif W_{t,1}^\mathbb{P}; \label{PHestonS}\\
+	\dif{V_t} &= k(\bar{V}-V_t)\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{P} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{P}\right). \label{PHestonV}
+\end{align}
+$\left(\dif W_{t,1}^\mathbb{P}, \dif W_{t,2}^\mathbb{P}\right)$ are $\mathcal{F}_t$-adapted Brownian motion processes. $\lbrace r \rbrace_{t\geq 0}$  and  $\lbrace q \rbrace_{t\geq 0}$ are $\mathcal{F}_t$-adapted processes (e.g., deterministic) which describe the risk-free rate of interest and the continuous dividend yield respectively. $\eta$ is a parameter which governs the size of the equity risk premium. The local stochastic volatility process mean reverts at a mean reversion rate $\kappa$ to the long run mean level $\bar{V}$. $\sigma_v$ governs the volatility of volatility and $\rho$ represents the instantaneous correlation between returns and volatility.
+
+Under the risk neutral probability measure, $\mathbb{Q}$, the model dynamics are assumed to be: 
+\begin{align}
+	\dif{\log(S_t)} &= \left( (r_t-q_t) - 1/2 V_t\right) \dif t + \sqrt{V_t} \dif W_{t,1}^\mathbb{Q};\label{QHestonS}\\
+	\dif{V_t} &= k(\bar{V}-V_t)\dif t + \eta_{V}V_t\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{Q} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{Q}\right).\label{QHestonV}
+\end{align}
+$\left(\dif W_{t,1}^\mathbb{Q}, \dif W_{t,2}^\mathbb{Q}\right)$ are Brownian motions under the (equivalent) martingale pricing measure $\mathbb{Q}$.
+
+The Heston model, which features local stochastic volatility with a leverage effect while providing semi-closed form solutions for option prices, is the staple stochastic volatility model for equity index modeling. It is used in a large number of empirical studies, has a number of well documented limitations, some of which have been remedied by enriching the model specification\footnote{[add reference bates], by adding jumps and/or additional (latent) stochastic states}. Many extensions\footnote{***[List extension types]} of the Heston model have been proven to improve model fit to option price panels and can be estimated using the same econometric techniques applicable for the standard Heston model.
+
+Given the focus of our study, we initially restrict our attention to the simplistic set-up of the Heston model for a host of reasons. On the one hand, for most Heston model extensions, econometric approaches to parameter estimation which employ option price data come with increased computational costs. This would limit the breadth of feasible Monte Carlo designs we could implement. 
+Secondly, extensions come with specific estimation challenges which typically require tailored estimation designs to obtain estimates therefore limiting the comparability of results obtained throughout the study. 
+
+Let $\theta$ denote the vector of parameters featured in the model. We assume $\theta \in \Theta$ where $\Theta$ is a compact set from the domain of valid data-generating process parameters. For the Heston model specification previously introduced, the value of $\theta$ corresponding to the data-generating process introduced in \eqref{PHestonS} - \eqref{QHestonV} is $\theta = \left[\eta, \kappa, \bar{v}, \sigma_v, \rho, \eta_v\right]$. Note that subsets of the parameter set play a role in either the $\mathbb{P}$-measure specification, the $\mathbb{Q}$-measure specification or in both, E.g., the Heston parameter set can be decomposed into 3 disjoint subsets: $\theta = \left[\theta^\mathbb{P}, \theta^{\mathbb{P},\mathbb{Q}}, \theta^\mathbb{Q}\right]$, where $\theta^\mathbb{P} = \eta$,~ $\theta^{\mathbb{P}\cap\mathbb{Q}} = \left[\kappa, \bar{v}, \sigma_v, \rho\right]$, and $\theta^\mathbb{Q} = \eta_v$. 
+
+Assuming we have a time series of state vector observations:\footnote{In practice such a series never exists as the volatility, $V_t$, is an unobservable, i.e., latent state process} $X_1, \dots, X_T$, observed at  equally-spaced timepoints $t_1,\dots,t_T$ with $t_{i+1} - t_i = \Delta >0, \forall i\geq 1 $. Denote by $f(X_{i+1} |X_i; \theta^\mathbb{P},  \theta^{\mathbb{P} \cap \mathbb{Q}})$ the transition density of the state vector $X_t$ under the historical probability measure. Note that the transition density depends on $\theta^\mathbb{P}$ and $\theta^{\mathbb{P} \cap \mathbb{Q}}$ which represent the subset of parameters that describe the model dynamics under $\mathbb{P}$.
+
+By using option price data the full set of parameters -- including the additional ones that characterize model dynamics under the risk neutral pricing measure -- can be estimated, i.e., inference on $\theta^\mathbb{Q}$ can be conducted while at the same time increasing sample identification potential for the $\theta^{\mathbb{P} \cap \mathbb{Q}}$ parameter set. 
+
+***[Do we define the transition density for the Q model? -> NO point.]***
+
+\subsection{Option prices}
+Suppose that, in addition to time series observations of returns, we have synchronous observations of option price panel data and time series data on the underlying. Let us denote the option prices by $p_{i}(T,K)$ where $T,K$ represent the maturity and the money-ness level of the option contract. Option prices are commonly quoted in terms of their Black-Scholes implied volatility. Let $P(X_{i},T,K; \theta^\mathbb{Q})$ be the corresponding model price\footnote{***[See Appendix ? for more details about the computation of European option prices in our base model specification.]***}, e.g., the option price generated by the base model specification under the equivalent martingale pricing measure for  given state vector instance $X_{i}$ and parameter set values $\theta^\mathbb{Q}$. If option prices were observed without error and the model is not misspecified, the observed option prices would coincide with their model-based counterparts. In practice the two prices differ. Typical modelling approaches assume away model misspecification and attribute the difference to measurement errors (e.g., microstructure noise). 
+
+
+***[Add brief discussion about the approaches for modeling price differences. Gist: price difference model choice typically correlates with estimation design. Price differences  drawn from a stationary parametric distribution, e.g., a normal distribution. 
+
+\subsection{Monte Carlo Design}
+
+\subsection{Estimators}
+
+\subsubsection{Particle Filter Based Estimation}
+Estimation contexts which make use of option prices (which are nonlinear, often semi-analytic expressions featuring model parameters and partially observable state vectors in most recent model specifications) are computationally demanding. The models used to describe index returns for option pricing purposes typically feature latent stochastic state processes which require filtering. This increases the computational cost of econometric estimation exercises as one has to devise parsimonious estimators which can work with non-analytic expressions of state vector observations by relying on stable and robust numerical procedures. The advent of parallel computing techniques has rendered advanced particle filter methods feasible for set-ups with larger panels of option price observations [references, some of them very new indeed], allowing for the evaluation of (quasi-)likelihood functions of option price observations.
+
+Two other hurdles are typically encountered when working with continuous time models. Firstly, even the simple continuous time stochastic model specifications (like the base-case model used in this paper) do not have known densities readily usable to evaluate the likelihood function. Secondly, one often has to resort to using discretization schemes to simulate state vector (i.e., particle) paths. However, despite this second hurdle, approximating transition densities using discrete distributions consisting of particle support points provides a tractable workaround which can easily be adapted for most of the typical model specifications considered. The filtering distributions provide estimators for the latent states and their possible distributions. The Monte Carlo procedures involved in the simulation of particles can be tailored to accommodate models with jumps and with more complex state dynamics than featured in our base model specification. 
+
+In the context of the base model specification previously introduced, we outline the following optimal filtering procedure in the spirit of \citet{johannes2009optimal}, \citet{christoffersen2010volatility} and ***[Hurn et al]*** and introduce the necessary implementation details for the Monte Carlo estimation exercise. First, let us denote the  log-likelihood function of the base model under the physical probability measure by
+%\begin{equation}
+%\log \mathcal{L}_T = \log f(X_0) + \sum_{i=0}^T \log f(X_{i+1}|X_{i};\theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}}).
+%\end{equation}
+The evaluation of this likelihood function is unfeasible as the state vector is not fully observed. Also note that it does not provide any information about $\theta^\mathbb{Q}$, the parameters which feature in the dynamics of the model under the risk neutral probability measure.
+ 
+To take into account option prices and to allow for the likelihood to be evaluated, a filtering rule using the time series observations for the components of the state vector which are observable is introduced alongside an option price panel likelihood observation in order to extract information about the latent states which are not observable.  Let us denote by $\mathcal{O}_i$ the filtration containing the collection of sigma algebras generated by the time series of observable states and associated option prices. E.g., for our base model specification this is the filtration generated by $S_{1},\dots,S_{T}$ and the panel $p_{1}(T,K),\dots  p_{T}(T,K)$ of option prices for all available option maturities $T$ and strike prices $K$. The filtering is carried out in two steps, as follows:\vspace{+5pt}\\
+\texttt{Step 1:~~~}\vspace{-5pt}
+%\begin{align}
+%f(X_{i+1}|\mathcal{O}_{i};\theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}}) &= f(S_{i+1}|{V}_{i+1},\mathcal{O}_i;\theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}}) f(V_{i+1}|\mathcal{O}_i;\theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}}) \notag\\
+%&~~\int_{\mathcal{D}_{V}} f(S_{i+1}|{V}_{i+1},\mathcal{O}_i; \theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}}) f(V_{i+1}|{V}_{i},\mathcal{O}_i;\theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}}) \notag \\
+%& \hspace{165pt} \times f(V_{i}|\mathcal{O}_i; \theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}})  \dif V_{i}
+%\end{align}
+
+%\texttt{Step 2:~~~}\vspace{-5pt}
+%\begin{align}
+%f(V_{i}|\mathcal{O}_i; \theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}}) &= \frac{f(X_{i},V_{i}|\mathcal{O}_i; \theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}})}{f(X_{i}|\mathcal{O}_i; \theta^\mathbb{P},\mathbb{P}\cap\mathbb{Q}})}
+%\end{align}
+
+
+\subsubsection{Implied State Estimation}
+
+
+\section{Results}
+
+\section{Applications}
+
+\section{Conclusions}
+
+\newpage
+
+
+\bibliographystyle{apalike}
+\nocite{*}
+\bibliography{P_ONE_BIB}
+
+\newpage
+\section*{Appendix} 
+
+\end{document}
