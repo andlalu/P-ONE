@@ -1,0 +1,7 @@
+{
+  "name" : "pone",
+  "version-string" : "0.1",
+  "dependencies" : [ "boost-random", {
+    "name" : "boost-random"
+  } ]
+}
