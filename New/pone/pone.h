@@ -1,6 +1,9 @@
-#ifndef CPP_PONE_H
-#define CPP_PONE_H
+#ifndef PONE_H
+#define PONE_H
 
-void hello();
+namespace pone
+{
+    void hello();
+}
 
-#endif //CPP_PONE_H
+#endif //PONE_H

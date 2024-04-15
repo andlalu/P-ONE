@@ -1,8 +1,12 @@
 #include "pone.h"
 
 #include <iostream>
-#include <boost/random/random.hpp>
+#include <boost/random.hpp>
 
-void hello() {
-    std::cout << "Hello, World!" << std::endl;
+namespace pone
+{
+    void hello() {
+        std::cout << "Hello, World!" << std::endl;
+
+    }
 }
