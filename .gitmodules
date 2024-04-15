@@ -1,3 +1,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "New/pone/external/boost"]
+	path = New/pone/external/boost
+	url = https://github.com/boostorg/boost.git
