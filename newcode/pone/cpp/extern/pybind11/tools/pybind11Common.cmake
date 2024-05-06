@@ -184,12 +184,12 @@ elseif(
       ))
 
   # New mode
-  include("pybind11NewTools.cmake")
+  include("${CMAKE_CURRENT_LIST_DIR}/pybind11NewTools.cmake")
 
 else()
 
   # Classic mode
-  include("pybind11Tools.cmake")
+  include("${CMAKE_CURRENT_LIST_DIR}/pybind11Tools.cmake")
 
 endif()
 

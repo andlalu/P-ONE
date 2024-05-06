@@ -73,7 +73,7 @@ endif()
 project(pybind11_tests CXX)
 
 # Access FindCatch and more
-list(APPEND CMAKE_MODULE_PATH "../tools")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../tools")
 
 option(PYBIND11_WERROR "Report all warnings as errors" OFF)
 option(DOWNLOAD_EIGEN "Download EIGEN (requires CMake 3.11+)" OFF)
@@ -494,7 +494,7 @@ endforeach()
 # Provide nice organisation in IDEs
 if(NOT CMAKE_VERSION VERSION_LESS 3.8)
   source_group(
-    TREE "../include"
+    TREE "${CMAKE_CURRENT_SOURCE_DIR}/../include"
     PREFIX "Header Files"
     FILES ${PYBIND11_HEADERS})
 endif()
@@ -504,7 +504,7 @@ pybind11_find_import(pytest VERSION 3.1)
 
 if(NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
   # This is not used later in the build, so it's okay to regenerate each time.
-  configure_file("pytest.ini" "${CMAKE_CURRENT_BINARY_DIR}/pytest.ini"
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/pytest.ini" "${CMAKE_CURRENT_BINARY_DIR}/pytest.ini"
                  COPYONLY)
   file(APPEND "${CMAKE_CURRENT_BINARY_DIR}/pytest.ini"
        "\ntestpaths = \"${CMAKE_CURRENT_SOURCE_DIR}\"")
@@ -553,8 +553,8 @@ add_custom_target(
     --error-exitcode=1
     --read-var-info=yes
     --track-origins=yes
-    --suppressions="valgrind-python.supp"
-    --suppressions="valgrind-numpy-scipy.supp"
+    --suppressions="${CMAKE_CURRENT_SOURCE_DIR}/valgrind-python.supp"
+    --suppressions="${CMAKE_CURRENT_SOURCE_DIR}/valgrind-numpy-scipy.supp"
     --gen-suppressions=all
     ${PYTHON_EXECUTABLE} -m pytest ${PYBIND11_ABS_PYTEST_FILES}
   DEPENDS ${test_targets}
@@ -576,7 +576,7 @@ add_custom_command(
   TARGET pybind11_tests
   POST_BUILD
   COMMAND
-    ${PYTHON_EXECUTABLE} ../tools/libsize.py
+    ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../tools/libsize.py
     $<TARGET_FILE:pybind11_tests>
     ${CMAKE_CURRENT_BINARY_DIR}/sosize-$<TARGET_FILE_NAME:pybind11_tests>.txt)
 

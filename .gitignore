@@ -1,7 +1,6 @@
 #mac
 .DS_Store
 
-New/vcpkg/
-**New/pone/cmake-build-debug/
-**New/pone/cmake-build-release/
+**newcode/pone/cpp/build/debug/
+**newcode/pone/cpp/build/release/
 **/.idea/

@@ -47,7 +47,7 @@ endif()
 string(REGEX MATCH "^[0-9]+" PYBIND11_VERSION_PATCH "${PYBIND11_VERSION_PATCH}")
 
 project(
-        pybind11
+  pybind11
   LANGUAGES CXX
   VERSION "${PYBIND11_VERSION_MAJOR}.${PYBIND11_VERSION_MINOR}.${PYBIND11_VERSION_PATCH}")
 
@@ -185,7 +185,7 @@ if(PYBIND11_MASTER_PROJECT AND NOT CMAKE_VERSION VERSION_LESS 3.12)
   file(
     GLOB_RECURSE _pybind11_header_check
     LIST_DIRECTORIES false
-    RELATIVE "."
+    RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
     CONFIGURE_DEPENDS "include/pybind11/*.h")
   set(_pybind11_here_only ${PYBIND11_HEADERS})
   set(_pybind11_disk_only ${_pybind11_header_check})
@@ -201,12 +201,12 @@ endif()
 
 # CMake 3.12 added list(TRANSFORM <list> PREPEND
 # But we can't use it yet
-string(REPLACE "include" "include" PYBIND11_HEADERS
+string(REPLACE "include/" "${CMAKE_CURRENT_SOURCE_DIR}/include/" PYBIND11_HEADERS
                "${PYBIND11_HEADERS}")
 
 # Cache variable so this can be used in parent projects
 set(pybind11_INCLUDE_DIR
-    "include"
+    "${CMAKE_CURRENT_LIST_DIR}/include"
     CACHE INTERNAL "Directory where pybind11 headers are located")
 
 # Backward compatible variable for add_subdirectory mode
@@ -244,10 +244,10 @@ else()
   set(PYBIND11_INSTALL OFF)
 endif()
 
-include("tools/pybind11Common.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/pybind11Common.cmake")
 # https://github.com/jtojnar/cmake-snips/#concatenating-paths-when-building-pkg-config-files
 # TODO: cmake 3.20 adds the cmake_path() function, which obsoletes this snippet
-include("tools/JoinPaths.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/JoinPaths.cmake")
 
 # Relative directory setting
 if(USE_PYTHON_INCLUDE_DIR AND DEFINED Python_INCLUDE_DIRS)
@@ -331,14 +331,14 @@ if(PYBIND11_INSTALL)
     endif()
   endif()
   join_paths(includedir_for_pc_file "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
-  configure_file("tools/pybind11.pc.in"
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/tools/pybind11.pc.in"
                  "${CMAKE_CURRENT_BINARY_DIR}/pybind11.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pybind11.pc"
           DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig/")
 
   # Uninstall target
   if(PYBIND11_MASTER_PROJECT)
-    configure_file("tools/cmake_uninstall.cmake.in"
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/tools/cmake_uninstall.cmake.in"
                    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
 
     add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P

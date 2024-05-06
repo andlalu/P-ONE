@@ -9,6 +9,7 @@ find_package(Boost COMPONENTS random)
 add_subdirectory("utils")
 include_directories("utils")
 
+add_subdirectory(extern/pybind11)
 find_package(pybind11 CONFIG)
 
 add_subdirectory("wrap")

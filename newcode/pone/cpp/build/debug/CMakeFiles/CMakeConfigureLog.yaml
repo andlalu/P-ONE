@@ -380,3 +380,79 @@ events:
       
       
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "extern/pybind11/tools/pybind11Common.cmake:287 (check_cxx_compiler_flag)"
+      - "extern/pybind11/tools/pybind11Common.cmake:327 (_pybind11_return_if_cxx_and_linker_flags_work)"
+      - "extern/pybind11/tools/pybind11Common.cmake:399 (_pybind11_generate_lto)"
+      - "extern/pybind11/CMakeLists.txt:247 (include)"
+    checks:
+      - "Performing Test HAS_FLTO_THIN"
+    directories:
+      source: "/Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-qvcTIH"
+      binary: "/Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-qvcTIH"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk"
+    buildResult:
+      variable: "HAS_FLTO_THIN"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-qvcTIH'
+        
+        Run Build Command(s): /Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_c753b
+        [1/2] /Library/Developer/CommandLineTools/usr/bin/c++ -DHAS_FLTO_THIN  -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk -fcolor-diagnostics   -flto -MD -MT CMakeFiles/cmTC_c753b.dir/src.cxx.o -MF CMakeFiles/cmTC_c753b.dir/src.cxx.o.d -o CMakeFiles/cmTC_c753b.dir/src.cxx.o -c /Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-qvcTIH/src.cxx
+        [2/2] : && /Library/Developer/CommandLineTools/usr/bin/c++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/cmTC_c753b.dir/src.cxx.o -o cmTC_c753b  -flto= && :
+        FAILED: cmTC_c753b 
+        : && /Library/Developer/CommandLineTools/usr/bin/c++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/cmTC_c753b.dir/src.cxx.o -o cmTC_c753b  -flto= && :
+        clang: error: unsupported argument '' to option '-flto='
+        ninja: build stopped: subcommand failed.
+        
+      exitCode: 1
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/Internal/CheckCompilerFlag.cmake:18 (cmake_check_source_compiles)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/x64/share/cmake-3.27/Modules/CheckCXXCompilerFlag.cmake:34 (cmake_check_compiler_flag)"
+      - "extern/pybind11/tools/pybind11Common.cmake:287 (check_cxx_compiler_flag)"
+      - "extern/pybind11/tools/pybind11Common.cmake:332 (_pybind11_return_if_cxx_and_linker_flags_work)"
+      - "extern/pybind11/tools/pybind11Common.cmake:399 (_pybind11_generate_lto)"
+      - "extern/pybind11/CMakeLists.txt:247 (include)"
+    checks:
+      - "Performing Test HAS_FLTO"
+    directories:
+      source: "/Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-ziNDAr"
+      binary: "/Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-ziNDAr"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+      CMAKE_MODULE_PATH: ""
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: ""
+      CMAKE_OSX_SYSROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk"
+    buildResult:
+      variable: "HAS_FLTO"
+      cached: true
+      stdout: |
+        Change Dir: '/Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-ziNDAr'
+        
+        Run Build Command(s): /Applications/CLion.app/Contents/bin/ninja/mac/x64/ninja -v cmTC_b9120
+        [1/2] /Library/Developer/CommandLineTools/usr/bin/c++ -DHAS_FLTO  -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk -fcolor-diagnostics   -flto -MD -MT CMakeFiles/cmTC_b9120.dir/src.cxx.o -MF CMakeFiles/cmTC_b9120.dir/src.cxx.o.d -o CMakeFiles/cmTC_b9120.dir/src.cxx.o -c /Users/andrei/P-ONE/newcode/pone/cpp/build/debug/CMakeFiles/CMakeScratch/TryCompile-ziNDAr/src.cxx
+        [2/2] : && /Library/Developer/CommandLineTools/usr/bin/c++ -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/cmTC_b9120.dir/src.cxx.o -o cmTC_b9120  -flto && :
+        
+      exitCode: 0
+...
