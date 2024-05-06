@@ -3,7 +3,7 @@ project(pone)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_subdirectory(extern/boost)
+add_subdirectory(extern/boostlocal)
 find_package(Boost COMPONENTS random)
 
 add_subdirectory("utils")
