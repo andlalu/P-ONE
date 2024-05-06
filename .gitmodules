@@ -1,14 +1,7 @@
-[submodule "vcpkg"]
-	path = vcpkg
-	url = https://github.com/microsoft/vcpkg.git
-[submodule "New/pone/external/boost"]
-	path = New/pone/external/boost
-	url = https://github.com/boostorg/boost.git
-[submodule "newcode/pone/extern/pybind11"]
-	path = newcode/pone/extern/pybind11
-	url = git@github.com:pybind/pybind11.git
-	branch = stable
 [submodule "newcode/pone/cpp/extern/pybind11"]
 	path = newcode/pone/cpp/extern/pybind11
 	url = git@github.com:pybind/pybind11.git
 	branch = stable
+[submodule "newcode/pone/cpp/extern/boost"]
+	path = newcode/pone/cpp/extern/boost
+	url = git@github.com:boostorg/boost.git
