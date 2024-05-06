@@ -2,6 +2,6 @@
 .DS_Store
 
 New/vcpkg/
-New/pone/cmake-build-debug/
-New/pone/cmake-build-release/
+**New/pone/cmake-build-debug/
+**New/pone/cmake-build-release/
 **/.idea/
