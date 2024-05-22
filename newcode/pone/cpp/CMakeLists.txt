@@ -16,5 +16,8 @@ add_subdirectory("wrap")
 include_directories("wrap")
 pybind11_add_module(pone wrap/wrap.cpp)
 
+add_subdirectory(test)
+include_directories(test)
+
 
 

@@ -5,7 +5,7 @@
 #include "rand.h"
 
 namespace pone {
-  int Rand::RandInt(int lowerBound, int upperBound)
+  int Rand::RandIntBounded(int lowerBound, int upperBound)
   {
     if (upperBound > lowerBound)
       return stdUniformInt() % (upperBound - lowerBound + 1) + lowerBound;
@@ -18,7 +18,7 @@ namespace pone {
     return (static_cast<double>(stdUniformInt()) / RAND_MAX);
   }
 
-  double Rand::RandDouble(double lowerBound, double upperBound)
+  double Rand::RandDoubleBounded(double lowerBound, double upperBound)
   {
     if (upperBound > lowerBound)
       return (lowerBound + RandDouble() * (upperBound - lowerBound));

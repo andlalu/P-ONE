@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include "rand.h"
-#include <boost/random.hpp>
 
 namespace pone
 {

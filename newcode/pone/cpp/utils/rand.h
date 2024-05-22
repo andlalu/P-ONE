@@ -19,13 +19,13 @@ namespace pone
       int RandInt() { return(stdUniformInt() ); }
 
       //Random integer between lower and upper bound
-      int RandInt(int lowerBound, int upperBound);
+      int RandIntBounded(int lowerBound, int upperBound);
 
       //Random double between 0 and 1.0
       double RandDouble();
 
       //Random double between lower and upper bound
-      double RandDouble(double lowerBound, double upperBound);
+      double RandDoubleBounded(double lowerBound, double upperBound);
 
       //Random bool
       bool RandBool();
