@@ -50,15 +50,9 @@ namespace pone
 
 namespace py = pybind11;
 
-void test()
-{
-  auto testInstance = pone::Ra  lalu
-      nd(25);
-}
-
 PYBIND11_MODULE(pone, instance)
 {
-  py::class_<pone::Rand>(instance, pone::className("Rand").data())
+  py::class_<pone::Rand>(instance, "Rand")
       .def(py::init<long>(), py::arg("seed"), "Constructor taking a seed")
       .def(pone::classMethodName("rand_int").data(), &pone::Rand::RandInt, "Random integer")
       .def(pone::classMethodName("rand_int").data(), &pone::Rand::RandIntBounded, "Random integer with bounds")
