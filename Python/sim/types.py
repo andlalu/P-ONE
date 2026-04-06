@@ -57,7 +57,6 @@ class HestonSimConfig(SimulationConfig):
 
 @dataclass(frozen=True)
 class HestonPath(SimulationPath):
-    seed: Optional[int]
     t_week: np.ndarray
     logS_week: np.ndarray
     V_week: np.ndarray

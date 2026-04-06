@@ -64,7 +64,6 @@ class HestonPathSimulator(PathSimulator):
 
         if self.config.return_daily:
             return HestonPath(
-                seed=self.config.seed,
                 t_week=t_week,
                 logS_week=logS_week,
                 V_week=V_week,
@@ -73,10 +72,4 @@ class HestonPathSimulator(PathSimulator):
                 V_daily=V_all,
             )
 
-        return HestonPath(
-            seed=self.config.seed,
-            t_week=t_week,
-            logS_week=logS_week,
-            V_week=V_week,
-            dlogS_week=dlogS_week,
-        )
+        return HestonPath(t_week=t_week, logS_week=logS_week, V_week=V_week, dlogS_week=dlogS_week)
