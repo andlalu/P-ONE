@@ -3,46 +3,47 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: draft_proposal.aux
 The style file: apalike.bst
 Database file #1: P_ONE_BIB.bib
+Warning--I didn't find a database entry for "duarte2019very"
 Warning--empty journal in bardgett2014inferring
-You've used 14 entries,
+You've used 15 entries,
             1935 wiz_defined-function locations,
-            565 strings with 6213 characters,
-and the built_in function-call counts, 5374 in all, are:
-= -- 530
-> -- 202
-< -- 6
-+ -- 70
-- -- 66
-* -- 474
-:= -- 947
-add.period$ -- 41
-call.type$ -- 14
-change.case$ -- 102
-chr.to.int$ -- 14
-cite$ -- 15
-duplicate$ -- 193
-empty$ -- 385
-format.name$ -- 82
-if$ -- 1024
+            573 strings with 6307 characters,
+and the built_in function-call counts, 5867 in all, are:
+= -- 581
+> -- 215
+< -- 7
++ -- 74
+- -- 70
+* -- 525
+:= -- 1025
+add.period$ -- 44
+call.type$ -- 15
+change.case$ -- 109
+chr.to.int$ -- 15
+cite$ -- 16
+duplicate$ -- 208
+empty$ -- 426
+format.name$ -- 89
+if$ -- 1123
 int.to.chr$ -- 1
 int.to.str$ -- 0
-missing$ -- 15
-newline$ -- 72
-num.names$ -- 42
-pop$ -- 82
+missing$ -- 16
+newline$ -- 77
+num.names$ -- 45
+pop$ -- 84
 preamble$ -- 1
-purify$ -- 103
+purify$ -- 110
 quote$ -- 0
-skip$ -- 146
+skip$ -- 157
 stack$ -- 0
-substring$ -- 425
-swap$ -- 13
+substring$ -- 486
+swap$ -- 14
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 82
+type$ -- 88
 warning$ -- 1
-while$ -- 48
+while$ -- 53
 width$ -- 0
-write$ -- 178
-(There was 1 warning)
+write$ -- 192
+(There were 2 warnings)

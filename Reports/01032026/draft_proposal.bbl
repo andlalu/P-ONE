@@ -26,17 +26,22 @@ Boswijk, H.~P., Laeven, R.~J., and Lalu, A. (2015).
   with a continuum of moments.
 \newblock {\em Working Paper}.
 
+\bibitem[Chong and Todorov, 2024]{chongtodorov2024vov}
+Chong, C.~H. and Todorov, V. (2024).
+\newblock Volatility of volatility and leverage effect from options.
+\newblock {\em Journal of Econometrics}, 240(1):105669.
+
 \bibitem[Christoffersen et~al., 2010]{christoffersen2010volatility}
 Christoffersen, P., Jacobs, K., and Mimouni, K. (2010).
 \newblock Volatility dynamics for the s\&p500: evidence from realized
   volatility, daily returns, and option prices.
 \newblock {\em The Review of Financial Studies}, 23(8):3141--3189.
 
-\bibitem[Duarte et~al., 2019]{duarte2019very}
-Duarte, J., Jones, C.~S., and Wang, J.~L. (2019).
+\bibitem[Duarte et~al., 2024]{duarte2024very}
+Duarte, J., Jones, C.~S., and Wang, J.~L. (2024).
 \newblock Very noisy option prices and inference regarding the volatility risk
   premium.
-\newblock {\em Available at SSRN 4167308, forthcoming Journal of Finance}.
+\newblock {\em The Journal of Finance}, 79(5):3581--3621.
 
 \bibitem[Garcia et~al., 2011]{garcia2011estimation}
 Garcia, R., Lewis, M.-A., Pastorello, S., and Renault, {\'E}. (2011).
