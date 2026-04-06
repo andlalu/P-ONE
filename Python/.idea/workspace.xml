@@ -5,10 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b3c7ffc8-92b8-4e96-8c62-e9f2997abcbe" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/Python.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Python.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/21022024/draft_proposal.log" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/21022024/draft_proposal.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/21022024/draft_proposal.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/21022024/draft_proposal.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/21022024/draft_proposal.synctex.gz" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/21022024/draft_proposal.synctex.gz" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,18 +64,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/andrei/Library/Mobile Documents/com~apple~CloudDocs/Dropbox iCloud/P-ONE/Python&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.inline.completion&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "master",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/Users/andrei/Library/Mobile Documents/com~apple~CloudDocs/Dropbox iCloud/P-ONE/Python",
+    "settings.editor.selected.configurable": "ml.llm.LLMTrustedDomainsConfigurableProvider",
+    "to.speed.mode.migration.done": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Python.heston_ccf_tests">
     <configuration name="OptionPricingTests" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Python" />

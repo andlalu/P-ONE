@@ -5,3 +5,5 @@ New/vcpkg/
 New/pone/cmake-build-debug/
 New/pone/cmake-build-release/
 **/.idea/
+/Python/.idea
+/Python/.idea
