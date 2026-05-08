@@ -63,6 +63,6 @@ class HestonPath(SimulationPath):
     dlogS_week: np.ndarray
     logS_daily: Optional[np.ndarray] = None
     V_daily: Optional[np.ndarray] = None
-		seed: Optional[int] = None
+    seed: Optional[int] = None
 
-		
+
