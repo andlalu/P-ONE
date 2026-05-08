@@ -39,7 +39,7 @@ class HestonPathSimulator(PathSimulator):
             v_np1 = self.variance_drawer.draw_next_variance(v_n, self.config.delta, rng, self.params)
             v_np1 = max(v_np1, 0.0)
 
-            i_hat = 0.5 * self.config.delta * (v_n + v_np1)
+            i_hat = 0.5 * self.config.delta * (v_n + v_np1) # trapezoidal approximation of integrated variance
             i_hat = max(i_hat, 0.0)
 
             z_perp = rng.normal()
