@@ -4,8 +4,8 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
-from sim.base import VarianceDrawer
-from sim.types import HestonParamsP
+from DGPSimulation.base import VarianceDrawer
+from DGPSimulation.types import HestonParamsP
 
 
 @dataclass(frozen=True)

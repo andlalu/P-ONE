@@ -1,8 +1,8 @@
 import numpy as np
 
-from sim.heston_simulator import HestonPathSimulator
-from sim.types import HestonParamsP, HestonSimConfig
-from sim.variance_drawers import AndersenQeVarianceDrawer, EulerVarianceDrawer
+from DGPSimulation.heston_simulator import HestonPathSimulator
+from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer, EulerVarianceDrawer
 
 
 def _base_params() -> HestonParamsP:

@@ -2,8 +2,8 @@ import math
 
 import numpy as np
 
-from sim.types import HestonParamsP
-from sim.variance_drawers import AndersenQeVarianceDrawer
+from DGPSimulation.types import HestonParamsP
+from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 
 
 def test_qe_stepper_matches_conditional_moments():

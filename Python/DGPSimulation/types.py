@@ -5,7 +5,7 @@ from typing import Optional
 
 import numpy as np
 
-from sim.base import ModelParams, SimulationConfig, SimulationPath
+from DGPSimulation.base import ModelParams, SimulationConfig, SimulationPath
 
 
 @dataclass(frozen=True)

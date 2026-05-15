@@ -7,7 +7,7 @@ from typing import Tuple
 
 import numpy as np
 
-from sim.types import HestonParamsP, HestonPath, HestonSimConfig
+from DGPSimulation.types import HestonParamsP, HestonPath, HestonSimConfig
 
 _FORMAT_VERSION = 1
 

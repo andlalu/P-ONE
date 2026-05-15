@@ -5,9 +5,9 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from sim.base import PathSimulator, VarianceDrawer
-from sim.types import HestonParamsP, HestonPath, HestonSimConfig
-from sim.variance_drawers import AndersenQeVarianceDrawer
+from DGPSimulation.base import PathSimulator, VarianceDrawer
+from DGPSimulation.types import HestonParamsP, HestonPath, HestonSimConfig
+from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 
 
 @dataclass

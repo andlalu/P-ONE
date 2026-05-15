@@ -4,9 +4,9 @@ import time
 
 import numpy as np
 
-from sim.heston_simulator import HestonPathSimulator
-from sim.types import HestonParamsP, HestonSimConfig
-from sim.variance_drawers import AndersenQeVarianceDrawer
+from DGPSimulation.heston_simulator import HestonPathSimulator
+from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 
 
 def run_benchmark(repetitions: int = 100_000) -> None:
