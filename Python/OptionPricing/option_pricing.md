@@ -12,7 +12,7 @@ This design intentionally follows the interface-first naming and boundary style 
 ---
 
 ## Current state (gap summary)
-- `Python/OptionPricing/cos_transform_pricer.py` currently computes only partial COS payoff terms and does not expose a full model/pricing API.
+- Legacy partial COS payoff scratch code has been removed; `cos_pricer.py` is the single COS pricing implementation.
 - No dedicated interface layer exists for CCF solving vs pricing vs orchestration.
 - No panel-oriented save/load API exists for option prices.
 - No comprehensive validation suite yet for:
@@ -34,7 +34,7 @@ Create a `Python/OptionPricing/base.py` module with abstract contracts:
 - `OptionPricer` (interface/base class)
   - Responsibility: consume coefficients and return prices.
   - Method shape:
-    - `price_matrix(state_matrix, strike_grid, maturity_grid, rate_grid, coefficients, pricing_config) -> price_matrix`
+    - `price_matrix(log_s, variance, strike_grid, maturity_grid, rate_grid, coefficients, pricing_config, dividend_yield_grid, option_type) -> price_matrix`
 
 - `OptionPanelGenerator` (interface/base class)
   - Responsibility: orchestrate state paths + solver + pricer into indexed panel output.

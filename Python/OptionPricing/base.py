@@ -12,7 +12,19 @@ class CcfSolver(ABC):
 
 class OptionPricer(ABC):
     @abstractmethod
-    def price_matrix(self, state_matrix: Any, strike_grid: Any, maturity_grid: Any, rate_grid: Any, coefficients: Any, pricing_config: Any):
+    def price_matrix(
+        self,
+        *,
+        log_s: Any,
+        variance: Any,
+        strike_grid: Any,
+        maturity_grid: Any,
+        rate_grid: Any,
+        coefficients: Any,
+        pricing_config: Any,
+        dividend_yield_grid: Any | None = None,
+        option_type: Any = "call",
+    ):
         """Return price matrix over strike and maturity grids."""
 
 

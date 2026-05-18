@@ -13,6 +13,8 @@ class HestonPricingParamsQ:
     vbar: float
     sigma_v: float
     rho: float
+    r: float = 0.0
+    q: float = 0.0
     v_risk_premium: float = 0.0
 
     def validate(self) -> None:
@@ -57,7 +59,8 @@ class OptionPanelConfig:
 class CoefficientTensor:
     u_grid: np.ndarray
     maturities: np.ndarray
-    cf_values: np.ndarray
+    cf_a: np.ndarray
+    cf_b: np.ndarray
 
 
 @dataclass(frozen=True)

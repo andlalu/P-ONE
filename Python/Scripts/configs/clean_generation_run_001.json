@@ -1,0 +1,41 @@
+{
+  "run_id": "run_001",
+  "n_samples": 100,
+  "base_seed": 1234500,
+  "output_root": "outputs/generation/run_001",
+  "dgp": {
+    "eta": 1.5,
+    "kappa": 3.0,
+    "vbar": 0.04,
+    "sigma_v": 0.4,
+    "rho": -0.7,
+    "r": 0.02,
+    "q": 0.0
+  },
+  "simulation": {
+    "delta": 0.003968253968253968,
+    "m_week": 5,
+    "t_week": 525,
+    "burnin_days": 756,
+    "s0": 100.0,
+    "return_daily": true
+  },
+  "q_measure": {
+    "eta_v": 0.0
+  },
+  "panel": {
+    "maturities_years": [0.08333333333333333, 0.25, 0.5],
+    "log_moneyness": [-0.15, -0.075, 0.0, 0.075, 0.15],
+    "option_type_rule": "otm_by_forward_moneyness",
+    "atm_option_type": "call",
+    "pricing_method": "COS",
+    "iv_method": "lets_be_rational",
+    "cos": {
+      "n_terms": 256,
+      "truncation_L": 10
+    }
+  },
+  "parallel": {
+    "workers": null
+  }
+}

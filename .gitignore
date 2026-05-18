@@ -16,3 +16,7 @@ Python/sim/__pycache__/heston_simulator.cpython-311.pyc
 Python/.idea/codeStyles/Project.xml
 Python/.idea/codeStyles/Project.xml
 /Python/.idea/inspectionProfiles
+**/__pycache__/
+Python/ImpliedVolatility/native/*.dylib
+Python/ImpliedVolatility/native/*.so
+Python/ImpliedVolatility/native/*.dll

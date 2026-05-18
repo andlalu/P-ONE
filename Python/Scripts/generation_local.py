@@ -1,74 +1,38 @@
-#!/usr/bin/env python3
-"""
-Local smoke-run wrapper for Chapter 3 clean generation.
-
-Intended use after Codex implements the experiment modules specified in
-codex_ch3_clean_generation.md.
-
-Example:
-    PYTHONPATH=Python python scripts/run_ch3_generation_local.py \
-        --config Python/experiments/configs/ch3_clean_generation_run_001.json \
-        --n-samples 2 \
-        --workers 2 \
-        --output-root outputs/ch3/local_smoke
-"""
 from __future__ import annotations
 
 import argparse
-import os
-import subprocess
 import sys
-from pathlib import Path
+
+from Scripts.generation import load_config, run_samples, with_overrides, write_run_metadata
+from Scripts.validate_generation import validate_run
 
 
-def _set_thread_env() -> None:
-    for key in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
-        os.environ.setdefault(key, "1")
-
-
-def _run(cmd: list[str]) -> None:
-    print("+", " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True)
-
-
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--n-samples", type=int, default=2)
     parser.add_argument("--workers", type=int, default=2)
-    parser.add_argument("--output-root", default="outputs/ch3/local_smoke")
+    parser.add_argument("--output-root", default="outputs/generation/local_run")
+    parser.add_argument("--skip-existing", action="store_true")
     args = parser.parse_args()
 
-    _set_thread_env()
-
-    repo_root = Path.cwd()
-    python_path = str(repo_root / "Python")
-    os.environ["PYTHONPATH"] = python_path + os.pathsep + os.environ.get("PYTHONPATH", "")
-
-    _run([
-        sys.executable,
-        "-m",
-        "experiments.run_ch3_generation_local",
-        "--config",
-        args.config,
-        "--n-samples",
-        str(args.n_samples),
-        "--workers",
-        str(args.workers),
-        "--output-root",
-        args.output_root,
-    ])
-
-    _run([
-        sys.executable,
-        "-m",
-        "experiments.validate_ch3_generation",
-        "--run-root",
-        args.output_root,
-        "--expected-samples",
-        str(args.n_samples),
-    ])
+    config = with_overrides(
+        load_config(args.config),
+        n_samples=args.n_samples,
+        workers=args.workers,
+        output_root=args.output_root,
+        skip_existing=args.skip_existing,
+    )
+    results = run_samples(config=config)
+    write_run_metadata(config, results)
+    errors = [result for result in results if result.status == "error"]
+    if errors:
+        for result in errors:
+            print(f"sample {result.sample_id} failed: {result.error}", file=sys.stderr)
+        return 1
+    validate_run(run_root=args.output_root, expected_samples=args.n_samples)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

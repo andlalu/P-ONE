@@ -23,8 +23,7 @@ class HestonAnalyticCcfSolver(CcfSolver):
         vbar = model_params.vbar
 
         if sigma == 0.0:
-            a = np.exp(-0.5 * u[:, None] ** 2 * vbar * t[None, :])
-            return CoefficientTensor(u_grid=u, maturities=t, cf_values=a.astype(complex))
+            raise NotImplementedError("deterministic variance limit is not implemented in the Heston CCF solver")
 
         d = np.sqrt((rho * sigma * iu - kappa) ** 2 + sigma * sigma * (iu + u[:, None] ** 2))
         g = (kappa - rho * sigma * iu - d) / (kappa - rho * sigma * iu + d)
@@ -34,9 +33,9 @@ class HestonAnalyticCcfSolver(CcfSolver):
         one_minus_g = 1.0 - g
         c = (kappa * vbar / (sigma * sigma)) * ((kappa - rho * sigma * iu - d) * t[None, :] - 2.0 * np.log(one_minus_g_exp / one_minus_g))
         d_term = ((kappa - rho * sigma * iu - d) / (sigma * sigma)) * ((1.0 - exp_dt) / one_minus_g_exp)
-        cf_values = np.exp(c + d_term * vbar)
+        if not np.all(np.isfinite(c.real)) or not np.all(np.isfinite(c.imag)):
+            raise FloatingPointError("non-finite affine A coefficient values")
+        if not np.all(np.isfinite(d_term.real)) or not np.all(np.isfinite(d_term.imag)):
+            raise FloatingPointError("non-finite affine B coefficient values")
 
-        if not np.all(np.isfinite(cf_values.real)) or not np.all(np.isfinite(cf_values.imag)):
-            raise FloatingPointError("non-finite coefficient values")
-
-        return CoefficientTensor(u_grid=u, maturities=t, cf_values=cf_values)
+        return CoefficientTensor(u_grid=u, maturities=t, cf_a=c, cf_b=d_term)

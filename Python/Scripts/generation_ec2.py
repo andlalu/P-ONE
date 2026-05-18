@@ -1,40 +1,12 @@
-#!/usr/bin/env python3
-"""
-EC2 master wrapper for Chapter 3 clean generation.
-
-This script is intentionally thin. The actual implementation should live in
-Python/experiments/run_ch3_generation_ec2.py and use multiprocessing across
-sample_id values.
-
-Example:
-    PYTHONPATH=Python python scripts/run_ch3_generation_ec2.py \
-        --config Python/experiments/configs/ch3_clean_generation_run_001.json \
-        --workers 15 \
-        --output-root outputs/ch3/run_001
-
-Optional S3 sync:
-    aws s3 sync outputs/ch3/run_001 s3://<bucket>/p-one/ch3/run_001
-"""
 from __future__ import annotations
 
 import argparse
-import os
-import subprocess
 import sys
-from pathlib import Path
+
+from Scripts.generation import load_config, run_samples, with_overrides, write_run_metadata
 
 
-def _set_thread_env() -> None:
-    for key in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
-        os.environ.setdefault(key, "1")
-
-
-def _run(cmd: list[str]) -> None:
-    print("+", " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True)
-
-
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--workers", type=int, default=None)
@@ -42,50 +14,36 @@ def main() -> None:
     parser.add_argument("--sample-start", type=int, default=0)
     parser.add_argument("--sample-end", type=int, default=None)
     parser.add_argument("--skip-existing", action="store_true")
-    parser.add_argument("--s3-prefix", default=None)
+    parser.add_argument("--paths-only", action="store_true")
+    parser.add_argument("--panels-only", action="store_true")
     args = parser.parse_args()
 
-    _set_thread_env()
+    if args.paths_only and args.panels_only:
+        parser.error("--paths-only and --panels-only cannot both be set")
 
-    repo_root = Path.cwd()
-    python_path = str(repo_root / "Python")
-    os.environ["PYTHONPATH"] = python_path + os.pathsep + os.environ.get("PYTHONPATH", "")
+    config = with_overrides(
+        load_config(args.config),
+        workers=args.workers,
+        output_root=args.output_root,
+        skip_existing=args.skip_existing,
+        paths_only=args.paths_only,
+        panels_only=args.panels_only,
+    )
+    results = run_samples(config=config, sample_start=args.sample_start, sample_end=args.sample_end)
+    write_run_metadata(config, results)
 
-    cmd = [
-        sys.executable,
-        "-m",
-        "experiments.run_ch3_generation_ec2",
-        "--config",
-        args.config,
-        "--sample-start",
-        str(args.sample_start),
-    ]
-
-    if args.workers is not None:
-        cmd += ["--workers", str(args.workers)]
-    if args.output_root is not None:
-        cmd += ["--output-root", args.output_root]
-    if args.sample_end is not None:
-        cmd += ["--sample-end", str(args.sample_end)]
-    if args.skip_existing:
-        cmd += ["--skip-existing"]
-
-    _run(cmd)
-
-    run_root = args.output_root or "outputs/ch3/run_001"
-    _run([
-        sys.executable,
-        "-m",
-        "experiments.validate_ch3_generation",
-        "--run-root",
-        run_root,
-        "--expected-samples",
-        "100",
-    ])
-
-    if args.s3_prefix:
-        _run(["aws", "s3", "sync", run_root, args.s3_prefix])
+    errors = [result for result in results if result.status == "error"]
+    for result in sorted(results, key=lambda item: item.sample_id):
+        print(
+            f"sample={result.sample_id} status={result.status} "
+            f"elapsed={result.elapsed_seconds:.3f}s path={result.path_file} panel={result.panel_file}"
+        )
+    if errors:
+        for result in errors:
+            print(f"sample {result.sample_id} failed: {result.error}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

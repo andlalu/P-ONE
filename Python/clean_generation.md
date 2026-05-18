@@ -1,8 +1,8 @@
-# Codex task — Chapter 3 clean DGP path and option-panel generation
+# Codex task — clean DGP path and option-panel generation
 
 ## Goal
 
-Implement the first production-quality data-generation stage for Chapter 3:
+Implement the first production-quality clean data-generation stage:
 
 1. Generate **100 Heston paths** under the proposed `P`-measure DGP.
 2. Store **daily path values** and weekly retained observations.
@@ -52,7 +52,7 @@ For this task, set `return_daily = true`, because the daily path values should b
    - Path simulation stays in `DGPSimulation`.
    - Option pricing stays in `OptionPricin`.
    - Implied-volatility inversion stays in `ImpliedVolatility`.
-   - Experiment orchestration stays in `Orchestration`.
+   - Experiment orchestration stays in `Scripts`.
 
 2. **Reusable clean panel generation**
    - The clean panel generator should be callable from scripts and from future noise-contamination routines.
@@ -82,7 +82,7 @@ Add or update:
 
 ```text
 Python/
-    ImpliedVolatilitu/
+    ImpliedVolatility/
         __init__.py
         black_iv.py
         black_price.py
@@ -93,18 +93,19 @@ Python/
         heston_cos_pricer.py
         clean_panel.py
 
-    Orchestration/
+    Scripts/
         __init__.py
         configs/
-            ch3_clean_generation_run_001.json
-        run_ch3_generation_local.py
-        run_ch3_generation_ec2.py
-        validate_ch3_generation.py
+            clean_generation_run_001.json
+        generation.py
+        generation_local.py
+        generation_ec2.py
+        validate_generation.py
 
 scripts/
-    run_ch3_generation_local.sh
-    run_ch3_generation_ec2.sh
-    sync_ch3_run_to_s3.sh
+    generation_local.sh
+    generation_ec2.sh
+    sync_run_to_s3.sh
 ```
 
 If the repo already has equivalent folders, follow the existing structure - the above structure is just a rough outline.
@@ -116,7 +117,7 @@ If the repo already has equivalent folders, follow the existing structure - the 
 Create:
 
 ```text
-Python/orchestration/configs/ch3_clean_generation_run_001.json
+Python/Scripts/configs/clean_generation_run_001.json
 ```
 
 with this shape:
@@ -126,7 +127,7 @@ with this shape:
   "run_id": "run_001",
   "n_samples": 100,
   "base_seed": 1234500,
-  "output_root": "outputs/ch3/run_001",
+  "output_root": "outputs/generation/run_001",
   "dgp": {
     "eta": 1.5,
     "kappa": 3.0,
@@ -198,9 +199,9 @@ The point is to avoid storing ITM options dominated by intrinsic value.
 Store one panel file per sample:
 
 ```text
-outputs/ch3/run_001/panels_clean/sample_000.parquet
+outputs/generation/run_001/panels_clean/sample_000.parquet
 ...
-outputs/ch3/run_001/panels_clean/sample_099.parquet
+outputs/generation/run_001/panels_clean/sample_099.parquet
 ```
 
 Preferred format: Parquet.
@@ -291,7 +292,7 @@ class HestonCosPricer:
         ...
 ```
 
-Use the Chapter 3 `P -> Q` mapping consistently with the report:
+Use the `P -> Q` mapping consistently with the report:
 
 ```text
 kappa_q = kappa - eta_v
@@ -386,9 +387,9 @@ return_daily = true
 Store:
 
 ```text
-outputs/ch3/run_001/paths/sample_000.npz
+outputs/generation/run_001/paths/sample_000.npz
 ...
-outputs/ch3/run_001/paths/sample_099.npz
+outputs/generation/run_001/paths/sample_099.npz
 ```
 
 The saved path must include:
@@ -408,23 +409,23 @@ If the existing `save_heston_path_npz` does not preserve daily arrays correctly,
 Add:
 
 ```text
-Python/experiments/generation_local.py
+Python/Scripts/generation_local.py
 ```
 
 Purpose:
 - run only 1 or 2 samples
 - use 1 or 2 workers
-- write to `outputs/ch3/local_run`
+- write to `outputs/generation/local_run`
 - validate outputs
 
 CLI:
 
 ```bash
-PYTHONPATH=Python python -m experiments.generation_local \
-  --config Python/experiments/configs/ch3_clean_generation_run_001.json \
+PYTHONPATH=Python python -m Scripts.generation_local \
+  --config Python/Scripts/configs/clean_generation_run_001.json \
   --n-samples 2 \
   --workers 2 \
-  --output-root outputs/ch3/local_run
+  --output-root outputs/generation/local_run
 ```
 
 It should call the same underlying worker logic used by EC2.
@@ -436,7 +437,7 @@ It should call the same underlying worker logic used by EC2.
 Add:
 
 ```text
-Python/experiments/generation_ec2.py
+Python/Scripts/generation_ec2.py
 ```
 
 Purpose:
@@ -447,8 +448,8 @@ Purpose:
 CLI:
 
 ```bash
-PYTHONPATH=Python python -m experiments.generation_ec2 \
-  --config Python/experiments/configs/clean_generation_run_001.json \
+PYTHONPATH=Python python -m Scripts.generation_ec2 \
+  --config Python/Scripts/configs/clean_generation_run_001.json \
   --workers 15
 ```
 
@@ -484,7 +485,7 @@ Reason: avoid oversubscription when each worker uses NumPy/SciPy internally.
 Implement one per-sample function used by both local and EC2 scripts:
 
 ```python
-def generate_one_sample(sample_id: int, config: Ch3GenerationConfig) -> SampleGenerationResult:
+def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGenerationResult:
     ...
 ```
 
@@ -504,7 +505,7 @@ Do not let a failure in one sample kill all workers without reporting which samp
 Write:
 
 ```text
-outputs/ch3/run_001/config/manifest_generation.csv
+outputs/generation/run_001/config/manifest_generation.csv
 ```
 
 Columns:
@@ -523,7 +524,7 @@ error
 The parent process should also write:
 
 ```text
-outputs/ch3/run_001/config/run_config_resolved.json
+outputs/generation/run_001/config/run_config_resolved.json
 ```
 
 which includes all defaults after resolution.
@@ -535,14 +536,14 @@ which includes all defaults after resolution.
 Add:
 
 ```text
-Python/experiments/validate_ch3_generation.py
+Python/Scripts/validate_generation.py
 ```
 
 CLI:
 
 ```bash
-PYTHONPATH=Python python -m experiments.validate_ch3_generation \
-  --run-root outputs/ch3/run_001 \
+PYTHONPATH=Python python -m Scripts.validate_generation \
+  --run-root outputs/generation/run_001 \
   --expected-samples 100
 ```
 
@@ -567,13 +568,13 @@ Checks:
 Add:
 
 ```text
-scripts/sync_ch3_run_to_s3.sh
+scripts/sync_run_to_s3.sh
 ```
 
 Usage:
 
 ```bash
-bash scripts/sync_ch3_run_to_s3.sh outputs/ch3/run_001 s3://<bucket>/p-one/ch3/run_001
+bash scripts/sync_run_to_s3.sh outputs/generation/run_001 s3://<bucket>/p-one/generation/run_001
 ```
 
 Implementation:

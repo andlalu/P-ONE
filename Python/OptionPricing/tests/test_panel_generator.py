@@ -16,7 +16,7 @@ def test_panel_generator_outputs_expected_shape():
     gen = HestonOptionPanelGenerator(
         pricing_stack=stack,
         panel_config=panel_cfg,
-        solver_params=HestonPricingParamsQ(kappa=2.0, vbar=0.04, sigma_v=0.5, rho=-0.5),
+        solver_params=HestonPricingParamsQ(kappa=2.0, vbar=0.04, sigma_v=0.5, rho=-0.5, r=0.01, q=0.0),
         pricing_config=CosPricingConfig(n_cos=32),
     )
     panel = gen.generate_panel(np.log(np.array([95.0, 100.0, 105.0])), np.array([0.03, 0.04, 0.05]))
