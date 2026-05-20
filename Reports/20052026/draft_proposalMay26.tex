@@ -143,7 +143,7 @@ suggests that such frictions can be quantitatively important for inference invol
 
 The proposed simulation design therefore does not commit ex-ante to a single parametric error law but instead considers three observed-panel specifications generated from the same clean model-implied panel. Each specification is meant to reflect empirical concerns raised by the recent literature while keeping the data generating exercise tractable. The three specifications are introduced in implied-volatility space. The corresponding contaminated prices are then obtained through the Black-Scholes pricing formula, rounded to the relevant tick size and projected back into the no-arbitrage price interval. This keeps the treatment of all three observation error specifications internally consistent while preserving both price and implied-volatility representations of the contaminated panel.
 
-\paragraph{Low I.I.D. noise}
+\paragraph{Design A: Low I.I.D. noise}
 First, a low-noise benchmark is introduced in which observation errors are independent across contracts, but the marginal scale of the error is allowed to vary with moneyness and maturity. This reflects the fact that option observation errors need not have the same relative impact across the surface and can enter the behavior of option-based estimators through local features of the panel, in particular for contracts close to the spot or forward price as discussed in \cite{chongtodorov2024vov}.
 For $j=1,\ldots,q_i$, let
 \[
@@ -181,7 +181,7 @@ In other words, this specification represents small quote observation errors who
 
 \emph{Example sampling noise for specification A: [to be added].}
 
-\paragraph{Cross-sectionally correlated noise}
+\paragraph{Design B: Cross-sectionally correlated noise}
 A second observation error design allows for cross-sectional dependence in a given option panel for timepoint $t_i$ by correlating errors across nearby strikes and tenors. This is largely motivated by the evidence and testing framework in \cite{andersen2021spatial}, which explicitly considers spatial dependence in option observation errors. In this specification, the information content of a panel with $q_i$ option prices is essentially not equivalent to that of $q_i$ independent observations.
 
 Let
@@ -222,7 +222,7 @@ This specification captures the possibility that nearby strikes and maturities s
 
 \emph{Example sampling noise for specification B: [to be added].}
 
-\paragraph{Temporally persistent noise}
+\paragraph{Design C: Temporally persistent noise}
 The third observation error design allows for a persistent common component in the observation error, affecting the level, moneyness slope and maturity slope of the contaminated implied-volatility panel. This is consistent with the practical treatment of option panels as surfaces and with the broader evidence that option price noise can be quantitatively relevant for inference on risk premia as in \cite{duarte2024very}.
 
 Let

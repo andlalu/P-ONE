@@ -10,6 +10,10 @@ Andersen, T., Fusari, N., Todorov, V., and Varneskov, R. (2021).
 \newblock Spatial dependence in option observation errors.
 \newblock {\em Econometric Theory}, 37(2):205--247.
 
+\bibitem[Avellaneda et~al., 2020]{avellaneda2020pca}
+Avellaneda, M., Healy, B., Papanicolaou, A., and Papanicolaou, G. (2020).
+\newblock Pca for implied volatility surfaces.
+
 \bibitem[Bardgett et~al., 2014]{bardgett2014inferring}
 Bardgett, C., Gourier, E., and Leippold, M. (2014).
 \newblock Inferring volatility dynamics and risk premia from the s\&p 500 and

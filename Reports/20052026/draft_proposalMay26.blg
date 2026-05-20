@@ -1,13 +1,12 @@
 This is BibTeX, Version 0.99e (TeX Live 2026)
 Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
-The top-level auxiliary file: draft_proposal.aux
+The top-level auxiliary file: draft_proposalMay26.aux
 The style file: apalike.bst
 Database file #1: P_ONE_BIB.bib
-Warning--I didn't find a database entry for "demsetz1968cost"
 Warning--empty journal in bardgett2014inferring
 You've used 18 entries,
             1935 wiz_defined-function locations,
-            588 strings with 6628 characters,
+            587 strings with 6623 characters,
 and the built_in function-call counts, 6931 in all, are:
 = -- 688
 > -- 258
@@ -46,4 +45,4 @@ warning$ -- 1
 while$ -- 63
 width$ -- 0
 write$ -- 228
-(There were 2 warnings)
+(There was 1 warning)

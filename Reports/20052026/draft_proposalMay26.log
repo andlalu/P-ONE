@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.20)  21 MAY 2026 00:02
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.20)  21 MAY 2026 00:06
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**draft_proposal.tex
-(./draft_proposal.tex
+**draft_proposalMay26.tex
+(./draft_proposalMay26.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
 (/usr/local/texlive/2026/texmf-dist/tex/latex/base/article.cls
@@ -543,8 +543,8 @@ Package: titlesec 2025/01/04 v2.17 Sectioning titles
 (/usr/local/texlive/2026/texmf-dist/tex/latex/tools/indentfirst.sty
 Package: indentfirst 2023/07/02 v1.03 Indent first paragraph (DPC)
 )
-(./draft_proposal.aux)
-\openout1 = `draft_proposal.aux'.
+(./draft_proposalMay26.aux)
+\openout1 = `draft_proposalMay26.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 71.
 LaTeX Font Info:    ... okay on input line 71.
@@ -641,7 +641,8 @@ Overfull \hbox (1.36174pt too wide) detected at line 376
 []
  []
 
-[11] [12] [13] [14] (./draft_proposal.bbl [15]) [16] (./draft_proposal.aux)
+[11] [12] [13] [14] (./draft_proposalMay26.bbl [15]) [16]
+(./draft_proposalMay26.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -649,12 +650,12 @@ L3 programming layer <2026-01-19>
  ) 
 Here is how much of TeX's memory you used:
  9657 strings out of 467525
- 160753 string characters out of 5418982
- 611604 words of memory out of 5000000
+ 160838 string characters out of 5418982
+ 611694 words of memory out of 5000000
  38364 multiletter control sequences out of 15000+600000
  638137 words of font info for 80 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,12n,93p,1243b,256s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,12n,93p,1248b,256s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><
@@ -673,7 +674,7 @@ ve/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/
 exmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2026/te
 xmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2026/tex
 mf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on draft_proposal.pdf (16 pages, 278780 bytes).
+Output written on draft_proposalMay26.pdf (16 pages, 278880 bytes).
 PDF statistics:
  146 PDF objects out of 1000 (max. 8388607)
  91 compressed objects within 1 object stream

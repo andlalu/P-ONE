@@ -10,6 +10,10 @@ Andersen, T., Fusari, N., Todorov, V., and Varneskov, R. (2021).
 \newblock Spatial dependence in option observation errors.
 \newblock {\em Econometric Theory}, 37(2):205--247.
 
+\bibitem[Avellaneda et~al., 2020]{avellaneda2020pca}
+Avellaneda, M., Healy, B., Papanicolaou, A., and Papanicolaou, G. (2020).
+\newblock Pca for implied volatility surfaces.
+
 \bibitem[Bardgett et~al., 2014]{bardgett2014inferring}
 Bardgett, C., Gourier, E., and Leippold, M. (2014).
 \newblock Inferring volatility dynamics and risk premia from the s\&p 500 and
@@ -33,7 +37,7 @@ Chong, C.~H. and Todorov, V. (2024).
 
 \bibitem[Christoffersen et~al., 2010]{christoffersen2010volatility}
 Christoffersen, P., Jacobs, K., and Mimouni, K. (2010).
-\newblock Volatility dynamics for the s\&p500: evidence from realized
+\newblock Volatility dynamics for the {S}\&{P}500: evidence from realized
   volatility, daily returns, and option prices.
 \newblock {\em The Review of Financial Studies}, 23(8):3141--3189.
 
