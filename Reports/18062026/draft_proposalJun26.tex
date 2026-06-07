@@ -483,6 +483,79 @@ the subsequent IS and PF estimation exercises may use observed implied volatilit
 vega-scaled price errors. A single stand-alone implied-volatility solver therefore prevents the construction of
 different data sets from depending on different numerical inversion conventions.
 
+\subsection{Parameter Choices for the Observation Error Specifications}
+For Design A, the scale parameters are set to
+\[
+\alpha_0=0.0015,\qquad \alpha_m=2.0,\qquad \alpha_\tau=0.05.
+\]
+The value of $\alpha_0$ fixes the baseline magnitude of the implied-volatility observation error. Expressed in decimal volatility units, $\alpha_0=0.0015$ corresponds to 15 implied-volatility basis points before the moneyness and maturity adjustments are applied. The parameters $\alpha_m$ and $\alpha_\tau$ determine the relative variation of the error scale across the option panel. Given the log-moneyness grid used in the simulation design, $\alpha_m=2.0$ implies that a contract with $|m|=0.15$ has an implied-volatility observation error scale which is approximately 30 percent larger than that of an otherwise identical at-the-money contract. The maturity parameter $\alpha_\tau=0.05$ implies a smaller adjustment which is largest for short-dated contracts. The maturity component is approximately 17 percent at $\tau=1/12$, 10 percent at $\tau=1/4$ and 7 percent at $\tau=1/2$.
+
+For Design B, the marginal scale parameters $\alpha_0, \alpha_m$ and $\alpha_\tau$ are kept equal to those used for Design A. The difference relative to Design A is therefore introduced through the dependence structure of the observation error, rather than through a different marginal error scale. The correlation length parameters are set to
+\[
+\ell_m=0.15,\qquad \ell_\tau=\frac{1}{3}.
+\]
+Given the log-moneyness grid used in the simulation design, this implies that two adjacent moneyness points with the same maturity have an observation error correlation of approximately 0.61. The maturity length parameter implies correlations of approximately 0.61 between the one-month and three-month maturities, 0.47 between the three-month and six-month maturities, and 0.29 between the one-month and six-month maturities. The resulting correlation matrix therefore induces local dependence across the option panel, while avoiding an almost perfectly correlated surface error. 
+
+For Design C, the persistence matrix is set to
+\[
+A=\mathrm{diag}(0.85,0.65,0.65).
+\]
+The first diagonal element governs the persistence of the common level component of the observation error, while the second and third diagonal elements govern the persistence of the moneyness-slope and maturity-slope components. The level component is made more persistent than the slope components, reflecting the interpretation of this design as one in which part of the option panel observation error is carried across adjacent observation dates.
+
+The innovation covariance matrix $Q$ is specified through the stationary standard deviations of the three factor components. These are set to
+\[
+(\bar s_{f,0},\bar s_{f,m},\bar s_{f,\tau})
+=
+(0.0007,\ 0.0025,\ 0.0008).
+\]
+Given $A=\mathrm{diag}(a_0,a_m,a_\tau)$, the innovation covariance matrix is
+\[
+Q
+=
+\mathrm{diag}
+\left(
+(1-a_0^2)\bar s_{f,0}^2,\,
+(1-a_m^2)\bar s_{f,m}^2,\,
+(1-a_\tau^2)\bar s_{f,\tau}^2
+\right).
+\]
+This gives
+\[
+Q
+=
+\mathrm{diag}
+\left(
+1.35975\cdot10^{-7},\,
+3.609375\cdot10^{-6},\,
+3.696\cdot10^{-7}
+\right).
+\]
+
+The residual idiosyncratic scale is chosen so that Design C has the same unconditional pointwise error scale as Design A. Let
+\[
+\Omega_f
+=
+\mathrm{diag}
+\left(
+\bar s_{f,0}^2,\bar s_{f,m}^2,\bar s_{f,\tau}^2
+\right).
+\]
+Then
+\[
+s_{\sigma,u,i}^{(j)}
+=
+\sqrt{
+\max\left[
+\left(s_{\sigma,i}^{(j)}\right)^2
+-
+\left(b_i^{(j)}\right)^\top \Omega_f b_i^{(j)},
+0
+\right]
+}.
+\]
+Thus, the common component introduces temporal dependence and common variation across moneyness and maturity, while the total marginal implied-volatility observation error remains comparable to that of Designs A and B. This makes the comparison across the three designs depend mainly on the dependence structure of the observation error rather than on a mechanical increase in its absolute scale.
+
+
 %========================================================
 \newpage
 

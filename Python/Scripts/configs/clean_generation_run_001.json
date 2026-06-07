@@ -53,8 +53,8 @@
       },
       "spatial_corr": {
         "enabled": true,
-        "alpha_0": 0.005,
-        "alpha_m": 1.0,
+        "alpha_0": 0.0015,
+        "alpha_m": 2.0,
         "alpha_tau": 0.05,
         "tau_min": 0.01984126984126984,
         "ell_m": 0.10,
