@@ -327,6 +327,22 @@ At each date $t_i$, we define a (possibly time-varying) set of option contracts
 $\mathcal{C}_i=\{(T_i^{(j)},K_i^{(j)},\mathrm{type}^{(j)})\}_{j=1}^{q_i}$ and compute a vector of
 model-implied prices $p_i^{\mathrm{model}}\in\mathbb{R}^{q_i}$.
 
+In the numerical design, 100 independent samples are generated. For each sample, the Heston state vector is simulated at a daily frequency and retained at a weekly frequency. The daily simulation step is set to
+\[
+\delta=\frac{1}{252},
+\]
+while weekly observations are obtained by retaining every fifth daily simulated value. The retained sample contains 525 weekly intervals, corresponding to 526 weekly state observations. A burn-in of 756 daily observations is used. The initial spot level is set to $S_0=100$, and the daily values of the simulated state vector are stored in addition to the weekly observations.
+
+At each weekly observation date, the clean option panel contains options with maturities:
+\[
+\tau \in \lbrace \frac{1}{12},\frac{1}{4},\frac{1}{2}\rbrace
+\]
+and log-forward moneyness levels:
+\[
+m\in \lbrace-0.15,-0.075,0,0.075,0.15\rbrace.
+\]
+The option type is selected using an out-of-the-money convention. Put options are used for negative log-forward moneyness values and call options are used for non-negative log-forward moneyness values. At-the-money options are treated as calls. Thus, each weekly panel contains 15 option contracts.
+
 \subsection{State simulation under $\mathbb{P}$}
 Let $y_t:=\log(S_t)$ and write $y_i:=y_{t_i}$ and $V_i:=V_{t_i}$. Under $\mathbb{P}$,
 the dynamics are given by \eqref{PHestonS}--\eqref{PHestonV}.
@@ -417,10 +433,36 @@ terms, and $\sum'$ indicates that the $k=0$ term is weighted by $1/2$. The payof
 admit closed forms for vanilla calls and puts. Put prices are obtained either via the corresponding COS payoff
 coefficients or via put-call parity.
 
+
+\subsection{Parameter values used for clean sample generation}
+
+The historical-measure parameter values used in the data generating process are
+\[
+\eta=5.0,\qquad
+\kappa=7.0,\qquad
+\bar V=0.0225,\qquad
+\sigma_v=0.4,\qquad
+\rho=-0.5,
+\]
+with (r=0.02) and (q=0). The risk-neutral variance risk-premium parameter is set to
+\[
+\eta_V=5.0.
+\]
+Given the notation in \eqref{QHestonV}, this implies
+\[
+\kappa_{\mathbb Q}=\kappa-\eta_V=2.0,
+\qquad
+\bar V_{\mathbb Q}=\frac{\kappa\bar V}{\kappa-\eta_V}=0.07875.
+\]
+Clean option prices are computed using the COS method. The corresponding Black-Scholes implied volatilities are computed using the same implied-volatility inversion routine used later for contaminated panels.
+
 \section{Option Panel Observation Error Specifications}
 \label{app:option_noise_specs}
 
 This appendix documents the functional forms used to generate contaminated option panels from the clean model-implied option panel. The purpose is to introduce observation error structures which are simple enough to be implemented in a large-scale Monte Carlo design, but sufficiently close to observed option-market features to provide a meaningful stress-test of PF and IS estimation.
+
+Noisy option panels are constructed from the clean model-implied panels generated in Appendix~\ref{app:sim_heston}. The clean panel at date \(t_i\) consists of model prices \(p_i^0\), Black-Scholes implied volatilities \(\sigma_i^0\), contract characteristics and Black-Scholes vegas. The observation error designs introduced in the main text are applied to the clean implied-volatility panel.  The corresponding raw contaminated price is then obtained from the Black-Scholes pricing formula. Tick rounding, no-arbitrage projection and implied-volatility inversion are applied afterwards using the same procedure for all three designs.
+
 
 \subsection{Tick rounding, price validity and implied-volatility inversion}
 For each raw contaminated price $\tilde p_i^{(j)}$, tick rounding is applied through
