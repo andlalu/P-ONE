@@ -16,6 +16,13 @@ from DGPSimulation.types import HestonParamsP, HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 from OptionPricing.clean_panel import generate_clean_option_panel_rows, parquet_available, write_panel
 from OptionPricing.cos_pricer import CosOptionPricer
+from OptionPricing.noisy_panel import (
+    NoiseGenerationConfig,
+    generate_noisy_panel_file,
+    parse_noise_config,
+    write_noise_config,
+    write_noisy_manifest,
+)
 from OptionPricing.types import CosPricingConfig
 
 THREAD_ENV_KEYS = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS")
@@ -47,6 +54,7 @@ class GenerationConfig:
     skip_existing: bool = False
     paths_only: bool = False
     panels_only: bool = False
+    noise: NoiseGenerationConfig | None = None
 
 
 @dataclass(frozen=True)
@@ -92,6 +100,7 @@ def load_config(config_path: str | Path) -> GenerationConfig:
             cos_truncation_L=float(cos_raw.get("truncation_L", 10.0)),
         ),
         workers=raw.get("parallel", {}).get("workers"),
+        noise=parse_noise_config(raw.get("noise")),
     )
 
 
@@ -171,6 +180,7 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
             params = config.dgp
             save_heston_path_npz(path_file, path=path, params=params, config=sim_config)
 
+        noisy_results = []
         if not config.paths_only:
             pricer = CosOptionPricer()
             pricing_config = CosPricingConfig(
@@ -192,6 +202,23 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
                 pricing_config=pricing_config,
             )
             panel_file = write_panel(rows, Path(config.output_root) / "panels_clean" / f"sample_{sample_id:03d}")
+            if config.noise is not None:
+                for scenario in config.noise.enabled_scenarios():
+                    noisy_results.append(
+                        generate_noisy_panel_file(
+                            clean_panel_path=panel_file,
+                            run_root=config.output_root,
+                            sample_id=sample_id,
+                            scenario=scenario,
+                            config=config.noise,
+                            skip_existing=config.skip_existing,
+                        )
+                    )
+                noisy_errors = [result for result in noisy_results if result.status == "error"]
+                if noisy_errors:
+                    raise RuntimeError(
+                        "; ".join(f"{result.noise_scenario}: {result.error_message}" for result in noisy_errors)
+                    )
 
         return SampleGenerationResult(
             run_id=config.run_id,
@@ -252,6 +279,8 @@ def write_run_metadata(config: GenerationConfig, results: list[SampleGenerationR
     config_dir.mkdir(parents=True, exist_ok=True)
     with (config_dir / "run_config_resolved.json").open("w") as fh:
         json.dump(resolved_config_dict(config), fh, indent=2)
+    if config.noise is not None:
+        write_noise_config(config.output_root, config.noise)
 
     manifest_path = config_dir / "manifest_generation.csv"
     fieldnames = [
@@ -269,3 +298,28 @@ def write_run_metadata(config: GenerationConfig, results: list[SampleGenerationR
         writer.writeheader()
         for result in sorted(results, key=lambda item: item.sample_id):
             writer.writerow(asdict(result))
+
+
+def write_noisy_metadata(config: GenerationConfig, sample_results: list[SampleGenerationResult]) -> None:
+    if config.noise is None:
+        return
+    noisy_results = []
+    for result in sample_results:
+        if result.status not in {"ok", "skipped"} or not result.panel_file:
+            continue
+        sample_id = result.sample_id
+        panel_file = Path(result.panel_file)
+        if not panel_file.exists():
+            continue
+        for scenario in config.noise.enabled_scenarios():
+            noisy_results.append(
+                generate_noisy_panel_file(
+                    clean_panel_path=panel_file,
+                    run_root=config.output_root,
+                    sample_id=sample_id,
+                    scenario=scenario,
+                    config=config.noise,
+                    skip_existing=True,
+                )
+            )
+    write_noisy_manifest(config.output_root, noisy_results)

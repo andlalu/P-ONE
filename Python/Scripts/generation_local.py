@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from Scripts.generation import load_config, run_samples, with_overrides, write_run_metadata
+from Scripts.generation import load_config, run_samples, with_overrides, write_noisy_metadata, write_run_metadata
 from Scripts.validate_generation import validate_run
 
 
@@ -25,6 +25,7 @@ def main() -> int:
     )
     results = run_samples(config=config)
     write_run_metadata(config, results)
+    write_noisy_metadata(config, results)
     errors = [result for result in results if result.status == "error"]
     if errors:
         for result in errors:

@@ -37,5 +37,42 @@
   },
   "parallel": {
     "workers": null
+  },
+  "noise": {
+    "base_seed": 9900000,
+    "sigma_min": 0.0001,
+    "price_epsilon": 1e-10,
+    "tick_size": 0.01,
+    "scenarios": {
+      "low_iid": {
+        "enabled": true,
+        "alpha_0": 0.0025,
+        "alpha_m": 1.0,
+        "alpha_tau": 0.05,
+        "tau_min": 0.01984126984126984
+      },
+      "spatial_corr": {
+        "enabled": true,
+        "alpha_0": 0.005,
+        "alpha_m": 1.0,
+        "alpha_tau": 0.05,
+        "tau_min": 0.01984126984126984,
+        "ell_m": 0.10,
+        "ell_tau": 0.25,
+        "correlation_jitter": 1e-10,
+        "max_correlation_jitter": 1e-6
+      },
+      "persistent_factor": {
+        "enabled": true,
+        "alpha_0": 0.003,
+        "alpha_m": 1.0,
+        "alpha_tau": 0.05,
+        "tau_min": 0.01984126984126984,
+        "a_diag": [0.85, 0.80, 0.75],
+        "q_diag": [0.0015, 0.0010, 0.0010],
+        "residual_scale_multiplier": 0.50,
+        "factor_initialization": "zero"
+      }
+    }
   }
 }

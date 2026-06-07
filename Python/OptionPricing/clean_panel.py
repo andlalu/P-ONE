@@ -11,6 +11,7 @@ import numpy as np
 
 from DGPSimulation.types import HestonParamsP, HestonPath
 from ImpliedVolatility.black_iv import implied_vol_black76
+from ImpliedVolatility.black_price import black76_vega
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
 from OptionPricing.types import CosPricingConfig, HestonPricingParamsQ
@@ -35,6 +36,7 @@ PANEL_COLUMNS = [
     "pricing_method",
     "model_price",
     "model_iv",
+    "model_vega",
     "iv_method",
 ]
 
@@ -143,6 +145,13 @@ def generate_clean_option_panel_rows(
                     option_type=option_type,
                     on_bounds="raise",
                 )
+                model_vega = black76_vega(
+                    forward=forward,
+                    strike=strike,
+                    tau=tau,
+                    vol=model_iv,
+                    discount_factor=discount,
+                )
                 rows.append(
                     {
                         "run_id": run_id,
@@ -164,6 +173,7 @@ def generate_clean_option_panel_rows(
                         "pricing_method": pricing_method.upper(),
                         "model_price": model_price,
                         "model_iv": model_iv,
+                        "model_vega": model_vega,
                         "iv_method": iv_method,
                     }
                 )
