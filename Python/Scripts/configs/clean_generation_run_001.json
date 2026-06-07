@@ -4,11 +4,11 @@
   "base_seed": 1234500,
   "output_root": "outputs/generation/run_001",
   "dgp": {
-    "eta": 1.5,
-    "kappa": 3.0,
-    "vbar": 0.04,
+    "eta":  5.0,
+    "kappa": 7.0,
+    "vbar": 0.0225,
     "sigma_v": 0.4,
-    "rho": -0.7,
+    "rho": -0.5,
     "r": 0.02,
     "q": 0.0
   },
@@ -21,7 +21,7 @@
     "return_daily": true
   },
   "q_measure": {
-    "eta_v": 0.0
+    "eta_v": 5.0
   },
   "panel": {
     "maturities_years": [0.08333333333333333, 0.25, 0.5],
