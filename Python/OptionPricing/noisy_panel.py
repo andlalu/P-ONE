@@ -14,6 +14,10 @@ from ImpliedVolatility.black_price import black76_price
 from OptionPricing.clean_panel import parquet_available
 
 NOISE_SCENARIOS = ("low_iid", "spatial_corr", "persistent_factor")
+PERSISTENT_FACTOR_DIM = 3
+PERSISTENT_FACTOR_Q_RTOL = 1e-8
+PERSISTENT_FACTOR_Q_ATOL = 1e-14
+PERSISTENT_FACTOR_RESIDUAL_POLICIES = ("match_total_marginal_scale", "legacy_multiplier")
 OBSERVED_PANEL_EXTRA_COLUMNS = [
     "noise_scenario",
     "raw_contaminated_iv",
@@ -52,9 +56,11 @@ class SpatialCorrNoiseConfig(MarginalNoiseScaleConfig):
 
 @dataclass(frozen=True)
 class PersistentFactorNoiseConfig(MarginalNoiseScaleConfig):
-    a_diag: tuple[float, float, float] = (0.85, 0.80, 0.75)
-    q_diag: tuple[float, float, float] = (0.0015, 0.0010, 0.0010)
-    residual_scale_multiplier: float = 0.50
+    a_diag: tuple[float, float, float] = (0.85, 0.65, 0.65)
+    stationary_factor_std: tuple[float, float, float] | None = (0.0007, 0.0025, 0.0008)
+    q_diag: tuple[float, float, float] | None = (1.35975e-7, 3.609375e-6, 3.696e-7)
+    residual_policy: str = "match_total_marginal_scale"
+    residual_scale_multiplier: float | None = None
     factor_initialization: str = "zero"
     enabled: bool = True
 
@@ -125,17 +131,114 @@ def default_noise_config() -> NoiseGenerationConfig:
                 },
                 "persistent_factor": {
                     "enabled": True,
-                    "alpha_0": 0.0030,
-                    "alpha_m": 1.0,
+                    "alpha_0": 0.0015,
+                    "alpha_m": 2.0,
                     "alpha_tau": 0.05,
                     "tau_min": 0.01984126984126984,
-                    "a_diag": [0.85, 0.80, 0.75],
-                    "q_diag": [0.0015, 0.0010, 0.0010],
-                    "residual_scale_multiplier": 0.50,
+                    "a_diag": [0.85, 0.65, 0.65],
+                    "stationary_factor_std": [0.0007, 0.0025, 0.0008],
+                    "q_diag": [1.35975e-7, 3.609375e-6, 3.696e-7],
+                    "residual_policy": "match_total_marginal_scale",
                     "factor_initialization": "zero",
                 },
             },
         }
+    )
+
+
+def _as_tuple3(value: Any, name: str) -> tuple[float, float, float]:
+    try:
+        values = tuple(float(x) for x in value)
+    except TypeError as exc:
+        raise ValueError(f"{name} must be a length-3 sequence") from exc
+    if len(values) != PERSISTENT_FACTOR_DIM:
+        raise ValueError(f"{name} must have length 3")
+    return values  # type: ignore[return-value]
+
+
+def _as_optional_tuple3(value: Any, name: str) -> tuple[float, float, float] | None:
+    if value is None:
+        return None
+    return _as_tuple3(value, name)
+
+
+def compute_q_diag_from_stationary_std(a_diag: np.ndarray | Iterable[float], stationary_factor_std: np.ndarray | Iterable[float]) -> np.ndarray:
+    a = np.asarray(tuple(a_diag), dtype=float)
+    stationary_std = np.asarray(tuple(stationary_factor_std), dtype=float)
+    return (1.0 - a * a) * stationary_std * stationary_std
+
+
+def compute_stationary_std_from_q_diag(a_diag: np.ndarray | Iterable[float], q_diag: np.ndarray | Iterable[float]) -> np.ndarray:
+    a = np.asarray(tuple(a_diag), dtype=float)
+    q = np.asarray(tuple(q_diag), dtype=float)
+    return np.sqrt(q / (1.0 - a * a))
+
+
+def validate_persistent_factor_config(config: PersistentFactorNoiseConfig) -> PersistentFactorNoiseConfig:
+    a_diag = np.asarray(config.a_diag, dtype=float)
+    if a_diag.shape != (PERSISTENT_FACTOR_DIM,):
+        raise ValueError("persistent_factor.a_diag must have length 3")
+    if not np.all(np.isfinite(a_diag)):
+        raise ValueError("persistent_factor.a_diag must contain finite values")
+    if np.any(np.abs(a_diag) >= 1.0):
+        raise ValueError("persistent_factor.a_diag entries must have absolute value strictly below 1")
+
+    stationary_factor_std = None
+    if config.stationary_factor_std is not None:
+        stationary_factor_std = np.asarray(config.stationary_factor_std, dtype=float)
+        if stationary_factor_std.shape != (PERSISTENT_FACTOR_DIM,):
+            raise ValueError("persistent_factor.stationary_factor_std must have length 3")
+        if not np.all(np.isfinite(stationary_factor_std)):
+            raise ValueError("persistent_factor.stationary_factor_std must contain finite values")
+        if np.any(stationary_factor_std < 0.0):
+            raise ValueError("persistent_factor.stationary_factor_std entries must be non-negative")
+
+    q_diag = None
+    if config.q_diag is not None:
+        q_diag = np.asarray(config.q_diag, dtype=float)
+        if q_diag.shape != (PERSISTENT_FACTOR_DIM,):
+            raise ValueError("persistent_factor.q_diag must have length 3")
+        if not np.all(np.isfinite(q_diag)):
+            raise ValueError("persistent_factor.q_diag must contain finite values")
+        if np.any(q_diag < 0.0):
+            raise ValueError("persistent_factor.q_diag entries must be non-negative innovation variances")
+
+    if stationary_factor_std is None and q_diag is None:
+        raise ValueError("persistent_factor requires stationary_factor_std or q_diag")
+    if stationary_factor_std is not None:
+        implied_q_diag = compute_q_diag_from_stationary_std(a_diag, stationary_factor_std)
+        if q_diag is None:
+            q_diag = implied_q_diag
+        elif not np.allclose(q_diag, implied_q_diag, rtol=PERSISTENT_FACTOR_Q_RTOL, atol=PERSISTENT_FACTOR_Q_ATOL):
+            raise ValueError(
+                "persistent_factor.q_diag must be the innovation covariance diagonal implied by "
+                "a_diag and stationary_factor_std"
+            )
+    else:
+        stationary_factor_std = compute_stationary_std_from_q_diag(a_diag, q_diag)
+
+    if config.residual_policy not in PERSISTENT_FACTOR_RESIDUAL_POLICIES:
+        raise ValueError(
+            "persistent_factor.residual_policy must be one of "
+            f"{', '.join(PERSISTENT_FACTOR_RESIDUAL_POLICIES)}"
+        )
+    if config.residual_policy == "legacy_multiplier":
+        if config.residual_scale_multiplier is None:
+            raise ValueError("persistent_factor.residual_scale_multiplier is required for legacy_multiplier policy")
+        if not math.isfinite(config.residual_scale_multiplier) or config.residual_scale_multiplier < 0.0:
+            raise ValueError("persistent_factor.residual_scale_multiplier must be non-negative")
+    return PersistentFactorNoiseConfig(
+        enabled=config.enabled,
+        alpha_0=config.alpha_0,
+        alpha_m=config.alpha_m,
+        alpha_tau=config.alpha_tau,
+        tau_min=config.tau_min,
+        a_diag=tuple(float(x) for x in a_diag),  # type: ignore[arg-type]
+        stationary_factor_std=tuple(float(x) for x in stationary_factor_std),  # type: ignore[arg-type]
+        q_diag=tuple(float(x) for x in q_diag),  # type: ignore[arg-type]
+        residual_policy=config.residual_policy,
+        residual_scale_multiplier=config.residual_scale_multiplier,
+        factor_initialization=config.factor_initialization,
     )
 
 
@@ -146,6 +249,27 @@ def parse_noise_config(raw_noise: dict[str, Any] | None) -> NoiseGenerationConfi
     low_raw = scenarios.get("low_iid", {})
     spatial_raw = scenarios.get("spatial_corr", {})
     factor_raw = scenarios.get("persistent_factor", {})
+    has_residual_policy = "residual_policy" in factor_raw
+    residual_scale_multiplier = factor_raw.get("residual_scale_multiplier")
+    residual_policy = str(factor_raw.get("residual_policy", "match_total_marginal_scale" if has_residual_policy or residual_scale_multiplier is None else "legacy_multiplier"))
+    persistent_factor = validate_persistent_factor_config(
+        PersistentFactorNoiseConfig(
+            enabled=bool(factor_raw.get("enabled", True)),
+            alpha_0=float(factor_raw.get("alpha_0", 0.0015)),
+            alpha_m=float(factor_raw.get("alpha_m", 2.0)),
+            alpha_tau=float(factor_raw.get("alpha_tau", 0.05)),
+            tau_min=float(factor_raw.get("tau_min", 0.01984126984126984)),
+            a_diag=_as_tuple3(factor_raw.get("a_diag", [0.85, 0.65, 0.65]), "persistent_factor.a_diag"),
+            stationary_factor_std=_as_optional_tuple3(
+                factor_raw.get("stationary_factor_std", [0.0007, 0.0025, 0.0008] if "q_diag" not in factor_raw else None),
+                "persistent_factor.stationary_factor_std",
+            ),
+            q_diag=_as_optional_tuple3(factor_raw.get("q_diag"), "persistent_factor.q_diag"),
+            residual_policy=residual_policy,
+            residual_scale_multiplier=float(residual_scale_multiplier) if residual_scale_multiplier is not None else None,
+            factor_initialization=str(factor_raw.get("factor_initialization", "zero")),
+        )
+    )
     return NoiseGenerationConfig(
         base_seed=int(raw_noise.get("base_seed", 9900000)),
         sigma_min=float(raw_noise.get("sigma_min", 0.0001)),
@@ -169,17 +293,7 @@ def parse_noise_config(raw_noise: dict[str, Any] | None) -> NoiseGenerationConfi
             correlation_jitter=float(spatial_raw.get("correlation_jitter", 1e-10)),
             max_correlation_jitter=float(spatial_raw.get("max_correlation_jitter", 1e-6)),
         ),
-        persistent_factor=PersistentFactorNoiseConfig(
-            enabled=bool(factor_raw.get("enabled", True)),
-            alpha_0=float(factor_raw.get("alpha_0", 0.0030)),
-            alpha_m=float(factor_raw.get("alpha_m", 1.0)),
-            alpha_tau=float(factor_raw.get("alpha_tau", 0.05)),
-            tau_min=float(factor_raw.get("tau_min", 0.01984126984126984)),
-            a_diag=tuple(float(x) for x in factor_raw.get("a_diag", [0.85, 0.80, 0.75])),  # type: ignore[arg-type]
-            q_diag=tuple(float(x) for x in factor_raw.get("q_diag", [0.0015, 0.0010, 0.0010])),  # type: ignore[arg-type]
-            residual_scale_multiplier=float(factor_raw.get("residual_scale_multiplier", 0.50)),
-            factor_initialization=str(factor_raw.get("factor_initialization", "zero")),
-        ),
+        persistent_factor=persistent_factor,
     )
 
 
@@ -190,6 +304,13 @@ def noise_config_to_dict(config: NoiseGenerationConfig) -> dict[str, Any]:
         "spatial_corr": payload.pop("spatial_corr"),
         "persistent_factor": payload.pop("persistent_factor"),
     }
+    factor_payload = payload["scenarios"]["persistent_factor"]
+    if factor_payload.get("residual_scale_multiplier") is None:
+        factor_payload.pop("residual_scale_multiplier")
+    if factor_payload.get("stationary_factor_std") is None:
+        factor_payload.pop("stationary_factor_std")
+    if factor_payload.get("q_diag") is None:
+        factor_payload.pop("q_diag")
     return payload
 
 
@@ -247,6 +368,21 @@ def _marginal_scale(log_moneyness: np.ndarray, tau: np.ndarray, config: Marginal
     return config.alpha_0 * (
         1.0 + config.alpha_m * np.abs(log_moneyness) + config.alpha_tau / np.sqrt(np.maximum(tau, config.tau_min))
     )
+
+
+def persistent_factor_residual_scale(log_moneyness: np.ndarray, tau: np.ndarray, config: PersistentFactorNoiseConfig) -> np.ndarray:
+    marginal_scale = _marginal_scale(log_moneyness, tau, config)
+    if config.residual_policy == "match_total_marginal_scale":
+        stationary_factor_std = np.array(config.stationary_factor_std, dtype=float)
+        factor_variance = (
+            stationary_factor_std[0] * stationary_factor_std[0]
+            + log_moneyness * log_moneyness * stationary_factor_std[1] * stationary_factor_std[1]
+            + tau * tau * stationary_factor_std[2] * stationary_factor_std[2]
+        )
+        return np.sqrt(np.maximum(marginal_scale * marginal_scale - factor_variance, 0.0))
+    if config.residual_policy == "legacy_multiplier":
+        return float(config.residual_scale_multiplier) * marginal_scale
+    raise ValueError(f"unsupported persistent_factor residual_policy: {config.residual_policy}")
 
 
 def _price_bounds(S: float, K: float, tau: float, r: float, q: float, option_type: str) -> tuple[float, float]:
@@ -408,7 +544,7 @@ def _persistent_factor_noise(rows: list[dict[str, Any]], rng: np.random.Generato
     clean_iv = np.array([float(row["model_iv"]) for row in rows])
     noise = np.zeros(len(rows), dtype=float)
     factors: list[dict[str, Any]] = []
-    factor_config = config.persistent_factor
+    factor_config = validate_persistent_factor_config(config.persistent_factor)
     if factor_config.factor_initialization != "zero":
         raise NotImplementedError("only zero factor initialization is implemented")
     a_diag = np.array(factor_config.a_diag, dtype=float)
@@ -416,12 +552,12 @@ def _persistent_factor_noise(rows: list[dict[str, Any]], rng: np.random.Generato
     f = np.zeros(3, dtype=float)
     week_values = sorted({int(row["week_index"]) for row in rows})
     for week in week_values:
-        f = a_diag * f + q_diag * rng.standard_normal(3)
+        f = a_diag * f + rng.normal(loc=0.0, scale=np.sqrt(q_diag), size=3)
         factors.append({"week_index": week, "factor_0": f[0], "factor_1": f[1], "factor_2": f[2]})
         idx = np.array([i for i, row in enumerate(rows) if int(row["week_index"]) == week], dtype=int)
         lm = np.array([float(rows[i]["log_moneyness"]) for i in idx])
         tau = np.array([float(rows[i]["maturity_years"]) for i in idx])
-        scale = factor_config.residual_scale_multiplier * _marginal_scale(lm, tau, factor_config)
+        scale = persistent_factor_residual_scale(lm, tau, factor_config)
         factor_component = f[0] + lm * f[1] + tau * f[2]
         residual = scale * rng.standard_normal(len(idx))
         noise[idx] = factor_component + residual
@@ -563,4 +699,3 @@ def write_noisy_manifest(run_root: str | Path, results: Iterable[NoisyPanelResul
         writer.writeheader()
         for result in sorted(results, key=lambda item: (item.sample_id, item.noise_scenario)):
             writer.writerow(asdict(result))
-
