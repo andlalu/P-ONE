@@ -124,6 +124,7 @@ class CgmmFirstStepCriterion:
             dt=dt,
             theta=theta,
             rk_steps=self.config.transition_rk_steps,
+            method=self.config.transition_cf_method,
         )
         residuals = phase - cond_cf
         t_residuals = time.perf_counter()
@@ -189,6 +190,10 @@ def criterion_diagnostics_to_dict(theta: HestonEstimationParams, diagnostics: Cr
             "nfev_total": int(np.sum(implied.nfev)),
             "objective_mean": float(np.mean(implied.objective)),
             "objective_max": float(np.max(implied.objective)),
+            "coefficient_solve_count": int(implied.coefficient_solve_count),
+            "coefficient_cache_hits": int(implied.coefficient_cache_hits),
+            "coefficient_cache_misses": int(implied.coefficient_cache_misses),
+            "fixed_coefficient_count": int(implied.fixed_coefficient_count),
         },
         "implied_variance": diagnostics.implied_variance_summary,
         "true_variance_rmse": diagnostics.true_variance_rmse,

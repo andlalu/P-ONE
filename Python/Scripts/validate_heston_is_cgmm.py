@@ -6,10 +6,13 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
+
 PYTHON_ROOT = Path(__file__).resolve().parents[1]
 if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
+from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.types import CosPricingConfig
 
 from Estimation.ISCGMM.cgmm_criterion import CgmmFirstStepCriterion, criterion_diagnostics_to_dict
@@ -75,6 +78,32 @@ def _perturb(theta: HestonEstimationParams, *, label: str) -> HestonEstimationPa
     raise ValueError(f"unknown perturbation label: {label}")
 
 
+def _panel_maturities(panel) -> np.ndarray:
+    return np.unique(np.concatenate([date.maturities for date in panel.dates]))
+
+
+def _resolve_effective_width(args: argparse.Namespace, panel, pricing_config: CosPricingConfig) -> tuple[float | None, dict]:
+    mode = args.effective_width_mode
+    if mode == "dynamic":
+        return None, {"mode": mode, "value": None}
+    if mode == "fixed":
+        if args.effective_truncation_width is None:
+            raise ValueError("--effective-truncation-width is required for --effective-width-mode fixed")
+        return float(args.effective_truncation_width), {"mode": mode, "value": float(args.effective_truncation_width)}
+
+    maturities = _panel_maturities(panel)
+    if mode == "clean-panel-diagnostic":
+        true_variance = panel.true_variance
+        if true_variance is None:
+            raise ValueError("clean-panel-diagnostic width mode requires true variance in the panel")
+        width = CosOptionPricer.effective_truncation_width(true_variance, maturities, pricing_config)
+        return width, {"mode": mode, "value": width, "source": "panel_true_variance"}
+    if mode == "conservative":
+        width = CosOptionPricer.effective_truncation_width(np.array([args.v_max], dtype=float), maturities, pricing_config)
+        return width, {"mode": mode, "value": width, "source": "v_max"}
+    raise ValueError(f"unsupported effective width mode: {mode}")
+
+
 def run_validation(args: argparse.Namespace) -> dict:
     config = load_config(args.config)
     config = with_overrides(config, workers=1)
@@ -93,17 +122,21 @@ def run_validation(args: argparse.Namespace) -> dict:
     max_dates = None if args.full_panel else args.max_dates
     panel = load_option_panel_data(panel_path, max_dates=max_dates)
     theta_true = _true_theta(config)
+    pricing_config = CosPricingConfig(n_cos=args.cos_terms, truncation_width=args.cos_truncation)
+    effective_width, effective_width_info = _resolve_effective_width(args, panel, pricing_config)
     criterion_config = CgmmConfig(
         implied_state=ImpliedStateConfig(
             v_min=args.v_min,
             v_max=args.v_max,
             tol=args.state_tol,
             max_iter=args.state_max_iter,
-            pricing_config=CosPricingConfig(n_cos=args.cos_terms, truncation_width=args.cos_truncation),
+            effective_truncation_width=effective_width,
+            pricing_config=pricing_config,
         ),
         quadrature=QuadratureConfig(order=args.quad_order, scale=args.quad_scale),
         instrument_precision=(args.instrument_return_precision, args.instrument_variance_precision),
         transition_rk_steps=args.transition_rk_steps,
+        transition_cf_method=args.transition_cf_method,
     )
     criterion = CgmmFirstStepCriterion(panel, criterion_config)
 
@@ -126,6 +159,24 @@ def run_validation(args: argparse.Namespace) -> dict:
         "panel_path": str(panel_path),
         "scenario": args.scenario,
         "sample_id": args.sample_id,
+        "panel": {
+            "n_dates": panel.n_dates,
+            "n_contracts": panel.n_contracts,
+            "full_panel": bool(args.full_panel),
+            "max_dates": None if args.full_panel else args.max_dates,
+        },
+        "settings": {
+            "cos_terms": args.cos_terms,
+            "cos_truncation": args.cos_truncation,
+            "effective_width": effective_width_info,
+            "transition_cf_method": args.transition_cf_method,
+            "transition_rk_steps": args.transition_rk_steps,
+            "state_tol": args.state_tol,
+            "state_max_iter": args.state_max_iter,
+            "quad_order": args.quad_order,
+            "quad_scale": args.quad_scale,
+            "instrument_precision": [args.instrument_return_precision, args.instrument_variance_precision],
+        },
         "evaluations": evaluations,
     }
     output_path = Path(args.output)
@@ -146,9 +197,16 @@ def main() -> int:
     parser.add_argument("--output", default="outputs/estimation/is_cgmm_validation_sample_000.json")
     parser.add_argument("--cos-terms", type=int, default=256)
     parser.add_argument("--cos-truncation", type=float, default=10.0)
+    parser.add_argument(
+        "--effective-width-mode",
+        choices=("dynamic", "fixed", "clean-panel-diagnostic", "conservative"),
+        default="dynamic",
+    )
+    parser.add_argument("--effective-truncation-width", type=float, default=None)
     parser.add_argument("--quad-order", type=int, default=3)
     parser.add_argument("--quad-scale", type=float, default=1.0)
     parser.add_argument("--transition-rk-steps", type=int, default=32)
+    parser.add_argument("--transition-cf-method", choices=("analytic", "rk4"), default="analytic")
     parser.add_argument("--state-tol", type=float, default=2e-4)
     parser.add_argument("--state-max-iter", type=int, default=40)
     parser.add_argument("--v-min", type=float, default=1e-8)

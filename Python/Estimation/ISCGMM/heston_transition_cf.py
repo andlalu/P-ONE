@@ -2,22 +2,21 @@ from __future__ import annotations
 
 import numpy as np
 
+from OptionPricing.heston_ccf_solver import solve_constant_riccati
+
 from Estimation.ISCGMM.types import HestonEstimationParams
 
+TRANSITION_CF_METHODS = ("analytic", "rk4")
 
-def heston_p_transform_coefficients(
+
+def _validate_transition_inputs(
     s_nodes: np.ndarray,
     *,
     dt: float,
     theta: HestonEstimationParams,
-    rk_steps: int = 32,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Affine coefficients for E[exp(i s1 r_T + i s2 V_T) | V_0].
-
-    The estimation state is X_i = (r_i, V_i). The transition law only depends
-    on V_i under the Heston P dynamics; r_i remains useful as an instrument.
-    """
-
+    rk_steps: int,
+    method: str,
+) -> np.ndarray:
     theta.validate()
     nodes = np.asarray(s_nodes, dtype=float)
     if nodes.ndim != 2 or nodes.shape[1] != 2:
@@ -26,6 +25,63 @@ def heston_p_transform_coefficients(
         raise ValueError("dt must be non-negative")
     if rk_steps <= 0:
         raise ValueError("rk_steps must be positive")
+    if method not in TRANSITION_CF_METHODS:
+        raise ValueError(f"method must be one of {', '.join(TRANSITION_CF_METHODS)}")
+    return nodes
+
+
+def _heston_p_transform_coefficients_analytic(
+    nodes: np.ndarray,
+    *,
+    dt: float,
+    theta: HestonEstimationParams,
+) -> tuple[np.ndarray, np.ndarray]:
+    u = nodes[:, 0]
+    w = nodes[:, 1]
+    iu = 1j * u
+    a = iu * (theta.eta - 0.5) - 0.5 * u * u
+    b = -theta.kappa + theta.rho * theta.sigma_v * iu
+    c = 0.5 * theta.sigma_v * theta.sigma_v
+    b0 = 1j * w
+    b_tau, int_b = solve_constant_riccati(
+        a=a,
+        b=b,
+        c=c,
+        b0=b0,
+        tau=np.array([dt], dtype=float),
+    )
+    a_tau = iu * (theta.r - theta.q) * dt + theta.kappa * theta.vbar * int_b[:, 0]
+    return a_tau, b_tau[:, 0]
+
+
+def heston_p_transform_coefficients(
+    s_nodes: np.ndarray,
+    *,
+    dt: float,
+    theta: HestonEstimationParams,
+    rk_steps: int = 32,
+    method: str = "analytic",
+) -> tuple[np.ndarray, np.ndarray]:
+    """Affine coefficients for E[exp(i s1 r_T + i s2 V_T) | V_0].
+
+    The estimation state is X_i = (r_i, V_i). The transition law only depends
+    on V_i under the Heston P dynamics; r_i remains useful as an instrument.
+    """
+
+    nodes = _validate_transition_inputs(
+        s_nodes,
+        dt=dt,
+        theta=theta,
+        rk_steps=rk_steps,
+        method=method,
+    )
+    if method == "analytic":
+        a, b = _heston_p_transform_coefficients_analytic(nodes, dt=dt, theta=theta)
+        if not np.all(np.isfinite(a.real)) or not np.all(np.isfinite(a.imag)):
+            raise FloatingPointError("non-finite Heston transition A coefficients")
+        if not np.all(np.isfinite(b.real)) or not np.all(np.isfinite(b.imag)):
+            raise FloatingPointError("non-finite Heston transition B coefficients")
+        return a, b
 
     u = nodes[:, 0]
     terminal_v = 1j * nodes[:, 1]
@@ -70,6 +126,7 @@ def heston_p_transition_cf(
     dt: float,
     theta: HestonEstimationParams,
     rk_steps: int = 32,
+    method: str = "analytic",
 ) -> np.ndarray:
     """Conditional CF of next X=(return, variance) given current X.
 
@@ -86,5 +143,6 @@ def heston_p_transition_cf(
         dt=dt,
         theta=theta,
         rk_steps=rk_steps,
+        method=method,
     )
     return np.exp(a[:, None] + b[:, None] * x[:, 1][None, :])

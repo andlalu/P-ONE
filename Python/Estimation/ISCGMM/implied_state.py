@@ -23,6 +23,14 @@ class _ScalarMinResult:
 
 
 @dataclass
+class _CacheStats:
+    coefficient_solve_count: int = 0
+    coefficient_cache_hits: int = 0
+    coefficient_cache_misses: int = 0
+    fixed_coefficient_count: int = 0
+
+
+@dataclass
 class _ContractGroup:
     maturity: float
     indices: np.ndarray
@@ -134,7 +142,10 @@ def _solve_coefficients(
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: CosPricingConfig,
+    stats: _CacheStats | None = None,
 ) -> CoefficientTensor:
+    if stats is not None:
+        stats.coefficient_solve_count += 1
     u_grid, _ = pricer._get_static_terms(config.n_cos, truncation_width)
     return solver.solve_coefficients(
         u_grid,
@@ -150,6 +161,7 @@ def _make_date_cache(
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: ImpliedStateConfig,
+    stats: _CacheStats,
 ) -> _DatePricingCache:
     groups: list[_ContractGroup] = []
     for maturity in np.unique(date.maturities):
@@ -173,7 +185,9 @@ def _make_date_cache(
                 pricer=pricer,
                 solver=solver,
                 config=config.pricing_config,
+                stats=stats,
             )
+            stats.fixed_coefficient_count += 1
         rate = float(rates[0])
         dividend_yield = float(dividend_yields[0])
         maturities = date.maturities[idx].astype(float)
@@ -208,6 +222,7 @@ def _coefficients_for_group(
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: ImpliedStateConfig,
+    stats: _CacheStats,
 ) -> tuple[CosPricingConfig, CoefficientTensor]:
     pricing_config, truncation_width = _pricing_config_for_group(
         variance=variance,
@@ -215,6 +230,7 @@ def _coefficients_for_group(
         base_config=config,
     )
     if group.fixed_coefficients is not None:
+        stats.coefficient_cache_hits += 1
         return pricing_config, group.fixed_coefficients
 
     coefficient_cache = group.coefficient_cache
@@ -224,6 +240,7 @@ def _coefficients_for_group(
     coefficient_key = float(truncation_width)
     coefficients = coefficient_cache.get(coefficient_key)
     if coefficients is None:
+        stats.coefficient_cache_misses += 1
         coefficients = _solve_coefficients(
             truncation_width=truncation_width,
             maturity_grid=group.maturity_grid,
@@ -231,8 +248,11 @@ def _coefficients_for_group(
             pricer=pricer,
             solver=solver,
             config=pricing_config,
+            stats=stats,
         )
         coefficient_cache[coefficient_key] = coefficients
+    else:
+        stats.coefficient_cache_hits += 1
     return pricing_config, coefficients
 
 
@@ -243,6 +263,7 @@ def _model_iv_for_date(
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: ImpliedStateConfig,
+    stats: _CacheStats,
 ) -> np.ndarray:
     date = cache.date
     model_iv = np.empty(date.n_contracts, dtype=float)
@@ -254,6 +275,7 @@ def _model_iv_for_date(
             pricer=pricer,
             solver=solver,
             config=config,
+            stats=stats,
         )
         prices = pricer.price_matrix(
             log_s=np.array([date.log_spot], dtype=float),
@@ -297,6 +319,7 @@ def _date_objective(
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: ImpliedStateConfig,
+    stats: _CacheStats,
 ) -> float:
     if variance < config.v_min or variance > config.v_max or not math.isfinite(variance):
         return float("inf")
@@ -307,6 +330,7 @@ def _date_objective(
             pricer=pricer,
             solver=solver,
             config=config,
+            stats=stats,
         )
     except (ValueError, FloatingPointError, OverflowError):
         return float("inf")
@@ -334,6 +358,7 @@ def _minimize_date_variance(
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: ImpliedStateConfig,
+    stats: _CacheStats,
 ) -> _ScalarMinResult:
     objective = lambda value: _date_objective(
         variance=float(value),
@@ -341,6 +366,7 @@ def _minimize_date_variance(
         pricer=pricer,
         solver=solver,
         config=config,
+        stats=stats,
     )
     lower, upper = _warm_bounds(start_value, config)
     result = _bounded_minimize_scalar(
@@ -383,6 +409,7 @@ def imply_heston_variance_path(
     pricer = CosOptionPricer()
     solver = HestonAnalyticCcfSolver()
     params_q = theta.to_pricing_q()
+    stats = _CacheStats()
     caches = tuple(
         _make_date_cache(
             date,
@@ -390,6 +417,7 @@ def imply_heston_variance_path(
             pricer=pricer,
             solver=solver,
             config=cfg,
+            stats=stats,
         )
         for date in panel.dates
     )
@@ -411,6 +439,7 @@ def imply_heston_variance_path(
             pricer=pricer,
             solver=solver,
             config=cfg,
+            stats=stats,
         )
         variance[date_idx] = min(max(result.x, cfg.v_min), cfg.v_max)
         objective[date_idx] = result.fun
@@ -429,4 +458,8 @@ def imply_heston_variance_path(
         failed=failed,
         nfev=nfev,
         start_values=start_values,
+        coefficient_solve_count=stats.coefficient_solve_count,
+        coefficient_cache_hits=stats.coefficient_cache_hits,
+        coefficient_cache_misses=stats.coefficient_cache_misses,
+        fixed_coefficient_count=stats.fixed_coefficient_count,
     )

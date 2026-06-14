@@ -220,6 +220,10 @@ class ImpliedStateResult:
     failed: np.ndarray
     nfev: np.ndarray
     start_values: np.ndarray
+    coefficient_solve_count: int = 0
+    coefficient_cache_hits: int = 0
+    coefficient_cache_misses: int = 0
+    fixed_coefficient_count: int = 0
 
     @property
     def success_rate(self) -> float:
@@ -254,6 +258,7 @@ class CgmmConfig:
     quadrature: QuadratureConfig = field(default_factory=QuadratureConfig)
     instrument_precision: tuple[float, float] = (10.0, 50.0)
     transition_rk_steps: int = 32
+    transition_cf_method: str = "analytic"
     dt: float | None = None
     second_step: bool = False
 
@@ -265,6 +270,8 @@ class CgmmConfig:
             raise ValueError("instrument_precision must contain two positive entries")
         if self.transition_rk_steps <= 0:
             raise ValueError("transition_rk_steps must be positive")
+        if self.transition_cf_method not in {"analytic", "rk4"}:
+            raise ValueError("transition_cf_method must be 'analytic' or 'rk4'")
         if self.dt is not None and self.dt <= 0.0:
             raise ValueError("dt must be positive when provided")
         if self.second_step:

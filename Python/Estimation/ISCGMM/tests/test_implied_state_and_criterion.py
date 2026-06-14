@@ -8,7 +8,7 @@ import pytest
 from DGPSimulation.heston_simulator import HestonPathSimulator
 from DGPSimulation.types import HestonParamsP, HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
-from Estimation.ISCGMM.cgmm_criterion import CgmmFirstStepCriterion
+from Estimation.ISCGMM.cgmm_criterion import CgmmFirstStepCriterion, criterion_diagnostics_to_dict
 from Estimation.ISCGMM.implied_state import imply_heston_variance_path
 from Estimation.ISCGMM.panel import load_option_panel_data
 from Estimation.ISCGMM.types import CgmmConfig, HestonEstimationParams, ImpliedStateConfig, QuadratureConfig
@@ -150,10 +150,16 @@ def test_first_step_criterion_is_deterministic_finite_and_penalizes_strong_pertu
         transition_rk_steps=16,
     )
     criterion = CgmmFirstStepCriterion(panel, config)
-    q_true_1 = criterion.evaluate(theta)
+    diagnostics = criterion.evaluate(theta, return_diagnostics=True)
+    q_true_1 = diagnostics.criterion_value
     q_true_2 = criterion.evaluate(theta)
     assert q_true_1 == pytest.approx(q_true_2, rel=0.0, abs=1e-14)
     assert math.isfinite(q_true_1)
+    payload = criterion_diagnostics_to_dict(theta, diagnostics)
+    state_info = payload["state_inversion"]
+    assert state_info["coefficient_solve_count"] > 0
+    assert state_info["coefficient_cache_hits"] > 0
+    assert state_info["fixed_coefficient_count"] == state_info["coefficient_solve_count"]
 
     bad_kappa = theta.kappa * 0.55
     bad_kappa_q = theta.kappa_q * 1.60
