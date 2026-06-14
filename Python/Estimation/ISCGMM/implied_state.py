@@ -8,7 +8,7 @@ import numpy as np
 from ImpliedVolatility.black_iv import implied_vol_black76
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
-from OptionPricing.types import CosPricingConfig
+from OptionPricing.types import CoefficientTensor, CosPricingConfig, HestonPricingParamsQ
 
 from Estimation.ISCGMM.types import EstimationPanel, HestonEstimationParams, ImpliedStateConfig, ImpliedStateResult, PanelDate
 
@@ -22,17 +22,30 @@ class _ScalarMinResult:
     success: bool
 
 
-@dataclass(frozen=True)
+@dataclass
 class _ContractGroup:
     maturity: float
     indices: np.ndarray
     rate: float
     dividend_yield: float
+    maturity_grid: np.ndarray
+    rate_grid: np.ndarray
+    dividend_yield_grid: np.ndarray
+    strikes: np.ndarray
+    maturities: np.ndarray
+    option_types: np.ndarray
+    option_types_for_pricing: np.ndarray
+    forwards: np.ndarray
+    discounts: np.ndarray
+    fixed_truncation_width: float | None = None
+    fixed_coefficients: CoefficientTensor | None = None
+    coefficient_cache: dict[float, CoefficientTensor] | None = None
 
 
 @dataclass(frozen=True)
 class _DatePricingCache:
     date: PanelDate
+    params_q: HestonPricingParamsQ
     groups: tuple[_ContractGroup, ...]
 
 
@@ -89,27 +102,6 @@ def _bounded_minimize_scalar(
     return _ScalarMinResult(x=float(x), fun=float(fun), nfev=nfev, nit=nit, success=math.isfinite(fun))
 
 
-def _make_date_cache(date: PanelDate) -> _DatePricingCache:
-    groups: list[_ContractGroup] = []
-    for maturity in np.unique(date.maturities):
-        idx = np.flatnonzero(np.isclose(date.maturities, maturity, rtol=0.0, atol=1e-14))
-        rates = date.rates[idx]
-        dividend_yields = date.dividend_yields[idx]
-        if not np.allclose(rates, rates[0]):
-            raise ValueError("rates must be constant within each maturity/date group")
-        if not np.allclose(dividend_yields, dividend_yields[0]):
-            raise ValueError("dividend yields must be constant within each maturity/date group")
-        groups.append(
-            _ContractGroup(
-                maturity=float(maturity),
-                indices=idx,
-                rate=float(rates[0]),
-                dividend_yield=float(dividend_yields[0]),
-            )
-        )
-    return _DatePricingCache(date=date, groups=tuple(groups))
-
-
 def _pricing_config_for_group(
     *,
     variance: float,
@@ -134,58 +126,163 @@ def _pricing_config_for_group(
     return local_config, target_width
 
 
+def _solve_coefficients(
+    *,
+    truncation_width: float,
+    maturity_grid: np.ndarray,
+    params_q: HestonPricingParamsQ,
+    pricer: CosOptionPricer,
+    solver: HestonAnalyticCcfSolver,
+    config: CosPricingConfig,
+) -> CoefficientTensor:
+    u_grid, _ = pricer._get_static_terms(config.n_cos, truncation_width)
+    return solver.solve_coefficients(
+        u_grid,
+        maturity_grid,
+        model_params=params_q,
+    )
+
+
+def _make_date_cache(
+    date: PanelDate,
+    *,
+    params_q: HestonPricingParamsQ,
+    pricer: CosOptionPricer,
+    solver: HestonAnalyticCcfSolver,
+    config: ImpliedStateConfig,
+) -> _DatePricingCache:
+    groups: list[_ContractGroup] = []
+    for maturity in np.unique(date.maturities):
+        idx = np.flatnonzero(np.isclose(date.maturities, maturity, rtol=0.0, atol=1e-14))
+        rates = date.rates[idx]
+        dividend_yields = date.dividend_yields[idx]
+        if not np.allclose(rates, rates[0]):
+            raise ValueError("rates must be constant within each maturity/date group")
+        if not np.allclose(dividend_yields, dividend_yields[0]):
+            raise ValueError("dividend yields must be constant within each maturity/date group")
+        maturity_value = float(maturity)
+        maturity_grid = np.array([maturity_value], dtype=float)
+        fixed_coefficients = None
+        fixed_width = None
+        if config.effective_truncation_width is not None:
+            fixed_width = float(config.effective_truncation_width)
+            fixed_coefficients = _solve_coefficients(
+                truncation_width=fixed_width,
+                maturity_grid=maturity_grid,
+                params_q=params_q,
+                pricer=pricer,
+                solver=solver,
+                config=config.pricing_config,
+            )
+        rate = float(rates[0])
+        dividend_yield = float(dividend_yields[0])
+        maturities = date.maturities[idx].astype(float)
+        groups.append(
+            _ContractGroup(
+                maturity=maturity_value,
+                indices=idx,
+                rate=rate,
+                dividend_yield=dividend_yield,
+                maturity_grid=maturity_grid,
+                rate_grid=np.array([rate], dtype=float),
+                dividend_yield_grid=np.array([dividend_yield], dtype=float),
+                strikes=date.strikes[idx].astype(float),
+                maturities=maturities,
+                option_types=date.option_types[idx].astype(str),
+                option_types_for_pricing=date.option_types[idx].astype(str).reshape(1, -1, 1),
+                forwards=date.spot * np.exp((rate - dividend_yield) * maturities),
+                discounts=np.exp(-rate * maturities),
+                fixed_truncation_width=fixed_width,
+                fixed_coefficients=fixed_coefficients,
+                coefficient_cache={},
+            )
+        )
+    return _DatePricingCache(date=date, params_q=params_q, groups=tuple(groups))
+
+
+def _coefficients_for_group(
+    *,
+    variance: float,
+    group: _ContractGroup,
+    cache: _DatePricingCache,
+    pricer: CosOptionPricer,
+    solver: HestonAnalyticCcfSolver,
+    config: ImpliedStateConfig,
+) -> tuple[CosPricingConfig, CoefficientTensor]:
+    pricing_config, truncation_width = _pricing_config_for_group(
+        variance=variance,
+        maturity=group.maturity,
+        base_config=config,
+    )
+    if group.fixed_coefficients is not None:
+        return pricing_config, group.fixed_coefficients
+
+    coefficient_cache = group.coefficient_cache
+    if coefficient_cache is None:
+        coefficient_cache = {}
+        group.coefficient_cache = coefficient_cache
+    coefficient_key = float(truncation_width)
+    coefficients = coefficient_cache.get(coefficient_key)
+    if coefficients is None:
+        coefficients = _solve_coefficients(
+            truncation_width=truncation_width,
+            maturity_grid=group.maturity_grid,
+            params_q=cache.params_q,
+            pricer=pricer,
+            solver=solver,
+            config=pricing_config,
+        )
+        coefficient_cache[coefficient_key] = coefficients
+    return pricing_config, coefficients
+
+
 def _model_iv_for_date(
     *,
     variance: float,
     cache: _DatePricingCache,
-    theta: HestonEstimationParams,
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: ImpliedStateConfig,
 ) -> np.ndarray:
     date = cache.date
     model_iv = np.empty(date.n_contracts, dtype=float)
-    params_q = theta.to_pricing_q()
     for group in cache.groups:
-        idx = group.indices
-        maturity_grid = np.array([group.maturity], dtype=float)
-        pricing_config, truncation_width = _pricing_config_for_group(
+        pricing_config, coefficients = _coefficients_for_group(
             variance=variance,
-            maturity=group.maturity,
-            base_config=config,
+            group=group,
+            cache=cache,
+            pricer=pricer,
+            solver=solver,
+            config=config,
         )
-        u_grid, _ = pricer._get_static_terms(pricing_config.n_cos, truncation_width)
-        coefficients = solver.solve_coefficients(
-            u_grid,
-            maturity_grid,
-            model_params=params_q,
-        )
-        option_types = date.option_types[idx].reshape(1, -1, 1)
         prices = pricer.price_matrix(
             log_s=np.array([date.log_spot], dtype=float),
             variance=np.array([variance], dtype=float),
-            strike_grid=date.strikes[idx],
-            maturity_grid=maturity_grid,
-            rate_grid=np.array([group.rate], dtype=float),
-            dividend_yield_grid=np.array([group.dividend_yield], dtype=float),
+            strike_grid=group.strikes,
+            maturity_grid=group.maturity_grid,
+            rate_grid=group.rate_grid,
+            dividend_yield_grid=group.dividend_yield_grid,
             coefficients=coefficients,
             pricing_config=pricing_config,
-            option_type=option_types,
+            option_type=group.option_types_for_pricing,
         )[0, :, 0]
-        for local_pos, price in zip(idx, prices):
-            tau = float(date.maturities[local_pos])
-            rate = float(date.rates[local_pos])
-            q = float(date.dividend_yields[local_pos])
-            forward = date.spot * math.exp((rate - q) * tau)
-            discount = math.exp(-rate * tau)
+        for local_pos, price, forward, strike, tau, discount, option_type in zip(
+            group.indices,
+            prices,
+            group.forwards,
+            group.strikes,
+            group.maturities,
+            group.discounts,
+            group.option_types,
+        ):
             try:
                 model_iv[local_pos] = implied_vol_black76(
                     price=float(price),
-                    forward=forward,
-                    strike=float(date.strikes[local_pos]),
-                    tau=tau,
-                    discount_factor=discount,
-                    option_type=str(date.option_types[local_pos]),
+                    forward=float(forward),
+                    strike=float(strike),
+                    tau=float(tau),
+                    discount_factor=float(discount),
+                    option_type=str(option_type),
                     on_bounds="clip",
                 )
             except (ValueError, FloatingPointError):
@@ -197,7 +294,6 @@ def _date_objective(
     *,
     variance: float,
     cache: _DatePricingCache,
-    theta: HestonEstimationParams,
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
     config: ImpliedStateConfig,
@@ -208,7 +304,6 @@ def _date_objective(
         model_iv = _model_iv_for_date(
             variance=variance,
             cache=cache,
-            theta=theta,
             pricer=pricer,
             solver=solver,
             config=config,
@@ -235,7 +330,6 @@ def _warm_bounds(previous: float, config: ImpliedStateConfig) -> tuple[float, fl
 def _minimize_date_variance(
     *,
     cache: _DatePricingCache,
-    theta: HestonEstimationParams,
     start_value: float,
     pricer: CosOptionPricer,
     solver: HestonAnalyticCcfSolver,
@@ -244,7 +338,6 @@ def _minimize_date_variance(
     objective = lambda value: _date_objective(
         variance=float(value),
         cache=cache,
-        theta=theta,
         pricer=pricer,
         solver=solver,
         config=config,
@@ -287,9 +380,19 @@ def imply_heston_variance_path(
     cfg = ImpliedStateConfig() if config is None else config
     cfg.validate()
     theta.validate()
-    caches = tuple(_make_date_cache(date) for date in panel.dates)
     pricer = CosOptionPricer()
     solver = HestonAnalyticCcfSolver()
+    params_q = theta.to_pricing_q()
+    caches = tuple(
+        _make_date_cache(
+            date,
+            params_q=params_q,
+            pricer=pricer,
+            solver=solver,
+            config=cfg,
+        )
+        for date in panel.dates
+    )
 
     n_dates = panel.n_dates
     variance = np.empty(n_dates, dtype=float)
@@ -304,7 +407,6 @@ def imply_heston_variance_path(
         start_values[date_idx] = previous
         result = _minimize_date_variance(
             cache=cache,
-            theta=theta,
             start_value=previous,
             pricer=pricer,
             solver=solver,

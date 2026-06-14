@@ -20,3 +20,8 @@ Python/.idea/codeStyles/Project.xml
 Python/ImpliedVolatility/native/*.dylib
 Python/ImpliedVolatility/native/*.so
 Python/ImpliedVolatility/native/*.dll
+
+# generated simulation, option-panel, and estimation artifacts
+outputs/generation/
+outputs/estimation/
+Python/Estimation/ISCGMM/tests/fixtures/generated/

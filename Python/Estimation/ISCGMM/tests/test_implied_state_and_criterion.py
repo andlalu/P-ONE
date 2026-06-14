@@ -14,6 +14,7 @@ from Estimation.ISCGMM.panel import load_option_panel_data
 from Estimation.ISCGMM.types import CgmmConfig, HestonEstimationParams, ImpliedStateConfig, QuadratureConfig
 from OptionPricing.clean_panel import generate_clean_option_panel_rows
 from OptionPricing.cos_pricer import CosOptionPricer
+from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
 from OptionPricing.types import CosPricingConfig
 
 
@@ -120,6 +121,23 @@ def test_implied_state_reports_boundary_hits(tmp_path):
     )
     result = imply_heston_variance_path(theta, panel, cfg)
     assert np.any(result.boundary_hit)
+
+
+def test_fixed_width_inversion_caches_heston_coefficients(tmp_path, monkeypatch):
+    _, theta = _true_params()
+    panel = load_option_panel_data(_write_tiny_panel(tmp_path), max_dates=4)
+    calls = []
+    original = HestonAnalyticCcfSolver.solve_coefficients
+
+    def counting_solve(self, *args, **kwargs):
+        calls.append(1)
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(HestonAnalyticCcfSolver, "solve_coefficients", counting_solve)
+    result = imply_heston_variance_path(theta, panel, _state_config(_generation_effective_width(panel)))
+    assert result.success_rate == pytest.approx(1.0)
+    n_maturities = len(np.unique(np.concatenate([date.maturities for date in panel.dates])))
+    assert len(calls) == panel.n_dates * n_maturities
 
 
 def test_first_step_criterion_is_deterministic_finite_and_penalizes_strong_perturbation(tmp_path):

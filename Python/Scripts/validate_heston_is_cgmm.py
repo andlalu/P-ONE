@@ -90,7 +90,8 @@ def run_validation(args: argparse.Namespace) -> dict:
             raise RuntimeError(result.error)
         panel_path = _sample_panel_path(config.output_root, args.sample_id, args.scenario)
 
-    panel = load_option_panel_data(panel_path, max_dates=args.max_dates)
+    max_dates = None if args.full_panel else args.max_dates
+    panel = load_option_panel_data(panel_path, max_dates=max_dates)
     theta_true = _true_theta(config)
     criterion_config = CgmmConfig(
         implied_state=ImpliedStateConfig(
@@ -135,20 +136,21 @@ def run_validation(args: argparse.Namespace) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate the minimal Heston implied-state C-GMM criterion.")
+    parser = argparse.ArgumentParser(description="Run a local Heston implied-state C-GMM validation.")
     parser.add_argument("--config", default="Python/Scripts/configs/clean_generation_run_001.json")
     parser.add_argument("--sample-id", type=int, default=0)
     parser.add_argument("--scenario", default="clean")
     parser.add_argument("--generate-if-missing", action="store_true")
     parser.add_argument("--max-dates", type=int, default=30)
+    parser.add_argument("--full-panel", action="store_true", help="Use all weekly dates in the selected generated panel.")
     parser.add_argument("--output", default="outputs/estimation/is_cgmm_validation_sample_000.json")
-    parser.add_argument("--cos-terms", type=int, default=96)
+    parser.add_argument("--cos-terms", type=int, default=256)
     parser.add_argument("--cos-truncation", type=float, default=10.0)
     parser.add_argument("--quad-order", type=int, default=3)
     parser.add_argument("--quad-scale", type=float, default=1.0)
     parser.add_argument("--transition-rk-steps", type=int, default=32)
-    parser.add_argument("--state-tol", type=float, default=1e-5)
-    parser.add_argument("--state-max-iter", type=int, default=80)
+    parser.add_argument("--state-tol", type=float, default=2e-4)
+    parser.add_argument("--state-max-iter", type=int, default=40)
     parser.add_argument("--v-min", type=float, default=1e-8)
     parser.add_argument("--v-max", type=float, default=1.0)
     parser.add_argument("--instrument-return-precision", type=float, default=10.0)
