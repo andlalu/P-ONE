@@ -142,7 +142,7 @@ The difference between $p_i^{\mathrm{obs}}$ and $p_i^{\mathrm{model}}$ is interp
 This difference can be, inter alia, attributed to microstructure effects, stale quotes or price discreteness due to minimum tick sizing or quote rounding conventions. \citet{duarte2024very}
 suggests that such frictions can be quantitatively important for inference involving option-implied risk premia. 
 
-The proposed simulation design therefore does not commit ex-ante to a single parametric error law but instead considers three observed-panel specifications generated from the same clean model-implied panel. Each specification is meant to reflect empirical concerns raised by the recent literature while keeping the data generating exercise tractable. The three specifications are introduced in implied-volatility space. The corresponding contaminated prices are then obtained through the Black-Scholes pricing formula, rounded to the relevant tick size and projected back into the no-arbitrage price interval. This keeps the treatment of all three observation error specifications internally consistent while preserving both price and implied-volatility representations of the contaminated panel.
+The proposed simulation design therefore does not commit ex-ante to a single parametric error law but instead considers three observed-panel specifications generated from the same clean model-implied panel. Each specification is meant to reflect empirical concerns raised by the recent literature while keeping the data generating exercise tractable. The three specifications are introduced in implied-volatility space. The corresponding noisy prices are then obtained through the Black-Scholes pricing formula, rounded to the relevant tick size and projected back into the no-arbitrage price interval. This keeps the treatment of all three observation error specifications internally consistent while preserving both price and implied-volatility representations of the noisy option panel.
 
 \paragraph{Design A: Low I.I.D. noise}
 First, a low-noise benchmark is introduced in which observation errors are independent across contracts, but the marginal scale of the error is allowed to vary with moneyness and maturity. This reflects the fact that option observation errors need not have the same relative impact across the surface and can enter the behaviour of option-based estimators through local features of the panel, in particular for contracts close to the spot or forward price as discussed in \cite{chongtodorov2024vov}.
@@ -150,17 +150,17 @@ For $j=1,\ldots,q_i$, let
 \[
 m_i^{(j)}=\log\left(\frac{K_i^{(j)}}{F_i^{(j)}}\right),
 \qquad
-\tau_i^{(j)}=T_i^{(j)}-t_i,
+\mathcal T_i^{(j)}=T_i^{(j)}-t_i,
 \]
 where $F_i^{(j)}$ denotes the corresponding forward price. The marginal implied-volatility observation error scale is specified as
 \begin{align}
 s_{\sigma,i}^{(j)}
 =
-s_\sigma(m_i^{(j)},\tau_i^{(j)})
+s_\sigma(m_i^{(j)},\mathcal T_i^{(j)})
 =
 \alpha_0\left(
 1+\alpha_m |m_i^{(j)}|
-+\frac{\alpha_\tau}{\sqrt{\max(\tau_i^{(j)},\tau_{\min})}}
++\frac{\alpha_{\mathcal T}}{\sqrt{\max(\mathcal T_i^{(j)},\mathcal T_{\min})}}
 \right).
 \label{eq:iv_error_scale}
 \end{align}
@@ -180,7 +180,7 @@ Z_i^{(j)}\overset{i.i.d.}{\sim}\mathcal{N}(0,1).
 \end{align}
 In other words, this specification represents small quote observation errors whose scale varies with moneyness and maturity, without imposing dependence across contracts. It serves as the low-noise benchmark case.
 
-Figure~\ref{fig:noise_surface_comparison} reports the resulting contaminated implied-volatility panels for a representative simulated date. In Design A, the perturbations are contract-specific and leave the broad shape of the clean surface intact. Figure~\ref{fig:noise_low_iid_timeseries} gives the corresponding realised perturbations for selected contracts over a 200-week subsample. The marginal scale variation underlying this design is shown in Figure~\ref{fig:noise_cross_section_structure}.
+The realised implications of the observation-error specifications are illustrated in Appendix~B. In the low i.i.d. design, the perturbations are contract-specific and preserve the broad shape of the clean implied-volatility panel, while allowing the local noise scale to vary with moneyness and maturity.
 
 \paragraph{Design B: Cross-sectionally correlated noise}
 A second observation error design allows for cross-sectional dependence in a given option panel for timepoint $t_i$ by correlating errors across nearby strikes and tenors. This is largely motivated by the evidence and testing framework in \cite{andersen2021spatial}, which explicitly considers spatial dependence in option observation errors. In this specification, the information content of a panel with $q_i$ option prices is essentially not equivalent to that of $q_i$ independent observations.
@@ -215,16 +215,16 @@ R_{i,jk}
 =
 \exp\left(
 -\frac{|m_i^{(j)}-m_i^{(k)}|}{\ell_m}
--\frac{|\tau_i^{(j)}-\tau_i^{(k)}|}{\ell_\tau}
+-\frac{|\mathcal T_i^{(j)}-\mathcal T_i^{(k)}|}{\ell_{\mathcal T}}
 \right).
 \label{eq:spatial_kernel}
 \end{align}
 This specification captures the possibility that nearby strikes and maturities share common quote or surface construction errors.
 
-The cross-sectionally correlated design creates locally coherent distortions across nearby moneyness and maturity points. This is visible both in the contaminated panel in Figure~\ref{fig:noise_surface_comparison} and in the signed perturbation plots in Figure~\ref{fig:noise_difference_comparison}.
+The cross-sectionally correlated design creates locally coherent distortions across nearby moneyness and maturity points. Appendix~B reports the corresponding noisy option panels, signed perturbations and cross-sectional correlation structure.
 
 \paragraph{Design C: Temporally persistent noise}
-The third observation error design allows for a persistent common component in the observation error, affecting the level, moneyness slope and maturity slope of the contaminated implied-volatility panel. This is consistent with the practical treatment of option panels as surfaces and with the broader evidence that option price noise can be quantitatively relevant for inference on risk premia as in \cite{duarte2024very}.
+The third observation error design allows for a persistent common component in the observation error, affecting the level, moneyness slo1pe and maturity slope of the noisy implied volatility panel. This is consistent with the practical treatment of option panels as surfaces and with the broader evidence that option price noise can be quantitatively relevant for inference on risk premia as in \cite{duarte2024very}.
 
 Let
 $f_i=(f_{0,i},f_{1,i},f_{2,i})^\top$ evolve according to
@@ -238,7 +238,7 @@ where $A$ is diagonal with entries inside the unit circle. For contract $j$, def
 \[
 b_i^{(j)}
 =
-\left(1,m_i^{(j)},\tau_i^{(j)}\right)^\top.
+\left(1,m_i^{(j)},\mathcal T_i^{(j)}\right)^\top.
 \]
 The raw implied-volatility observation error is
 \begin{align}
@@ -256,65 +256,194 @@ u_i^{(j)}
 u_i^{(j)}\sim\mathcal{N}\left(0,\left(s_{\sigma,u,i}^{(j)}\right)^2\right),
 \label{eq:factor_iv_noise}
 \end{align}
-where $s_{\sigma,u,i}^{(j)}$ is allowed to depend on $m_i^{(j)}$ and $\tau_i^{(j)}$. 
+where $s_{\sigma,u,i}^{(j)}$ is allowed to depend on $m_i^{(j)}$ and $\mathcal T_i^{(j)}$. 
 
 The matrix $A$ is the persistence matrix of the common observation-error factors. In the present specification it is taken to be diagonal, so that each component of $f_i$ follows a separate first-order autoregressive process. The restriction that the diagonal entries of $A$ lie inside the unit circle ensures stationarity. The matrix $Q$ is the covariance matrix of the innovations $\xi_i$ and controls the magnitude and possible co-movement of new shocks to the common components of the observation error.
 
-The factor representation is a parsimonious way of introducing temporal dependence in the option panel observation errors. The vector $f_i$ describes the common observation-error state at date $t_i$, while the loading vector $b_i^{(j)}$ determines how this common component affects option contract $j$, i.e., $\left(b_i^{(j)}\right)^\top f_i = f_{0,i}+m_i^{(j)}f_{1,i}+\tau_i^{(j)}f_{2,i}.$
+The factor representation is a parsimonious way of introducing temporal dependence in the option panel observation errors. The vector $f_i$ describes the common observation-error state at date $t_i$, while the loading vector $b_i^{(j)}$ determines how this common component affects option contract $j$, i.e., $\left(b_i^{(j)}\right)^\top f_i = f_{0,i}+m_i^{(j)}f_{1,i}+\mathcal T_i^{(j)}f_{2,i}.$
 The first component acts as a common level error, the second component as a moneyness-slope error, and the third component as a maturity-slope error. This type of low-dimensional factor representation is consistent with the empirical treatment of implied-volatility panels as objects whose movements can be summarised by a small number of common components; see, for example, \cite{cont2002dynamics} and related PCA-based evidence for implied-volatility surface such as  \cite{avellaneda2020pca}.
 
-Unlike Designs A and B, the persistent-factor design induces serially dependent quote distortions. Figure~\ref{fig:noise_persistent_factor} reports the realised common factors and their effect on the same representative contracts over the same 200-week subsample as Figure~\ref{fig:noise_low_iid_timeseries}.
+Compared to Designs A and B, the persistent-factor design C induces serially dependent quote distortions through (several) common component(s). Appendix~B reports the realised factor paths and their effect on representative option contracts.
 
-For all three specifications, the raw contaminated price is obtained from the Black-Scholes pricing function:
+For all three specifications, the raw noisy price is obtained from the Black-Scholes pricing function:
 \begin{align}
 \tilde p_i^{(j)}
 =
 B^{\mathrm{BS}}
 \left(
-S_i,K_i^{(j)},\tau_i^{(j)},r_i,q_i,\tilde\sigma_i^{(j)}
+S_i,K_i^{(j)},\mathcal T_i^{(j)},r_i,q_i,\tilde\sigma_i^{(j)}
 \right).
 \label{eq:raw_contaminated_price}
 \end{align}
-The raw contaminated price $\tilde p_i^{(j),}$ is then rounded to the relevant tick size and projected back into the no-arbitrage price interval for the corresponding European option. The observed implied volatility $\sigma_i^{(j),\mathrm{obs}}$ is obtained by inverting the Black-Scholes pricing formula at the resulting observed price $p_i^{(j),\mathrm{obs}}$. This final step ensures that the contaminated panel contains both observed prices and observed implied volatilities, and that invalid prices generated by the noise mechanism are handled by capping rather than by re-sampling.
+The raw noisy price $\tilde p_i^{(j),}$ is then rounded to the relevant tick size and projected back into the no-arbitrage price interval for the corresponding European option. The observed implied volatility $\sigma_i^{(j),\mathrm{obs}}$ is obtained by inverting the Black-Scholes pricing formula at the resulting observed price $p_i^{(j),\mathrm{obs}}$. This final step ensures that the noisy panel contains both observed prices and observed implied volatilities, and that invalid prices generated by the noise mechanism are handled by capping rather than by re-sampling.
 
 The detailed calibration of the noise parameters and the contract design $\mathcal{C}_i$ are deferred to Appendix~\ref{app:option_noise_specs}.
 
-Note that the three observation error specifications are written in terms of model prices and Black-Scholes implied volatilities. Black-Scholes vegas are stored alongside the generated panels so that the same contaminated panels can also be used in vega-scaled estimation exercises if required.
+Note that the three observation error specifications are written in terms of model prices and Black-Scholes implied volatilities. Black-Scholes vegas are stored alongside the generated panels so that the same noisy panels can also be used in vega-scaled estimation exercises if required.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figures/noise/noise_surface_comparison_sample000_date129.pdf}
-    \caption{Clean and contaminated implied-volatility panels for sample 000 at week index 129. The clean panel is generated exactly from the Heston pricing model. Designs A--C introduce increasingly structured quote distortions in implied-volatility space before prices are reconstructed and projected into admissible price intervals.}
-    \label{fig:noise_surface_comparison}
-\end{figure}
+\subsubsection{Implied-State C-GMM Estimation}
+\label{sec:is_cgmm_estimation}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figures/noise/noise_difference_comparison_sample000_date129.pdf}
-    \caption{Signed implied-volatility perturbations relative to the clean model-implied panel for Designs A--C at week index 129. The plots show observed minus clean implied volatility across log-forward moneyness and maturity.}
-    \label{fig:noise_difference_comparison}
-\end{figure}
+The first estimation approach considered in the Monte Carlo exercise is an implied-state continuum GMM estimator in the spirit of \citet{boswijk2015asset}. The estimator uses the option panel at each observation date to recover a parameter-dependent proxy for the latent variance state and subsequently imposes moment restrictions based on the conditional characteristic function of the resulting state vector. This provides a natural benchmark for the particle-filter approach introduced below. The implied-state estimator summarises each option panel by a latent state implied from the cross-section of option prices, whereas the particle filter treats the option panel as part of the measurement system used to update a distribution of latent states.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figures/noise/noise_design_cross_section_structure.pdf}
-    \caption{Cross-sectional structure of the observation-error designs. The left panel shows the marginal implied-volatility error scale. The right panel shows the spatial correlation matrix used in Design B after ordering contracts by maturity and log-forward moneyness.}
-    \label{fig:noise_cross_section_structure}
-\end{figure}
+Let
+\[
+\theta_{\mathbb Q}
+:=
+\left[
+\theta^{\mathbb{P}\cap\mathbb{Q}},
+\theta^\mathbb{Q}
+\right]
+\]
+denote the subset of parameters which enters the risk-neutral option pricing problem. In the Heston specification considered, this corresponds to
+\[
+\theta_{\mathbb Q}
+=
+\left[
+\kappa,\bar V,\sigma_v,\rho,\eta_V
+\right].
+\]
+Given a candidate value of \(\theta_{\mathbb Q}\), the observed option panel at date \(t_i\) can be used to construct an implied variance state. Let
+\[
+\sigma_i^{\mathrm{obs}}
+=
+\left(
+\sigma_i^{(1),\mathrm{obs}},
+\dots,
+\sigma_i^{(q_i),\mathrm{obs}}
+\right)^\top
+\]
+denote the vector of observed Black-Scholes implied volatilities corresponding to the contracts in \(\mathcal C_i\). For a candidate variance level \(v\), let
+\(
+\sigma^{(j),\mathrm{model}}
+\left(
+\log(S_i),v;\theta_{\mathbb Q}
+\right)
+\)
+denote the model-implied Black-Scholes volatility of contract \(j\) obtained from the Heston pricing model. The implied variance state is defined as
+\[
+\widehat V_i^{\theta_{\mathbb Q}}
+=
+\arg\min_{v\in\mathcal V}
+\sum_{j=1}^{q_i}
+\left[
+\sigma_i^{(j),\mathrm{obs}}
+-
+\sigma^{(j),\mathrm{model}}
+\left(
+\log(S_i),v;\theta_{\mathbb Q}
+\right)
+\right]^2 ,
+\label{eq:is_implied_state}
+\]
+where \(\mathcal V\) is the admissible domain for the variance state. In the absence of observation error, and evaluated at the true parameter vector, this inversion recovers the latent variance sequence up to numerical approximation error. In noisy option panels, \(\widehat V_i^{\theta_{\mathbb Q}}\) is instead a parameter-dependent transformation of the noisy option cross-section. This is the main channel through which option observation errors affect the implied-state estimator.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figures/noise/noise_low_iid_timeseries_sample000.pdf}
-    \caption{Realised perturbations for selected contracts under Design A over weeks 100--299. The series are independent across contracts conditional on the clean panel, so the plot contains no persistent common observation-error factor.}
-    \label{fig:noise_low_iid_timeseries}
-\end{figure}
+Define the observed log-return increment
+\[
+R_i
+:=
+\log(S_i)-\log(S_{i-1})
+\]
+and collect the observable return and implied variance into the parameter-dependent estimation state:
+\[
+X_i^{\theta_{\mathbb Q}}
+=
+\left(
+R_i,
+\widehat V_i^{\theta_{\mathbb Q}}
+\right)^\top .
+\label{eq:is_state_vector}
+\]
+Although the state-implying step depends only on \(\theta_{\mathbb Q}\), the transition law of \(X_i^{\theta_{\mathbb Q}}\) under the historical probability measure depends on the full parameter vector \(\theta\). Let
+\[
+\varphi\left(s,X_i^{\theta_{\mathbb Q}},\Delta;\theta\right)
+=
+\mathbb E_\theta
+\left[
+\exp\left(
+is^\top X_{i+1}^{\theta_{\mathbb Q}}
+\right)
+\mid X_i^{\theta_{\mathbb Q}}
+\right]
+\]
+denote the conditional characteristic function of the next estimation state, where \(s\in\mathbb R^2\). For the Heston model this conditional characteristic function is available in affine form under \(\mathbb P\), since the dynamics of the return and variance pair are driven by the square-root variance process.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figures/noise/noise_persistent_factor_timeseries_sample000.pdf}
-    \caption{Temporal dependence in Design C over weeks 100--299. The upper panel shows the realised level, moneyness-slope and maturity-slope observation-error factors. The lower panel shows the resulting serially persistent implied-volatility perturbations for selected representative contracts.}
-    \label{fig:noise_persistent_factor}
-\end{figure}
+The implied-state C-GMM estimator is based on the martingale difference
+\[
+e_i(s;\theta)
+=
+\exp\left(
+is^\top X_{i+1}^{\theta_{\mathbb Q}}
+\right)
+-
+\varphi\left(s,X_i^{\theta_{\mathbb Q}},\Delta;\theta\right).
+\label{eq:is_cgmm_error}
+\]
+Following the characteristic-function approach to GMM estimation, this residual is multiplied by a continuum of instruments of the form
+\[
+\exp\left(
+iu^\top X_i^{\theta_{\mathbb Q}}
+\right),
+\qquad u\in\mathbb R^2 .
+\]
+Let \(\tau=(u,s)\) denote the combined argument of the continuum of moment conditions. The moment function is
+\[
+h_i(\tau;\theta)
+=
+\exp\left(
+iu^\top X_i^{\theta_{\mathbb Q}}
+\right)
+\left[
+\exp\left(
+is^\top X_{i+1}^{\theta_{\mathbb Q}}
+\right)
+-
+\varphi\left(s,X_i^{\theta_{\mathbb Q}},\Delta;\theta\right)
+\right].
+\label{eq:is_cgmm_moment}
+\]
+At the true parameter value, and under the maintained model assumptions, these moments satisfy
+\[
+\mathbb E\left[
+h_i(\tau;\theta_0)
+\right]
+=
+0,
+\qquad
+\text{for all } \tau .
+\]
+
+Let
+\[
+\widehat h_T(\tau;\theta)
+=
+\frac{1}{T-1}
+\sum_{i=1}^{T-1}
+h_i(\tau;\theta)
+\]
+denote the corresponding sample moment. The first-step implied-state C-GMM criterion is
+\[
+Q_T^{(1)}(\theta)
+=
+\int
+\left|
+\widehat h_T(\tau;\theta)
+\right|^2
+\pi(\tau),\dif\tau ,
+\label{eq:is_cgmm_first_step_criterion}
+\]
+where \(\pi\) is an integrating density over the continuum of moments. The first-step estimator is then
+\begin{equation}
+\widehat\theta_{\mathrm{IS}}
+=
+\arg\min_{\theta\in\Theta}
+Q_T^{(1)}(\theta).
+\label{eq:is_cgmm_estimator}
+\end{equation}
+The numerical evaluation of \eqref{eq:is_cgmm_first_step_criterion}, including the construction of the implied variance states, the conditional characteristic function and the integration rule for the continuum of moments, is described in Appendix~\ref{app:is_cgmm_implementation}.
+
+The distinction between the clean and noisy option panels is particularly relevant for this estimator. In Design A, independent contract-level observation errors perturb the implied variance state locally through the cross-sectional inversion in \eqref{eq:is_implied_state}. In Design B, cross-sectional dependence in the observation errors can generate coherent distortions across nearby moneyness and maturity points, which may be partially absorbed as changes in the implied state. In Design C, persistent common factors in the option observation error may generate serially dependent distortions in the recovered implied variance sequence. The Monte Carlo comparison therefore evaluates not only how the estimator behaves under small independent quote errors, but also how sensitive it is to cross-sectional and temporal dependence in the option panel observation errors.
+
  
 \subsubsection{Particle Filter Based Estimation}
 Estimation contexts which make use of option prices (that are nonlinear, often semi-analytic expressions featuring model parameters and partially observable state vectors) can be computationally demanding. The models used to describe index returns for option pricing purposes typically feature latent stochastic state processes which require filtering  or implying. This increases the computational cost of econometric estimation exercises as one has to devise parsimonious estimators which can work with non-analytic expressions of state vector observations by relying on stable and robust numerical procedures. 
@@ -374,7 +503,7 @@ while weekly observations are obtained by retaining every fifth daily simulated 
 
 At each weekly observation date, the clean option panel contains options with maturities:
 \[
-\tau \in \lbrace \frac{1}{12},\frac{1}{4},\frac{1}{2}\rbrace
+\mathcal T \in \lbrace \frac{1}{12},\frac{1}{4},\frac{1}{2}\rbrace
 \]
 and log-forward moneyness levels:
 \[
@@ -454,16 +583,16 @@ European option prices in \eqref{eq:panel_model_prices} are evaluated using the 
 method, which expands the risk-neutral density of the log-price (or log-return) on a bounded interval
 as a cosine series and integrates the payoff against this approximation.
 
-Let $\tau:=T-t_i$ and define the log-forward moneyness
+Let $\mathcal T:=T-t_i$ and define the log-forward moneyness
 \begin{align}
-x:=\log\!\left(\frac{S_i e^{(r_{t_i}-q_{t_i})\tau}}{K}\right).
+x:=\log\!\left(\frac{S_i e^{(r_{t_i}-q_{t_i})\mathcal T}}{K}\right).
 \end{align}
-Denote by $\phi(u;\tau,X_i)$ the conditional characteristic function of $\log(S_T)$ under $\mathbb{Q}$
+Denote by $\phi(u;\mathcal T,X_i)$ the conditional characteristic function of $\log(S_T)$ under $\mathbb{Q}$
 (which is available in semi-closed form for Heston). The COS approximation for a European call can be
 written as
 \begin{align}
-C_i(T,K) \approx e^{-r_{t_i}\tau}\sum_{k=0}^{N-1}{}'
-\Re\!\left\{\phi\!\left(\frac{k\pi}{b-a};\tau,X_i\right)\exp\!\left(-i\frac{k\pi a}{b-a}\right)\right\}
+C_i(T,K) \approx e^{-r_{t_i}\mathcal T}\sum_{k=0}^{N-1}{}'
+\Re\!\left\{\phi\!\left(\frac{k\pi}{b-a};\mathcal T,X_i\right)\exp\!\left(-i\frac{k\pi a}{b-a}\right)\right\}
 \,U_k(x),
 \label{eq:COS_call}
 \end{align}
@@ -493,18 +622,18 @@ Given the notation in \eqref{QHestonV}, this implies
 \qquad
 \bar V_{\mathbb Q}=\frac{\kappa\bar V}{\kappa-\eta_V}=0.07875.
 \]
-Clean option prices are computed using the COS method. The corresponding Black-Scholes implied volatilities are computed using the same implied-volatility inversion routine used later for contaminated panels.
+Clean option prices are computed using the COS method. The corresponding Black-Scholes implied volatilities are computed using the same implied-volatility inversion routine used later for noisy panels.
 
 \section{Option Panel Observation Error Specifications}
 \label{app:option_noise_specs}
 
-This appendix documents the functional forms used to generate contaminated option panels from the clean model-implied option panel. The purpose is to introduce observation error structures which are simple enough to be implemented in a large-scale Monte Carlo design, but sufficiently close to observed option-market features to provide a meaningful stress-test of PF and IS estimation.
+This appendix documents the functional forms used to generate noisy option panels from the clean model-implied option panel. The purpose is to introduce observation error structures which are simple enough to be implemented in a large-scale Monte Carlo design, but sufficiently close to observed option-market features to provide a meaningful stress-test of PF and IS estimation.
 
-Noisy option panels are constructed from the clean model-implied panels generated in Appendix~\ref{app:sim_heston}. The clean panel at date \(t_i\) consists of model prices \(p_i^0\), Black-Scholes implied volatilities \(\sigma_i^0\), contract characteristics and Black-Scholes vegas. The observation error designs introduced in the main text are applied to the clean implied-volatility panel.  The corresponding raw contaminated price is then obtained from the Black-Scholes pricing formula. Tick rounding, no-arbitrage projection and implied-volatility inversion are applied afterwards using the same procedure for all three designs.
+Noisy option panels are constructed from the clean model-implied panels generated in Appendix~\ref{app:sim_heston}. The clean panel at date \(t_i\) consists of model prices \(p_i^0\), Black-Scholes implied volatilities \(\sigma_i^0\), contract characteristics and Black-Scholes vegas. The observation error designs introduced in the main text are applied to the clean implied-volatility panel.  The corresponding raw noisy price is then obtained from the Black-Scholes pricing formula. Tick rounding, no-arbitrage projection and implied-volatility inversion are applied afterwards using the same procedure for all three designs.
 
 
 \subsection{Tick rounding, price validity and implied-volatility inversion}
-For each raw contaminated price $\tilde p_i^{(j)}$, tick rounding is applied through
+For each raw noisy price $\tilde p_i^{(j)}$, tick rounding is applied through
 \[
 \mathcal{R}_{\delta_{\mathrm{tick}}}(x)
 =
@@ -514,15 +643,15 @@ For each raw contaminated price $\tilde p_i^{(j)}$, tick rounding is applied thr
 Let $L_i^{(j)}$ and $U_i^{(j)}$ denote the no-arbitrage lower and upper bounds for the corresponding European
 option. For a call option,
 \[
-L_i^{(j)}=\max\left(S_ie^{-q\tau_i^{(j)}}-K_i^{(j)}e^{-r\tau_i^{(j)}},0\right),
+L_i^{(j)}=\max\left(S_ie^{-q\mathcal T_i^{(j)}}-K_i^{(j)}e^{-r\mathcal T_i^{(j)}},0\right),
 \qquad
-U_i^{(j)}=S_ie^{-q\tau_i^{(j)}}.
+U_i^{(j)}=S_ie^{-q\mathcal T_i^{(j)}}.
 \]
 For a put option,
 \[
-L_i^{(j)}=\max\left(K_i^{(j)}e^{-r\tau_i^{(j)}}-S_ie^{-q\tau_i^{(j)}},0\right),
+L_i^{(j)}=\max\left(K_i^{(j)}e^{-r\mathcal T_i^{(j)}}-S_ie^{-q\mathcal T_i^{(j)}},0\right),
 \qquad
-U_i^{(j)}=K_i^{(j)}e^{-r\tau_i^{(j)}}.
+U_i^{(j)}=K_i^{(j)}e^{-r\mathcal T_i^{(j)}}.
 \]
 The observed price is obtained by projecting the rounded price into the admissible interval:
 \begin{align}
@@ -544,22 +673,22 @@ prices. The implementation therefore records whether capping is applied at the l
 The observed Black-Scholes implied volatility $\sigma_i^{(j),\mathrm{obs}}$ is computed from
 $p_i^{(j),\mathrm{obs}}$ using a robust implied-volatility inversion routine. In the implementation this is handled
 through a stand-alone implied-volatility solver interface so that the same routine can be used for clean panels,
-contaminated panels and later estimator diagnostics. The preferred numerical method is the rational approximation
+noisy panels and later estimator diagnostics. The preferred numerical method is the rational approximation
 approach of \citet{jaeckel2015lets}, which is designed for fast and robust implied-volatility inversion.
 
-\subsection{Implementation of contaminated panels}
+\subsection{Implementation of noisy option panels}
 The clean model-implied panels are generated once and stored before any observation error is applied. Each
-contaminated panel is then generated as a deterministic transformation of the clean panel, conditional on the
+noisy panel is then generated as a deterministic transformation of the clean panel, conditional on the
 noise specification and the random seed assigned to the sample and scenario. This avoids re-pricing the Heston
 model for each observation-error design.
 
 The implementation records, for each contract, the clean model price, the clean Black-Scholes implied volatility,
-the raw contaminated price before validity enforcement, the rounded and capped observed price, the observed implied
+the raw noisy price before validity enforcement, the rounded and capped observed price, the observed implied
 volatility, the noise scenario and indicators for whether lower- or upper-bound capping was applied. The capping
 policy is preferred to re-sampling because it preserves reproducibility and makes the frequency of invalid raw
 noise draws observable.
 
-The same implied-volatility inversion routine is used for clean and contaminated panels. This is important because
+The same implied-volatility inversion routine is used for clean and noisy panels. This is important because
 the subsequent IS and PF estimation exercises may use observed implied volatilities, price-space errors, or
 vega-scaled price errors. A single stand-alone implied-volatility solver therefore prevents the construction of
 different data sets from depending on different numerical inversion conventions.
@@ -567,13 +696,13 @@ different data sets from depending on different numerical inversion conventions.
 \subsection{Parameter Choices for the Observation Error Specifications}
 For Design A, the scale parameters are set to
 \[
-\alpha_0=0.0015,\qquad \alpha_m=2.0,\qquad \alpha_\tau=0.05.
+\alpha_0=0.0015,\qquad \alpha_m=2.0,\qquad \alpha_{\mathcal T}=0.05.
 \]
-The value of $\alpha_0$ fixes the baseline magnitude of the implied-volatility observation error. Expressed in decimal volatility units, $\alpha_0=0.0015$ corresponds to 15 implied-volatility basis points before the moneyness and maturity adjustments are applied. The parameters $\alpha_m$ and $\alpha_\tau$ determine the relative variation of the error scale across the option panel. Given the log-moneyness grid used in the simulation design, $\alpha_m=2.0$ implies that a contract with $|m|=0.15$ has an implied-volatility observation error scale which is approximately 30 percent larger than that of an otherwise identical at-the-money contract. The maturity parameter $\alpha_\tau=0.05$ implies a smaller adjustment which is largest for short-dated contracts. The maturity component is approximately 17 percent at $\tau=1/12$, 10 percent at $\tau=1/4$ and 7 percent at $\tau=1/2$.
+The value of $\alpha_0$ fixes the baseline magnitude of the implied-volatility observation error. Expressed in decimal volatility units, $\alpha_0=0.0015$ corresponds to 15 implied-volatility basis points before the moneyness and maturity adjustments are applied. The parameters $\alpha_m$ and $\alpha_{\mathcal T}$ determine the relative variation of the error scale across the option panel. Given the log-moneyness grid used in the simulation design, $\alpha_m=2.0$ implies that a contract with $|m|=0.15$ has an implied-volatility observation error scale which is approximately 30 percent larger than that of an otherwise identical at-the-money contract. The maturity parameter $\alpha_{\mathcal T}=0.05$ implies a smaller adjustment which is largest for short-dated contracts. The maturity component is approximately 17 percent at $\mathcal T=1/12$, 10 percent at $\mathcal T=1/4$ and 7 percent at $\mathcal T=1/2$.
 
-For Design B, the marginal scale parameters $\alpha_0, \alpha_m$ and $\alpha_\tau$ are kept equal to those used for Design A. The difference relative to Design A is therefore introduced through the dependence structure of the observation error, rather than through a different marginal error scale. The correlation length parameters are set to
+For Design B, the marginal scale parameters $\alpha_0, \alpha_m$ and $\alpha_{\mathcal T}$ are kept equal to those used for Design A. The difference relative to Design A is therefore introduced through the dependence structure of the observation error, rather than through a different marginal error scale. The correlation length parameters are set to
 \[
-\ell_m=0.15,\qquad \ell_\tau=\frac{1}{3}.
+\ell_m=0.15,\qquad \ell_{\mathcal T}=\frac{1}{3}.
 \]
 Given the log-moneyness grid used in the simulation design, this implies that two adjacent moneyness points with the same maturity have an observation error correlation of approximately 0.61. The maturity length parameter implies correlations of approximately 0.61 between the one-month and three-month maturities, 0.47 between the three-month and six-month maturities, and 0.29 between the one-month and six-month maturities. The resulting correlation matrix therefore induces local dependence across the option panel, while avoiding an almost perfectly correlated surface error. 
 
@@ -585,11 +714,11 @@ The first diagonal element governs the persistence of the common level component
 
 The innovation covariance matrix $Q$ is specified through the stationary standard deviations of the three factor components. These are set to
 \[
-(\bar s_{f,0},\bar s_{f,m},\bar s_{f,\tau})
+(\bar s_{f,0},\bar s_{f,m},\bar s_{f,\mathcal T})
 =
 (0.0007,\ 0.0025,\ 0.0008).
 \]
-Given $A=\mathrm{diag}(a_0,a_m,a_\tau)$, the innovation covariance matrix is
+Given $A=\mathrm{diag}(a_0,a_m,a_\mathcal T)$, the innovation covariance matrix is
 \[
 Q
 =
@@ -597,7 +726,7 @@ Q
 \left(
 (1-a_0^2)\bar s_{f,0}^2,\,
 (1-a_m^2)\bar s_{f,m}^2,\,
-(1-a_\tau^2)\bar s_{f,\tau}^2
+(1-a_\mathcal T^2)\bar s_{f,\mathcal T}^2
 \right).
 \]
 This gives
@@ -618,7 +747,7 @@ The residual idiosyncratic scale is chosen so that Design C has the same uncondi
 =
 \mathrm{diag}
 \left(
-\bar s_{f,0}^2,\bar s_{f,m}^2,\bar s_{f,\tau}^2
+\bar s_{f,0}^2,\bar s_{f,m}^2,\bar s_{f,\mathcal T}^2
 \right).
 \]
 Then
@@ -635,6 +764,159 @@ s_{\sigma,u,i}^{(j)}
 }.
 \]
 Thus, the common component introduces temporal dependence and common variation across moneyness and maturity, while the total marginal implied-volatility observation error remains comparable to that of Designs A and B. This makes the comparison across the three designs depend mainly on the dependence structure of the observation error rather than on a mechanical increase in its absolute scale.
+
+\subsection{Illustration of the Observation Error Specifications}
+\label{app:noise_visualisations}
+
+This subsection reports visual diagnostics for the three noisy panel designs used in the simulation exercise. The figures are based on one representative simulated sample and are intended to illustrate the cross-sectional and time-series structure induced by the observation-error mechanisms. They are not estimation results.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/noise/noise_surface_comparison_sample000_date129.pdf}
+    \caption{Clean and noisy implied-volatility panels for sample 000 at week index 129. The clean panel is generated exactly from the Heston pricing model. Designs A--C introduce increasingly structured quote distortions in implied-volatility space before prices are reconstructed and projected into admissible price intervals.}
+    \label{fig:app_noise_surface_comparison}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/noise/noise_difference_comparison_sample000_date129.pdf}
+    \caption{Signed implied-volatility perturbations relative to the clean model-implied panel for Designs A--C at week index 129. The plots show observed minus clean implied volatility across log-forward moneyness and maturity.}
+    \label{fig:app_noise_difference_comparison}
+    TODO: Re-point plot data to average sample perturbations instead of a given sample
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/noise/noise_design_cross_section_structure.pdf}
+    \caption{Cross-sectional structure of the observation-error designs. The left panel shows the marginal implied-volatility error scale. The right panel shows the spatial correlation matrix used in Design B after ordering contracts by maturity and log-forward moneyness.}
+    \label{fig:app_noise_cross_section_structure}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/noise/noise_low_iid_timeseries_sample000.pdf}
+    \caption{Realised perturbations for selected contracts under Design A over weeks 100--299. The series are independent across contracts conditional on the clean panel, so the plot contains no persistent common observation-error factor.}
+    \label{fig:app_noise_low_iid_timeseries}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/noise/noise_persistent_factor_timeseries_sample000.pdf}
+    \caption{Temporal dependence in Design C over weeks 100--299. The upper panel shows the realised level, moneyness-slope and maturity-slope observation-error factors. The lower panel shows the resulting serially persistent implied-volatility perturbations for selected representative contracts.}
+    \label{fig:app_noise_persistent_factor}
+\end{figure}
+
+
+\section{Implementation of the IS C-GMM Estimator}
+\label{app:is_cgmm_implementation}
+
+This appendix records the numerical implementation of the implied-state C-GMM estimator introduced in Section~\ref{sec:is_cgmm_estimation}. The purpose is to separate the computational choices needed for the Monte Carlo exercise from the main description of the estimator.
+
+\subsection{Construction of implied variance states}
+
+For each observation date \(t_i\), the implied-state step solves the scalar minimisation problem in \eqref{eq:is_implied_state}. The implementation uses the observed Black-Scholes implied-volatility panel as the target object. For each candidate variance value \(v\), Heston option prices are computed under \(\mathbb Q\) for all contracts in \(\mathcal C_i\), using the risk-neutral parameter subset \(\theta_{\mathbb Q}\). These model prices are then inverted into Black-Scholes implied volatilities using the same implied-volatility inversion convention as that used in the construction of the clean and noisy panels. The criterion function is the sum of squared differences between observed and model-implied volatilities across the contracts in the panel for date \(i\).
+
+The minimisation is one dimensional because the Heston design contains a single latent variance state. The search is carried out over a bounded interval \(\mathcal V=[\underline V,\overline V]\). Consecutive option panels are close in time, so the numerical search can be "warm-started" from the previously implied variance level. In the clean-panel case, evaluating the state-implying step at the true risk-neutral parameter vector provides a direct numerical check on the implementation, since the recovered sequence should be close to the simulated variance path.
+
+The same procedure is applied to clean and noisy option panels. Hence, differences between the implied states recovered from the different observation error designs are driven by the observation error mechanisms themselves and not by changes in the pricing or implied-volatility inversion convention.
+
+\subsection{Heston transition characteristic function under \(\mathbb P\)}
+
+The C-GMM moment conditions require the conditional characteristic function of the next estimation state
+\[
+X_{i+1}^{\theta_{\mathbb Q}}
+=
+\left(
+R_{i+1},
+\widehat V_{i+1}^{\theta_{\mathbb Q}}
+\right)^\top
+\]
+given \(X_i^{\theta_{\mathbb Q}}\). In the Heston implementation this is evaluated using the physical-measure dynamics of the return and variance pair. Conditional on the current implied variance \(\widehat V_i^{\theta_{\mathbb Q}}\), the relevant characteristic function is written in affine form as
+\[
+\varphi\left(s,X_i^{\theta_{\mathbb Q}},\Delta;\theta\right)
+=
+\exp\left(
+A(\Delta;s,\theta)
++
+B(\Delta;s,\theta)
+\widehat V_i^{\theta_{\mathbb Q}}
+\right),
+\label{eq:app_heston_transition_ccf}
+\]
+where \(s=(s_R,s_V)^\top\). The affine coefficients solve the Riccati system associated with the Heston dynamics under \(\mathbb P\). With terminal loading \(B(0)=is_V\), the scalar Riccati equation for \(B\) can be written as
+\[
+\frac{\dif B}{\dif t}
+=
+a+bB+cB^2,
+\]
+where
+\[
+a
+=
+is_R\left(\eta-\frac{1}{2}\right)
+-\frac{1}{2}s_R^2,
+\qquad
+b
+=
+-\kappa+\rho\sigma_v is_R,
+\qquad
+c
+=
+\frac{1}{2}\sigma_v^2 .
+\]
+The corresponding \(A\) coefficient satisfies
+\[
+\frac{\dif A}{\dif t}
+=
+is_R(r-q)+\kappa\bar V B .
+\]
+The implementation evaluates this system using the analytic Heston Riccati solution. A Runge--Kutta solver is retained as a reference implementation and is used for numerical validation of the analytic formula. This is useful because the characteristic function contains complex square roots and logarithms, for which branch choices can otherwise become a source of numerical error.
+
+\subsection{Evaluation of the continuum GMM criterion}
+
+Let \(\tau=(u,s)\), where \(u\in\mathbb R^2\) denotes the instrument argument and \(s\in\mathbb R^2\) denotes the conditional characteristic function argument. The first step criterion in \eqref{eq:is_cgmm_first_step_criterion} is evaluated using an integrating density \(\pi(\tau)\). In the numerical implementation this density is chosen so that
+\[
+\pi(\tau)=\pi_u(u)\pi_s(s),
+\]
+with Gaussian weights for the instrument component. The integration over the instrument argument can then be carried out analytically. Specifically, the products of instrument functions generate terms of the form
+\[
+\int
+\exp\left(
+iu^\top
+\left(
+X_i^{\theta_{\mathbb Q}}
+-
+X_j^{\theta_{\mathbb Q}}
+\right)
+\right)
+\pi_u(u)\,\dif u ,
+\]
+which reduce to a Gaussian kernel in the distance between the two implied-state observations. This leaves a finite dimensional numerical integration over the \(s\)-argument of the conditional characteristic function. The implementation uses deterministic quadrature nodes for this remaining integral.
+
+This construction follows the same principle as in the continuum-GMM implementation of \citet{boswijk2015asset}: the criterion uses the conditional characteristic function to generate a continuum of moment restrictions, while numerical integration and analytic simplifications are used to keep the criterion evaluation computationally feasible.
+
+\subsection{Parameter transformation and numerical minimisation}
+
+The first-step estimator minimises \(Q_T^{(1)}(\theta)\) over the admissible parameter set \(\Theta\). In the numerical implementation, the constrained Heston parameters are mapped to an unconstrained or bounded free vector. The transformation is based on
+\[
+\left(
+\eta,
+\log\kappa,
+\log\bar V,
+\log\sigma_v,
+\operatorname{atanh}\rho,
+\log\kappa_{\mathbb Q}
+\right),
+\]
+where
+\[
+\kappa_{\mathbb Q}=\kappa-\eta_V,
+\qquad
+\eta_V=\kappa-\kappa_{\mathbb Q}.
+\]
+This parameterisation enforces positivity of the mean-reversion, long-run variance, vol-of-vol and risk-neutral mean-reversion parameters, while keeping \(\rho\) inside \((-1,1)\). The criterion is deterministic for a fixed simulated panel, but it is expensive because each function evaluation requires a full reconstruction of the implied variance sequence. The implementation therefore uses derivative-free minimisation with a small number of deterministic starting points and records objective values, implied-state diagnostics and timing information.
+
+At the present stage the Monte Carlo design uses the first-step C-GMM criterion. Efficient second-step weighting is conceptually standard in the continuum-GMM setting, but is deferred in the current implementation in order to keep the comparison with the particle-filter estimator focused on the finite-sample consequences of the state recovery step and the option-panel observation error.
 
 
 %========================================================

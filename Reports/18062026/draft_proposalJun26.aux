@@ -32,46 +32,65 @@
 \citation{avellaneda2020pca}
 \newlabel{eq:factor_iv_noise}{{1.11}{7}{Design C: Temporally persistent noise}{equation.1.11}{}}
 \newlabel{eq:raw_contaminated_price}{{1.12}{7}{Design C: Temporally persistent noise}{equation.1.12}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Clean and contaminated implied-volatility panels for sample 000 at week index 129. The clean panel is generated exactly from the Heston pricing model. Designs A--C introduce increasingly structured quote distortions in implied-volatility space before prices are reconstructed and projected into admissible price intervals.}}{8}{}\protected@file@percent }
-\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:noise_surface_comparison}{{1}{8}{Clean and contaminated implied-volatility panels for sample 000 at week index 129. The clean panel is generated exactly from the Heston pricing model. Designs A--C introduce increasingly structured quote distortions in implied-volatility space before prices are reconstructed and projected into admissible price intervals}{figure.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Signed implied-volatility perturbations relative to the clean model-implied panel for Designs A--C at week index 129. The plots show observed minus clean implied volatility across log-forward moneyness and maturity.}}{9}{}\protected@file@percent }
-\newlabel{fig:noise_difference_comparison}{{2}{9}{Signed implied-volatility perturbations relative to the clean model-implied panel for Designs A--C at week index 129. The plots show observed minus clean implied volatility across log-forward moneyness and maturity}{figure.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Cross-sectional structure of the observation-error designs. The left panel shows the marginal implied-volatility error scale. The right panel shows the spatial correlation matrix used in Design B after ordering contracts by maturity and log-forward moneyness.}}{10}{}\protected@file@percent }
-\newlabel{fig:noise_cross_section_structure}{{3}{10}{Cross-sectional structure of the observation-error designs. The left panel shows the marginal implied-volatility error scale. The right panel shows the spatial correlation matrix used in Design B after ordering contracts by maturity and log-forward moneyness}{figure.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Realised perturbations for selected contracts under Design A over weeks 100--299. The series are independent across contracts conditional on the clean panel, so the plot contains no persistent common observation-error factor.}}{11}{}\protected@file@percent }
-\newlabel{fig:noise_low_iid_timeseries}{{4}{11}{Realised perturbations for selected contracts under Design A over weeks 100--299. The series are independent across contracts conditional on the clean panel, so the plot contains no persistent common observation-error factor}{figure.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Temporal dependence in Design C over weeks 100--299. The upper panel shows the realised level, moneyness-slope and maturity-slope observation-error factors. The lower panel shows the resulting serially persistent implied-volatility perturbations for selected representative contracts.}}{12}{}\protected@file@percent }
-\newlabel{fig:noise_persistent_factor}{{5}{12}{Temporal dependence in Design C over weeks 100--299. The upper panel shows the realised level, moneyness-slope and maturity-slope observation-error factors. The lower panel shows the resulting serially persistent implied-volatility perturbations for selected representative contracts}{figure.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {1.3.2}Particle Filter Based Estimation}{12}{}\protected@file@percent }
+\citation{boswijk2015asset}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {1.3.2}Implied-State C-GMM Estimation}{8}{}\protected@file@percent }
+\newlabel{sec:is_cgmm_estimation}{{1.3.2}{8}{Implied-State C-GMM Estimation}{subsubsection.1.3.2}{}}
+\newlabel{eq:is_implied_state}{{1.3.2}{9}{Implied-State C-GMM Estimation}{subsubsection.1.3.2}{}}
+\newlabel{eq:is_state_vector}{{1.3.2}{9}{Implied-State C-GMM Estimation}{subsubsection.1.3.2}{}}
+\newlabel{eq:is_cgmm_error}{{1.3.2}{9}{Implied-State C-GMM Estimation}{subsubsection.1.3.2}{}}
+\newlabel{eq:is_cgmm_moment}{{1.3.2}{10}{Implied-State C-GMM Estimation}{subsubsection.1.3.2}{}}
+\newlabel{eq:is_cgmm_first_step_criterion}{{1.3.2}{10}{Implied-State C-GMM Estimation}{subsubsection.1.3.2}{}}
+\newlabel{eq:is_cgmm_estimator}{{1.13}{10}{Implied-State C-GMM Estimation}{equation.1.13}{}}
 \citation{johannes2009optimal}
 \citation{christoffersen2010volatility}
-\newlabel{LikelihoodContribTheo}{{1.14}{13}{Particle Filter Based Estimation}{equation.1.14}{}}
-\newlabel{SamplingDensityTheo}{{1.15}{14}{Particle Filter Based Estimation}{equation.1.15}{}}
-\@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.2.1}Current computational implementation.}{14}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {A}Simulation of Heston Paths and Model Option Panels}{15}{}\protected@file@percent }
-\newlabel{app:sim_heston}{{A}{15}{Simulation of Heston Paths and Model Option Panels}{section.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Sampling grid and contract set}{15}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}State simulation under $\mathbb  {P}$}{16}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.1}Exact transition for $V_{i+1}\mid V_i$}{16}{}\protected@file@percent }
-\newlabel{eq:CIR_exact}{{A.1}{16}{Exact transition for $V_{i+1}\mid V_i$}{equation.1.1}{}}
-\newlabel{eq:CIR_exact_params}{{A.2}{16}{Exact transition for $V_{i+1}\mid V_i$}{equation.1.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.2}Integrated variance proxy}{16}{}\protected@file@percent }
-\newlabel{eq:I_trap}{{A.4}{16}{Integrated variance proxy}{equation.1.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.3}Log-price update with leverage}{16}{}\protected@file@percent }
-\newlabel{eq:logS_update}{{A.5}{17}{Log-price update with leverage}{equation.1.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Model option panels under $\mathbb  {Q}$}{17}{}\protected@file@percent }
-\newlabel{eq:panel_model_prices}{{A.6}{17}{Model option panels under $\mathbb {Q}$}{equation.1.6}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.3.1}COS pricing}{17}{}\protected@file@percent }
-\newlabel{eq:COS_call}{{A.9}{18}{COS pricing}{equation.1.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Parameter values used for clean sample generation}{18}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {B}Option Panel Observation Error Specifications}{18}{}\protected@file@percent }
-\newlabel{app:option_noise_specs}{{B}{18}{Option Panel Observation Error Specifications}{section.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {1.3.3}Particle Filter Based Estimation}{11}{}\protected@file@percent }
+\newlabel{LikelihoodContribTheo}{{1.15}{12}{Particle Filter Based Estimation}{equation.1.15}{}}
+\newlabel{SamplingDensityTheo}{{1.16}{12}{Particle Filter Based Estimation}{equation.1.16}{}}
+\@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.3.1}Current computational implementation.}{12}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Simulation of Heston Paths and Model Option Panels}{13}{}\protected@file@percent }
+\newlabel{app:sim_heston}{{A}{13}{Simulation of Heston Paths and Model Option Panels}{section.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Sampling grid and contract set}{13}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}State simulation under $\mathbb  {P}$}{14}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.1}Exact transition for $V_{i+1}\mid V_i$}{14}{}\protected@file@percent }
+\newlabel{eq:CIR_exact}{{A.1}{14}{Exact transition for $V_{i+1}\mid V_i$}{equation.1.1}{}}
+\newlabel{eq:CIR_exact_params}{{A.2}{14}{Exact transition for $V_{i+1}\mid V_i$}{equation.1.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.2}Integrated variance proxy}{14}{}\protected@file@percent }
+\newlabel{eq:I_trap}{{A.4}{14}{Integrated variance proxy}{equation.1.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.3}Log-price update with leverage}{14}{}\protected@file@percent }
+\newlabel{eq:logS_update}{{A.5}{15}{Log-price update with leverage}{equation.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Model option panels under $\mathbb  {Q}$}{15}{}\protected@file@percent }
+\newlabel{eq:panel_model_prices}{{A.6}{15}{Model option panels under $\mathbb {Q}$}{equation.1.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.3.1}COS pricing}{15}{}\protected@file@percent }
+\newlabel{eq:COS_call}{{A.9}{16}{COS pricing}{equation.1.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Parameter values used for clean sample generation}{16}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Option Panel Observation Error Specifications}{16}{}\protected@file@percent }
+\newlabel{app:option_noise_specs}{{B}{16}{Option Panel Observation Error Specifications}{section.2}{}}
 \citation{jaeckel2015lets}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Tick rounding, price validity and implied-volatility inversion}{19}{}\protected@file@percent }
-\newlabel{eq:app_price_projection}{{B.1}{19}{Tick rounding, price validity and implied-volatility inversion}{equation.2.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Implementation of contaminated panels}{20}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Parameter Choices for the Observation Error Specifications}{20}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Tick rounding, price validity and implied-volatility inversion}{17}{}\protected@file@percent }
+\newlabel{eq:app_price_projection}{{B.1}{17}{Tick rounding, price validity and implied-volatility inversion}{equation.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Implementation of noisy option panels}{18}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Parameter Choices for the Observation Error Specifications}{18}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.4}Illustration of the Observation Error Specifications}{20}{}\protected@file@percent }
+\newlabel{app:noise_visualisations}{{B.4}{20}{Illustration of the Observation Error Specifications}{subsection.2.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Clean and noisy implied-volatility panels for sample 000 at week index 129. The clean panel is generated exactly from the Heston pricing model. Designs A--C introduce increasingly structured quote distortions in implied-volatility space before prices are reconstructed and projected into admissible price intervals.}}{21}{}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:app_noise_surface_comparison}{{1}{21}{Clean and noisy implied-volatility panels for sample 000 at week index 129. The clean panel is generated exactly from the Heston pricing model. Designs A--C introduce increasingly structured quote distortions in implied-volatility space before prices are reconstructed and projected into admissible price intervals}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Signed implied-volatility perturbations relative to the clean model-implied panel for Designs A--C at week index 129. The plots show observed minus clean implied volatility across log-forward moneyness and maturity.}}{22}{}\protected@file@percent }
+\newlabel{fig:app_noise_difference_comparison}{{2}{22}{Signed implied-volatility perturbations relative to the clean model-implied panel for Designs A--C at week index 129. The plots show observed minus clean implied volatility across log-forward moneyness and maturity}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Cross-sectional structure of the observation-error designs. The left panel shows the marginal implied-volatility error scale. The right panel shows the spatial correlation matrix used in Design B after ordering contracts by maturity and log-forward moneyness.}}{23}{}\protected@file@percent }
+\newlabel{fig:app_noise_cross_section_structure}{{3}{23}{Cross-sectional structure of the observation-error designs. The left panel shows the marginal implied-volatility error scale. The right panel shows the spatial correlation matrix used in Design B after ordering contracts by maturity and log-forward moneyness}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Realised perturbations for selected contracts under Design A over weeks 100--299. The series are independent across contracts conditional on the clean panel, so the plot contains no persistent common observation-error factor.}}{23}{}\protected@file@percent }
+\newlabel{fig:app_noise_low_iid_timeseries}{{4}{23}{Realised perturbations for selected contracts under Design A over weeks 100--299. The series are independent across contracts conditional on the clean panel, so the plot contains no persistent common observation-error factor}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Temporal dependence in Design C over weeks 100--299. The upper panel shows the realised level, moneyness-slope and maturity-slope observation-error factors. The lower panel shows the resulting serially persistent implied-volatility perturbations for selected representative contracts.}}{24}{}\protected@file@percent }
+\newlabel{fig:app_noise_persistent_factor}{{5}{24}{Temporal dependence in Design C over weeks 100--299. The upper panel shows the realised level, moneyness-slope and maturity-slope observation-error factors. The lower panel shows the resulting serially persistent implied-volatility perturbations for selected representative contracts}{figure.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Implementation of the IS C-GMM Estimator}{24}{}\protected@file@percent }
+\newlabel{app:is_cgmm_implementation}{{C}{24}{Implementation of the IS C-GMM Estimator}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.1}Construction of implied variance states}{24}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.2}Heston transition characteristic function under \(\mathbb  P\)}{25}{}\protected@file@percent }
+\newlabel{eq:app_heston_transition_ccf}{{C.2}{25}{Heston transition characteristic function under \(\mathbb P\)}{subsection.3.2}{}}
+\citation{boswijk2015asset}
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.3}Evaluation of the continuum GMM criterion}{26}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {C.4}Parameter transformation and numerical minimisation}{26}{}\protected@file@percent }
 \bibstyle{apalike}
 \citation{*}
 \bibdata{P_ONE_BIB}
@@ -93,4 +112,4 @@
 \bibcite{pan2002jump}{{16}{2002}{{Pan}}{{}}}
 \bibcite{protterstochastic}{{17}{2005}{{Protter}}{{}}}
 \bibcite{sundaresan2000continuous}{{18}{2000}{{Sundaresan}}{{}}}
-\gdef \@abspage@last{24}
+\gdef \@abspage@last{29}
