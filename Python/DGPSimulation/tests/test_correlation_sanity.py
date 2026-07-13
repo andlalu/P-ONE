@@ -1,14 +1,15 @@
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
+from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 
 
 def _estimate_corr_for_rho(rho: float) -> float:
     corrs = []
     for seed in range(30):
-        params = HestonParamsP(eta=1.0, kappa=2.0, vbar=0.04, sigma_v=0.45, rho=rho, r=0.0, q=0.0)
+        params = HestonPhysicalParameters(eta=1.0, kappa=2.0, vbar=0.04, sigma_v=0.45, rho=rho, r=0.0, q=0.0)
         config = HestonSimConfig(seed=seed, burnin_days=126, t_week=120, return_daily=True)
         path = HestonPathSimulator(params, config, AndersenQeVarianceDrawer()).simulate()
 

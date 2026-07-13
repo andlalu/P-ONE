@@ -1,0 +1,46 @@
+{
+  "implied_state": {
+    "v_min": 0.000001,
+    "v_max": 0.15,
+    "tol": 0.0002,
+    "max_iter": 24,
+    "boundary_tol": 0.00001,
+    "warm_start_window": 0.04
+  },
+  "quadrature": {
+    "dimension": 2,
+    "order": 2,
+    "scale": 1.0
+  },
+  "cgmm": {
+    "instrument_precision": [10.0, 50.0],
+    "transition_rk_steps": 24,
+    "transition_cf_method": "analytic",
+    "spacing_tolerance": 1e-10
+  },
+  "optimizer": {
+    "base_start": {
+      "eta": 4.8,
+      "kappa": 6.8,
+      "vbar": 0.024,
+      "sigma_v": 0.42,
+      "rho": -0.52,
+      "eta_v": 4.8,
+      "r": 0.02,
+      "q": 0.0
+    },
+    "natural_bounds": [
+      [0.0, 10.0],
+      [2.0, 12.0],
+      [0.005, 0.08],
+      [0.15, 0.8],
+      [-0.9, -0.1],
+      [0.5, 6.0]
+    ],
+    "candidate_relative_perturbations": [],
+    "stage1": {"max_evaluations": 80, "xtol": 0.05, "ftol": 0.01},
+    "stage2": {"max_evaluations": 180, "xtol": 0.01, "ftol": 0.001},
+    "penalty_value": 1000000000000.0
+  },
+  "logging": {"progress_every": 5}
+}

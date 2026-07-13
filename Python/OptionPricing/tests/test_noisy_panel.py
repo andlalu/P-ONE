@@ -1,4 +1,5 @@
 import csv
+import json
 import math
 
 import numpy as np
@@ -6,6 +7,8 @@ import pytest
 
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price, black76_vega
+from OptionData.io import panel_metadata_path
+from OptionPricing.cos_basis import FixedCosBasisConfig
 from OptionPricing.noisy_panel import (
     _apply_price_mechanics,
     _marginal_scale,
@@ -82,6 +85,14 @@ def _clean_rows(sample_id=0):
     return rows
 
 
+def _panel_metadata():
+    return {
+        "sample_id": 0,
+        "scenario": "clean",
+        "cos_basis": FixedCosBasisConfig((0.25, 0.5), (1.5, 2.0), 64).to_metadata(),
+    }
+
+
 def test_low_iid_noise_is_deterministic():
     config = default_noise_config()
     rows = _clean_rows()
@@ -103,7 +114,7 @@ def test_spatial_corr_noise_has_contract_level_draws():
 def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
     config = default_noise_config()
     run_root = tmp_path / "run"
-    clean_path = write_table(_clean_rows(), run_root / "panels_clean" / "sample_000")
+    clean_path = write_table(_clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata())
     results = []
     for scenario in config.enabled_scenarios():
         results.append(
@@ -117,6 +128,9 @@ def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
         )
     write_noise_config(run_root, config)
     assert {result.status for result in results} == {"ok"}
+    with panel_metadata_path(results[0].output_observed_panel).open() as fh:
+        observed_metadata = json.load(fh)
+    assert observed_metadata["cos_basis"] == _panel_metadata()["cos_basis"]
     factor_file = run_root / "noise_factors" / "persistent_factor" / "sample_000.csv"
     assert factor_file.exists()
     with factor_file.open(newline="") as fh:
@@ -245,7 +259,7 @@ def test_tick_rounding_and_capping_are_recorded():
 def test_skip_existing_avoids_recomputation(tmp_path):
     config = default_noise_config()
     run_root = tmp_path / "run"
-    clean_path = write_table(_clean_rows(), run_root / "panels_clean" / "sample_000")
+    clean_path = write_table(_clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata())
     first = generate_noisy_panel_file(
         clean_panel_path=clean_path,
         run_root=run_root,

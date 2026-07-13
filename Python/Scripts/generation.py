@@ -12,9 +12,11 @@ from typing import Any
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
 from DGPSimulation.io import load_heston_path_npz, save_heston_path_npz
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
+from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 from OptionPricing.clean_panel import generate_clean_option_panel_rows, parquet_available, write_panel
+from OptionPricing.cos_basis import FixedCosBasisConfig
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.noisy_panel import (
     NoiseGenerationConfig,
@@ -23,7 +25,6 @@ from OptionPricing.noisy_panel import (
     write_noise_config,
     write_noisy_manifest,
 )
-from OptionPricing.types import CosPricingConfig
 
 THREAD_ENV_KEYS = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS")
 
@@ -37,7 +38,8 @@ class PanelConfig:
     pricing_method: str
     iv_method: str
     cos_n_terms: int
-    cos_truncation_L: float
+    cos_effective_widths: tuple[float, ...]
+    cos_maturity_tolerance: float = 1e-10
 
 
 @dataclass(frozen=True)
@@ -46,7 +48,7 @@ class GenerationConfig:
     n_samples: int
     base_seed: int
     output_root: str
-    dgp: HestonParamsP
+    dgp: HestonPhysicalParameters
     simulation: HestonSimConfig
     eta_v: float
     panel: PanelConfig
@@ -81,12 +83,17 @@ def load_config(config_path: str | Path) -> GenerationConfig:
     sim_raw["return_daily"] = True
     panel_raw = raw["panel"]
     cos_raw = panel_raw.get("cos", {})
+    if cos_raw.get("n_terms") is None or not cos_raw.get("effective_widths"):
+        raise ValueError(
+            "generation requires calibrated explicit cos.n_terms and maturity-aligned cos.effective_widths; "
+            "production calibration is intentionally not part of this refactor"
+        )
     return GenerationConfig(
         run_id=raw["run_id"],
         n_samples=int(raw["n_samples"]),
         base_seed=int(raw["base_seed"]),
         output_root=raw["output_root"],
-        dgp=HestonParamsP(**raw["dgp"]),
+        dgp=HestonPhysicalParameters(**raw["dgp"]),
         simulation=HestonSimConfig(**sim_raw),
         eta_v=float(raw["q_measure"]["eta_v"]),
         panel=PanelConfig(
@@ -96,8 +103,9 @@ def load_config(config_path: str | Path) -> GenerationConfig:
             atm_option_type=panel_raw.get("atm_option_type", "call"),
             pricing_method=panel_raw["pricing_method"],
             iv_method=panel_raw["iv_method"],
-            cos_n_terms=int(cos_raw.get("n_terms", 256)),
-            cos_truncation_L=float(cos_raw.get("truncation_L", 10.0)),
+            cos_n_terms=int(cos_raw["n_terms"]),
+            cos_effective_widths=tuple(float(value) for value in cos_raw["effective_widths"]),
+            cos_maturity_tolerance=float(cos_raw.get("maturity_tolerance", 1e-10)),
         ),
         workers=raw.get("parallel", {}).get("workers"),
         noise=parse_noise_config(raw.get("noise")),
@@ -183,9 +191,11 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
         noisy_results = []
         if not config.paths_only:
             pricer = CosOptionPricer()
-            pricing_config = CosPricingConfig(
+            cos_basis = FixedCosBasisConfig(
+                maturities=config.panel.maturities_years,
+                effective_widths=config.panel.cos_effective_widths,
                 n_cos=config.panel.cos_n_terms,
-                truncation_width=config.panel.cos_truncation_L,
+                maturity_tolerance=config.panel.cos_maturity_tolerance,
             )
             rows = generate_clean_option_panel_rows(
                 run_id=config.run_id,
@@ -199,9 +209,18 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
                 pricing_method=config.panel.pricing_method,
                 iv_method=config.panel.iv_method,
                 pricer=pricer,
-                pricing_config=pricing_config,
+                cos_basis=cos_basis,
             )
-            panel_file = write_panel(rows, Path(config.output_root) / "panels_clean" / f"sample_{sample_id:03d}")
+            panel_file = write_panel(
+                rows,
+                Path(config.output_root) / "panels_clean" / f"sample_{sample_id:03d}",
+                metadata={
+                    "run_id": config.run_id,
+                    "sample_id": sample_id,
+                    "scenario": "clean",
+                    "cos_basis": cos_basis.to_metadata(),
+                },
+            )
             if config.noise is not None:
                 for scenario in config.noise.enabled_scenarios():
                     noisy_results.append(

@@ -1,13 +1,14 @@
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
+from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer, EulerVarianceDrawer
 
 
 STRESS_PARAM_SETS = [
-    HestonParamsP(eta=1.0, kappa=1.5, vbar=0.04, sigma_v=0.7, rho=-0.8, r=0.01, q=0.0),
-    HestonParamsP(eta=1.0, kappa=0.3, vbar=0.02, sigma_v=1.0, rho=0.85, r=0.01, q=0.0),
+    HestonPhysicalParameters(eta=1.0, kappa=1.5, vbar=0.04, sigma_v=0.7, rho=-0.8, r=0.01, q=0.0),
+    HestonPhysicalParameters(eta=1.0, kappa=0.3, vbar=0.02, sigma_v=1.0, rho=0.85, r=0.01, q=0.0),
 ]
 
 

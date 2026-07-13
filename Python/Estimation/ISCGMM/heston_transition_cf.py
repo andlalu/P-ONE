@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from OptionPricing.heston_ccf_solver import solve_constant_riccati
-
-from Estimation.ISCGMM.types import HestonEstimationParams
+from Models.Heston.affine_transform import solve_constant_riccati
+from Models.Heston.parameters import HestonParameters
 
 TRANSITION_CF_METHODS = ("analytic", "rk4")
 
@@ -13,7 +12,7 @@ def _validate_transition_inputs(
     s_nodes: np.ndarray,
     *,
     dt: float,
-    theta: HestonEstimationParams,
+    theta: HestonParameters,
     rk_steps: int,
     method: str,
 ) -> np.ndarray:
@@ -34,7 +33,7 @@ def _heston_p_transform_coefficients_analytic(
     nodes: np.ndarray,
     *,
     dt: float,
-    theta: HestonEstimationParams,
+    theta: HestonParameters,
 ) -> tuple[np.ndarray, np.ndarray]:
     u = nodes[:, 0]
     w = nodes[:, 1]
@@ -58,7 +57,7 @@ def heston_p_transform_coefficients(
     s_nodes: np.ndarray,
     *,
     dt: float,
-    theta: HestonEstimationParams,
+    theta: HestonParameters,
     rk_steps: int = 32,
     method: str = "analytic",
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -124,7 +123,7 @@ def heston_p_transition_cf(
     x_prev: np.ndarray,
     *,
     dt: float,
-    theta: HestonEstimationParams,
+    theta: HestonParameters,
     rk_steps: int = 32,
     method: str = "analytic",
 ) -> np.ndarray:

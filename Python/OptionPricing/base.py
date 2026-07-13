@@ -12,29 +12,27 @@ class CcfSolver(ABC):
 
 class OptionPricer(ABC):
     @abstractmethod
-    def price_matrix(
+    def price_matrix_fixed_basis(
         self,
         *,
         log_s: Any,
         variance: Any,
         strike_grid: Any,
-        maturity_grid: Any,
-        rate_grid: Any,
-        coefficients: Any,
-        pricing_config: Any,
-        dividend_yield_grid: Any | None = None,
+        rate: float,
+        dividend_yield: float,
+        basis: Any,
         option_type: Any = "call",
     ):
-        """Return price matrix over strike and maturity grids."""
+        """Return prices using a prepared variance-independent COS basis."""
 
 
-class OptionPanelGenerator(ABC):
+class OptionPriceCubeGenerator(ABC):
     @abstractmethod
     def generate_panel(self, log_s_week: Any, v_week: Any):
         """Generate an option panel from state paths."""
 
 
-class OptionPanelStore(ABC):
+class OptionPriceCubeStore(ABC):
     @abstractmethod
     def save(self, panel: Any, file_path: str) -> None:
         """Persist panel."""

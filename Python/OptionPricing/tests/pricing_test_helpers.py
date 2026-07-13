@@ -6,11 +6,11 @@ from dataclasses import dataclass
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
+from Models.Heston.parameters import HestonPhysicalParameters, HestonRiskNeutralParameters
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
-from OptionPricing.types import CosPricingConfig, HestonPricingParamsQ
+from OptionPricing.types import VarianceScaledCosConfig
 
 
 @dataclass(frozen=True)
@@ -27,26 +27,19 @@ def cos_heston_price(
     tau: float,
     strike: float,
     option_type: str,
-    params: HestonPricingParamsQ,
-    config: CosPricingConfig,
+    params: HestonRiskNeutralParameters,
+    config: VarianceScaledCosConfig,
 ) -> float:
     pricer = CosOptionPricer()
-    width = pricer.effective_truncation_width(np.array([variance]), np.array([tau]), config)
-    u_grid, _ = pricer._get_static_terms(config.n_cos, width)
-    coefficients = HestonAnalyticCcfSolver().solve_coefficients(
-        u_grid,
-        np.array([tau], dtype=float),
-        model_params=params,
-    )
-    prices = pricer.price_matrix(
+    prices = pricer.price_matrix_variance_scaled_reference(
         log_s=np.array([math.log(spot)]),
         variance=np.array([variance]),
         strike_grid=np.array([strike]),
         maturity_grid=np.array([tau]),
         rate_grid=np.array([params.r]),
         dividend_yield_grid=np.array([params.q]),
-        coefficients=coefficients,
-        pricing_config=config,
+        model_params=params,
+        config=config,
         option_type=option_type,
     )
     return float(prices[0, 0, 0])
@@ -59,14 +52,14 @@ def mc_heston_price(
     n_weeks: int,
     strike: float,
     option_type: str,
-    params: HestonPricingParamsQ,
+    params: HestonRiskNeutralParameters,
     n_paths: int,
     base_seed: int = 37_000,
 ) -> MonteCarloEstimate:
     if option_type not in {"call", "put"}:
         raise ValueError("option_type must be 'call' or 'put'")
 
-    dgp_params = HestonParamsP(
+    dgp_params = HestonPhysicalParameters(
         eta=0.0,
         kappa=params.kappa,
         vbar=params.vbar,

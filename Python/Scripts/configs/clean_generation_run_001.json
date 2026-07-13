@@ -41,8 +41,9 @@
     "pricing_method": "COS",
     "iv_method": "lets_be_rational",
     "cos": {
-      "n_terms": 256,
-      "truncation_L": 10
+      "calibration_status": "required_before_production_generation",
+      "n_terms": null,
+      "effective_widths": []
     }
   },
   "parallel": {

@@ -2,12 +2,12 @@ import math
 
 import numpy as np
 
-from DGPSimulation.types import HestonParamsP
+from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 
 
 def test_qe_stepper_matches_conditional_moments():
-    params = HestonParamsP(eta=1.2, kappa=2.2, vbar=0.05, sigma_v=0.5, rho=-0.4, r=0.0, q=0.0)
+    params = HestonPhysicalParameters(eta=1.2, kappa=2.2, vbar=0.05, sigma_v=0.5, rho=-0.4, r=0.0, q=0.0)
     drawer = AndersenQeVarianceDrawer()
 
     delta = 1.0 / 252.0

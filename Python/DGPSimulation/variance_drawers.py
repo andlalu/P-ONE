@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from DGPSimulation.base import VarianceDrawer
-from DGPSimulation.types import HestonParamsP
+from Models.Heston.parameters import HestonPhysicalParameters
 
 
 @dataclass(frozen=True)
@@ -13,7 +13,7 @@ class AndersenQeVarianceDrawer(VarianceDrawer):
     psi_c: float = 1.5
     eps: float = 1e-16
 
-    def draw_next_variance(self, v_n: float, delta: float, rng: Any, params: HestonParamsP) -> float:
+    def draw_next_variance(self, v_n: float, delta: float, rng: Any, params: HestonPhysicalParameters) -> float:
         e = math.exp(-params.kappa * delta)
         m = params.vbar + (v_n - params.vbar) * e
         s2 = (
@@ -49,7 +49,7 @@ class AndersenQeVarianceDrawer(VarianceDrawer):
 class EulerVarianceDrawer(VarianceDrawer):
     """Euler-Maruyama with full truncation to keep variance non-negative."""
 
-    def draw_next_variance(self, v_n: float, delta: float, rng: Any, params: HestonParamsP) -> float:
+    def draw_next_variance(self, v_n: float, delta: float, rng: Any, params: HestonPhysicalParameters) -> float:
         v_pos = max(v_n, 0.0)
         z = rng.normal()
         dv = params.kappa * (params.vbar - v_pos) * delta + params.sigma_v * math.sqrt(v_pos * delta) * z

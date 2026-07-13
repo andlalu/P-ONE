@@ -9,12 +9,13 @@ from typing import Iterable
 
 import numpy as np
 
-from DGPSimulation.types import HestonParamsP, HestonPath
+from DGPSimulation.types import HestonPath
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_vega
+from Models.Heston.parameters import HestonParameters, HestonPhysicalParameters, HestonRiskNeutralParameters
+from OptionData.io import write_panel_metadata
+from OptionPricing.cos_basis import FixedCosBasisConfig
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
-from OptionPricing.types import CosPricingConfig, HestonPricingParamsQ
 
 PANEL_COLUMNS = [
     "run_id",
@@ -41,18 +42,17 @@ PANEL_COLUMNS = [
 ]
 
 
-def heston_q_from_p(params_p: HestonParamsP, eta_v: float) -> HestonPricingParamsQ:
-    kappa_q = params_p.kappa - eta_v
-    if kappa_q <= 0.0:
-        raise ValueError("kappa - eta_v must be strictly positive")
-    return HestonPricingParamsQ(
-        kappa=kappa_q,
-        vbar=params_p.kappa * params_p.vbar / kappa_q,
+def heston_q_from_p(params_p: HestonPhysicalParameters, eta_v: float) -> HestonRiskNeutralParameters:
+    return HestonParameters(
+        eta=params_p.eta,
+        kappa=params_p.kappa,
+        vbar=params_p.vbar,
         sigma_v=params_p.sigma_v,
         rho=params_p.rho,
+        eta_v=eta_v,
         r=params_p.r,
         q=params_p.q,
-    )
+    ).to_risk_neutral()
 
 
 def option_type_for_log_moneyness(log_moneyness: float, atm_option_type: str = "call") -> str:
@@ -70,7 +70,7 @@ def generate_clean_option_panel_rows(
     run_id: str,
     sample_id: int,
     path: HestonPath,
-    params_p: HestonParamsP,
+    params_p: HestonPhysicalParameters,
     eta_v: float,
     maturities_years: Iterable[float],
     log_moneyness: Iterable[float],
@@ -78,13 +78,14 @@ def generate_clean_option_panel_rows(
     pricing_method: str,
     iv_method: str,
     pricer: CosOptionPricer,
-    pricing_config: CosPricingConfig,
+    cos_basis: FixedCosBasisConfig,
 ) -> list[dict[str, object]]:
     if pricing_method.upper() != "COS":
         raise NotImplementedError(f"unsupported pricing_method: {pricing_method}")
 
     params_q = heston_q_from_p(params_p, eta_v)
     maturities = [float(x) for x in maturities_years]
+    cos_basis.validate_requested_maturities(maturities)
     moneyness_grid = [float(x) for x in log_moneyness]
     rows: list[dict[str, object]] = []
     log_s_week = np.asarray(path.logS_week, dtype=float)
@@ -93,14 +94,6 @@ def generate_clean_option_panel_rows(
     n_obs = log_s_week.shape[0]
     n_moneyness = len(moneyness_grid)
     n_maturities = len(maturities)
-
-    truncation_width = pricer.effective_truncation_width(v_week, np.asarray(maturities, dtype=float), pricing_config)
-    u_grid, _ = pricer._get_static_terms(pricing_config.n_cos, truncation_width)
-    coefficients = HestonAnalyticCcfSolver().solve_coefficients(
-        u_grid,
-        np.asarray(maturities, dtype=float),
-        model_params=params_q,
-    )
 
     strike_tensor = np.empty((n_obs, n_moneyness, n_maturities), dtype=float)
     option_types = np.empty((n_obs, n_moneyness, n_maturities), dtype=object)
@@ -114,17 +107,23 @@ def generate_clean_option_panel_rows(
             strike_tensor[:, moneyness_index, maturity_index] = forwards[:, maturity_index] * math.exp(lm)
             option_types[:, moneyness_index, maturity_index] = option_type_for_log_moneyness(lm, atm_option_type)
 
-    prices = pricer.price_matrix(
-        log_s=log_s_week,
-        variance=v_week,
-        strike_grid=strike_tensor,
-        maturity_grid=np.asarray(maturities, dtype=float),
-        rate_grid=np.full(n_maturities, params_p.r, dtype=float),
-        dividend_yield_grid=np.full(n_maturities, params_p.q, dtype=float),
-        coefficients=coefficients,
-        pricing_config=pricing_config,
-        option_type=option_types,
-    )
+    prices = np.empty_like(strike_tensor)
+    for maturity_index, maturity in enumerate(maturities):
+        basis = pricer.prepare_fixed_basis(
+            maturity=maturity,
+            effective_width=cos_basis.width_for_maturity(maturity),
+            n_cos=cos_basis.n_cos,
+            model_params=params_q,
+        )
+        prices[:, :, maturity_index] = pricer.price_matrix_fixed_basis(
+            log_s=log_s_week,
+            variance=v_week,
+            strike_grid=strike_tensor[:, :, maturity_index : maturity_index + 1],
+            rate=params_p.r,
+            dividend_yield=params_p.q,
+            basis=basis,
+            option_type=option_types[:, :, maturity_index : maturity_index + 1],
+        )[:, :, 0]
 
     for week_index, (t, log_s, v) in enumerate(zip(path.t_week, path.logS_week, path.V_week)):
         S = float(math.exp(float(log_s)))
@@ -186,13 +185,14 @@ def parquet_available() -> bool:
     )
 
 
-def write_panel(rows: list[dict[str, object]], target_without_suffix: Path) -> Path:
+def write_panel(rows: list[dict[str, object]], target_without_suffix: Path, *, metadata: dict[str, object]) -> Path:
     target_without_suffix.parent.mkdir(parents=True, exist_ok=True)
     if parquet_available():
         import pandas as pd  # type: ignore[import-not-found]
 
         out = target_without_suffix.with_suffix(".parquet")
         pd.DataFrame(rows, columns=PANEL_COLUMNS).to_parquet(out, index=False)
+        write_panel_metadata(out, metadata)
         return out
 
     warnings.warn("Parquet dependencies unavailable; writing clean option panel as CSV.", RuntimeWarning)
@@ -201,6 +201,7 @@ def write_panel(rows: list[dict[str, object]], target_without_suffix: Path) -> P
         writer = csv.DictWriter(fh, fieldnames=PANEL_COLUMNS)
         writer.writeheader()
         writer.writerows(rows)
+    write_panel_metadata(out, metadata)
     return out
 
 

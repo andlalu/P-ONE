@@ -1,10 +1,11 @@
 import numpy as np
 
-from Estimation.ISCGMM.types import HestonEstimationParams, from_free, to_free
+from Estimation.ISCGMM.parameter_transform import from_free, to_free
+from Models.Heston.parameters import HestonParameters
 
 
 def test_parameter_transform_roundtrip_and_constraints():
-    theta = HestonEstimationParams(
+    theta = HestonParameters(
         eta=5.0,
         kappa=7.0,
         vbar=0.0225,

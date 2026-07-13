@@ -8,40 +8,21 @@ from OptionPricing.base import CcfSolver, OptionPricer
 
 
 @dataclass(frozen=True)
-class HestonPricingParamsQ:
-    kappa: float
-    vbar: float
-    sigma_v: float
-    rho: float
-    r: float = 0.0
-    q: float = 0.0
-    v_risk_premium: float = 0.0
+class VarianceScaledCosConfig:
+    """Explicit reference configuration for the legacy variance-scaled width."""
 
-    def validate(self) -> None:
-        if self.kappa <= 0.0:
-            raise ValueError("kappa must be strictly positive")
-        if self.vbar < 0.0:
-            raise ValueError("vbar must be non-negative")
-        if self.sigma_v < 0.0:
-            raise ValueError("sigma_v must be non-negative")
-        if not -1.0 <= self.rho <= 1.0:
-            raise ValueError("rho must be in [-1, 1]")
-
-
-@dataclass(frozen=True)
-class CosPricingConfig:
     n_cos: int = 256
-    truncation_width: float = 10.0
+    width_multiplier: float = 10.0
 
     def validate(self) -> None:
         if self.n_cos <= 1:
             raise ValueError("n_cos must be > 1")
-        if self.truncation_width <= 0.0:
-            raise ValueError("truncation_width must be strictly positive")
+        if self.width_multiplier <= 0.0:
+            raise ValueError("width_multiplier must be strictly positive")
 
 
 @dataclass(frozen=True)
-class OptionPanelConfig:
+class OptionPriceCubeConfig:
     strikes: np.ndarray
     maturities: np.ndarray
     rates: np.ndarray
@@ -64,7 +45,21 @@ class CoefficientTensor:
 
 
 @dataclass(frozen=True)
-class OptionPanel:
+class PreparedFixedCosBasis:
+    """Reusable maturity-specific COS grid, payoff terms and affine A/B."""
+
+    maturity: float
+    effective_width: float
+    n_cos: int
+    u_grid: np.ndarray
+    payoff_terms: np.ndarray
+    coefficients: CoefficientTensor
+
+
+@dataclass(frozen=True)
+class OptionPriceCube:
+    """Legacy dense vectorised pricing output; not a market-data panel."""
+
     prices: np.ndarray
     observation_index: np.ndarray
     strikes: np.ndarray

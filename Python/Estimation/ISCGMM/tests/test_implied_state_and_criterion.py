@@ -2,33 +2,36 @@ import math
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 from Estimation.ISCGMM.cgmm_criterion import CgmmFirstStepCriterion, criterion_diagnostics_to_dict
+from Estimation.ISCGMM.config import CcfQuadratureConfig, CgmmConfig, ImpliedStateConfig
 from Estimation.ISCGMM.implied_state import imply_heston_variance_path
-from Estimation.ISCGMM.panel import load_option_panel_data
-from Estimation.ISCGMM.types import CgmmConfig, HestonEstimationParams, ImpliedStateConfig, QuadratureConfig
-from OptionPricing.clean_panel import generate_clean_option_panel_rows
+from Models.Heston.parameters import HestonParameters, HestonPhysicalParameters
+from OptionData.io import load_option_panel
+from OptionData.panel import OptionPanel
+from OptionPricing.clean_panel import generate_clean_option_panel_rows, write_panel
+from OptionPricing.cos_basis import FixedCosBasisConfig
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
-from OptionPricing.types import CosPricingConfig
 
 
-def _true_params() -> tuple[HestonParamsP, HestonEstimationParams]:
-    params_p = HestonParamsP(
-        eta=5.0,
-        kappa=7.0,
-        vbar=0.0225,
-        sigma_v=0.4,
-        rho=-0.5,
-        r=0.02,
-        q=0.0,
+def _basis() -> FixedCosBasisConfig:
+    return FixedCosBasisConfig(
+        maturities=(1.0 / 12.0, 0.25),
+        effective_widths=(1.0, 1.5),
+        n_cos=64,
     )
-    theta = HestonEstimationParams(
+
+
+def _true_params() -> tuple[HestonPhysicalParameters, HestonParameters]:
+    params_p = HestonPhysicalParameters(
+        eta=5.0, kappa=7.0, vbar=0.0225, sigma_v=0.4, rho=-0.5, r=0.02, q=0.0
+    )
+    theta = HestonParameters(
         eta=params_p.eta,
         kappa=params_p.kappa,
         vbar=params_p.vbar,
@@ -45,59 +48,46 @@ def _write_tiny_panel(tmp_path: Path, *, n_weeks: int = 7) -> Path:
     params_p, _ = _true_params()
     path = HestonPathSimulator(
         params=params_p,
-        config=HestonSimConfig(
-            delta=1.0 / 252.0,
-            m_week=5,
-            t_week=n_weeks,
-            burnin_days=60,
-            s0=100.0,
-            seed=321,
-        ),
+        config=HestonSimConfig(t_week=n_weeks, burnin_days=60, s0=100.0, seed=321),
         variance_drawer=AndersenQeVarianceDrawer(),
     ).simulate()
+    basis = _basis()
     rows = generate_clean_option_panel_rows(
         run_id="unit",
         sample_id=0,
         path=path,
         params_p=params_p,
         eta_v=5.0,
-        maturities_years=(1.0 / 12.0, 0.25),
+        maturities_years=basis.maturities,
         log_moneyness=(-0.10, 0.0, 0.10),
         atm_option_type="call",
         pricing_method="COS",
         iv_method="lets_be_rational",
         pricer=CosOptionPricer(),
-        pricing_config=CosPricingConfig(n_cos=64, truncation_width=10.0),
+        cos_basis=basis,
     )
-    target = tmp_path / "panel.parquet"
-    pd.DataFrame(rows).to_parquet(target, index=False)
-    return target
+    return write_panel(
+        rows,
+        tmp_path / "panel",
+        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": basis.to_metadata()},
+    )
 
 
-def _state_config(effective_truncation_width: float | None = None) -> ImpliedStateConfig:
+def _state_config(*, v_max: float = 1.0, boundary_tol: float = 1e-5) -> ImpliedStateConfig:
     return ImpliedStateConfig(
+        cos_basis=_basis(),
+        v_min=1e-8,
+        v_max=v_max,
         tol=2e-5,
         max_iter=80,
-        effective_truncation_width=effective_truncation_width,
-        pricing_config=CosPricingConfig(n_cos=64, truncation_width=10.0),
-    )
-
-
-def _generation_effective_width(panel) -> float:
-    true_v = panel.true_variance
-    assert true_v is not None
-    maturities = np.unique(np.concatenate([date.maturities for date in panel.dates]))
-    return CosOptionPricer.effective_truncation_width(
-        true_v,
-        maturities,
-        CosPricingConfig(n_cos=64, truncation_width=10.0),
+        boundary_tol=boundary_tol,
     )
 
 
 def test_implied_state_recovers_clean_variance_and_reports_warm_starts(tmp_path):
     _, theta = _true_params()
-    panel = load_option_panel_data(_write_tiny_panel(tmp_path))
-    result = imply_heston_variance_path(theta, panel, _state_config(_generation_effective_width(panel)))
+    panel = load_option_panel(_write_tiny_panel(tmp_path))
+    result = imply_heston_variance_path(theta, panel, _state_config())
     true_v = panel.true_variance
     assert true_v is not None
     rmse = math.sqrt(float(np.mean((result.variance - true_v) ** 2)))
@@ -110,22 +100,23 @@ def test_implied_state_recovers_clean_variance_and_reports_warm_starts(tmp_path)
 
 def test_implied_state_reports_boundary_hits(tmp_path):
     _, theta = _true_params()
-    panel = load_option_panel_data(_write_tiny_panel(tmp_path), max_dates=4)
-    cfg = ImpliedStateConfig(
-        v_min=1e-8,
-        v_max=0.01,
-        tol=2e-4,
-        boundary_tol=1e-4,
-        max_iter=40,
-        pricing_config=CosPricingConfig(n_cos=48, truncation_width=10.0),
-    )
-    result = imply_heston_variance_path(theta, panel, cfg)
+    panel = load_option_panel(_write_tiny_panel(tmp_path), max_dates=4)
+    result = imply_heston_variance_path(theta, panel, _state_config(v_max=0.01, boundary_tol=1e-4))
     assert np.any(result.boundary_hit)
 
 
-def test_fixed_width_inversion_caches_heston_coefficients(tmp_path, monkeypatch):
+def test_implied_state_rejects_panel_configuration_cos_basis_mismatch(tmp_path):
     _, theta = _true_params()
-    panel = load_option_panel_data(_write_tiny_panel(tmp_path), max_dates=4)
+    panel = load_option_panel(_write_tiny_panel(tmp_path), max_dates=3)
+    mismatched = FixedCosBasisConfig(_basis().maturities, (1.1, 1.5), _basis().n_cos)
+    panel = OptionPanel(panel.dates, metadata={**panel.metadata, "cos_basis": mismatched.to_metadata()})
+    with pytest.raises(ValueError, match="width mismatch"):
+        imply_heston_variance_path(theta, panel, _state_config())
+
+
+def test_fixed_width_inversion_reuses_heston_coefficients_across_dates(tmp_path, monkeypatch):
+    _, theta = _true_params()
+    panel = load_option_panel(_write_tiny_panel(tmp_path), max_dates=4)
     calls = []
     original = HestonAnalyticCcfSolver.solve_coefficients
 
@@ -134,18 +125,19 @@ def test_fixed_width_inversion_caches_heston_coefficients(tmp_path, monkeypatch)
         return original(self, *args, **kwargs)
 
     monkeypatch.setattr(HestonAnalyticCcfSolver, "solve_coefficients", counting_solve)
-    result = imply_heston_variance_path(theta, panel, _state_config(_generation_effective_width(panel)))
-    assert result.success_rate == pytest.approx(1.0)
+    result = imply_heston_variance_path(theta, panel, _state_config())
     n_maturities = len(np.unique(np.concatenate([date.maturities for date in panel.dates])))
-    assert len(calls) == panel.n_dates * n_maturities
+    assert result.success_rate == pytest.approx(1.0)
+    assert len(calls) == n_maturities
+    assert result.coefficient_solve_count == n_maturities
 
 
-def test_first_step_criterion_is_deterministic_finite_and_penalizes_strong_perturbation(tmp_path):
+def test_first_step_criterion_is_deterministic_and_preserves_ordering(tmp_path):
     _, theta = _true_params()
-    panel = load_option_panel_data(_write_tiny_panel(tmp_path), max_dates=6)
+    panel = load_option_panel(_write_tiny_panel(tmp_path), max_dates=6)
     config = CgmmConfig(
-        implied_state=_state_config(_generation_effective_width(panel)),
-        quadrature=QuadratureConfig(order=2, scale=1.0),
+        implied_state=_state_config(),
+        quadrature=CcfQuadratureConfig(order=2, scale=1.0),
         instrument_precision=(10.0, 50.0),
         transition_rk_steps=16,
     )
@@ -155,15 +147,14 @@ def test_first_step_criterion_is_deterministic_finite_and_penalizes_strong_pertu
     q_true_2 = criterion.evaluate(theta)
     assert q_true_1 == pytest.approx(q_true_2, rel=0.0, abs=1e-14)
     assert math.isfinite(q_true_1)
-    payload = criterion_diagnostics_to_dict(theta, diagnostics)
-    state_info = payload["state_inversion"]
+    state_info = criterion_diagnostics_to_dict(theta, diagnostics)["state_inversion"]
     assert state_info["coefficient_solve_count"] > 0
     assert state_info["coefficient_cache_hits"] > 0
     assert state_info["fixed_coefficient_count"] == state_info["coefficient_solve_count"]
 
     bad_kappa = theta.kappa * 0.55
     bad_kappa_q = theta.kappa_q * 1.60
-    perturbed = HestonEstimationParams(
+    perturbed = HestonParameters(
         eta=theta.eta * 1.4,
         kappa=bad_kappa,
         vbar=theta.vbar * 1.6,
@@ -176,7 +167,6 @@ def test_first_step_criterion_is_deterministic_finite_and_penalizes_strong_pertu
     q_bad = criterion.evaluate(perturbed)
     assert math.isfinite(q_bad)
     assert q_true_1 < q_bad
-
     before = panel.log_spot.copy()
-    _ = criterion.evaluate(theta)
+    criterion.evaluate(theta)
     np.testing.assert_allclose(panel.log_spot, before)

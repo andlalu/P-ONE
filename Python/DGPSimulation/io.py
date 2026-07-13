@@ -7,7 +7,8 @@ from typing import Tuple
 
 import numpy as np
 
-from DGPSimulation.types import HestonParamsP, HestonPath, HestonSimConfig
+from DGPSimulation.types import HestonPath, HestonSimConfig
+from Models.Heston.parameters import HestonPhysicalParameters
 
 _FORMAT_VERSION = 1
 
@@ -15,7 +16,7 @@ _FORMAT_VERSION = 1
 def save_heston_path_npz(
     file_path: str | Path,
     path: HestonPath,
-    params: HestonParamsP,
+    params: HestonPhysicalParameters,
     config: HestonSimConfig,
     compressed: bool = True,
 ) -> None:
@@ -49,7 +50,7 @@ def save_heston_path_npz(
         np.savez(destination, **payload)
 
 
-def load_heston_path_npz(file_path: str | Path) -> Tuple[HestonPath, HestonParamsP, HestonSimConfig]:
+def load_heston_path_npz(file_path: str | Path) -> Tuple[HestonPath, HestonPhysicalParameters, HestonSimConfig]:
     """Load a Heston path and metadata previously saved by save_heston_path_npz."""
     source = Path(file_path)
 
@@ -60,7 +61,7 @@ def load_heston_path_npz(file_path: str | Path) -> Tuple[HestonPath, HestonParam
                 f"Unsupported heston path format version: {metadata.get('format_version')}"
             )
 
-        params = HestonParamsP(**metadata["params"])
+        params = HestonPhysicalParameters(**metadata["params"])
         config = HestonSimConfig(**metadata["config"])
 
         logS_daily = data["logS_daily"] if "logS_daily" in data.files else None

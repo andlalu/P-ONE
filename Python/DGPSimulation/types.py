@@ -5,28 +5,7 @@ from typing import Optional
 
 import numpy as np
 
-from DGPSimulation.base import ModelParams, SimulationConfig, SimulationPath
-
-
-@dataclass(frozen=True)
-class HestonParamsP(ModelParams):
-    eta: float
-    kappa: float
-    vbar: float
-    sigma_v: float
-    rho: float
-    r: float = 0.0
-    q: float = 0.0
-
-    def validate(self) -> None:
-        if self.kappa <= 0.0:
-            raise ValueError("kappa must be strictly positive")
-        if self.vbar < 0.0:
-            raise ValueError("vbar must be non-negative")
-        if self.sigma_v <= 0.0:
-            raise ValueError("sigma_v must be strictly positive")
-        if not -1.0 <= self.rho <= 1.0:
-            raise ValueError("rho must be in [-1, 1]")
+from DGPSimulation.base import SimulationConfig, SimulationPath
 
 
 @dataclass(frozen=True)
@@ -64,5 +43,4 @@ class HestonPath(SimulationPath):
     logS_daily: Optional[np.ndarray] = None
     V_daily: Optional[np.ndarray] = None
     seed: Optional[int] = None
-
 

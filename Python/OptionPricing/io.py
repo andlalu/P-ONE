@@ -5,12 +5,12 @@ from pathlib import Path
 
 import numpy as np
 
-from OptionPricing.base import OptionPanelStore
-from OptionPricing.types import OptionPanel
+from OptionPricing.base import OptionPriceCubeStore
+from OptionPricing.types import OptionPriceCube
 
 
-class NpzOptionPanelStore(OptionPanelStore):
-    def save(self, panel: OptionPanel, file_path: str) -> None:
+class NpzOptionPriceCubeStore(OptionPriceCubeStore):
+    def save(self, panel: OptionPriceCube, file_path: str) -> None:
         p = Path(file_path)
         np.savez_compressed(
             p,
@@ -23,7 +23,7 @@ class NpzOptionPanelStore(OptionPanelStore):
 
     def load(self, file_path: str):
         data = np.load(file_path, allow_pickle=False)
-        return OptionPanel(
+        return OptionPriceCube(
             prices=data["prices"],
             observation_index=data["observation_index"],
             strikes=data["strikes"],

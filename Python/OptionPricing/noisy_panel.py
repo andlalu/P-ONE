@@ -11,6 +11,7 @@ import numpy as np
 
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price
+from OptionData.io import panel_metadata_path, write_panel_metadata
 from OptionPricing.clean_panel import parquet_available
 
 NOISE_SCENARIOS = ("low_iid", "spatial_corr", "persistent_factor")
@@ -331,7 +332,12 @@ def read_table(path: str | Path) -> list[dict[str, Any]]:
         return list(csv.DictReader(fh))
 
 
-def write_table(rows: list[dict[str, Any]], target_without_suffix: str | Path) -> Path:
+def write_table(
+    rows: list[dict[str, Any]],
+    target_without_suffix: str | Path,
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> Path:
     target = Path(target_without_suffix)
     target.parent.mkdir(parents=True, exist_ok=True)
     if parquet_available():
@@ -339,6 +345,8 @@ def write_table(rows: list[dict[str, Any]], target_without_suffix: str | Path) -
 
         out = target.with_suffix(".parquet")
         pd.DataFrame(rows).to_parquet(out, index=False)
+        if metadata is not None:
+            write_panel_metadata(out, metadata)
         return out
     out = target.with_suffix(".csv")
     fieldnames = list(rows[0].keys()) if rows else []
@@ -346,6 +354,8 @@ def write_table(rows: list[dict[str, Any]], target_without_suffix: str | Path) -
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+    if metadata is not None:
+        write_panel_metadata(out, metadata)
     return out
 
 
@@ -631,7 +641,17 @@ def generate_noisy_panel_file(
     try:
         clean_rows = read_table(clean_panel_path)
         rows, factors = generate_noisy_panel_rows(clean_rows, scenario=scenario, seed=seed, config=config)
-        output = write_table(rows, Path(run_root) / "panels_observed" / scenario / f"sample_{sample_id:03d}")
+        clean_metadata_path = panel_metadata_path(clean_panel_path)
+        if not clean_metadata_path.exists():
+            raise ValueError("clean panel is missing required COS-basis metadata sidecar")
+        with clean_metadata_path.open() as fh:
+            inherited_metadata = json.load(fh)
+        inherited_metadata.update({"scenario": scenario, "sample_id": sample_id})
+        output = write_table(
+            rows,
+            Path(run_root) / "panels_observed" / scenario / f"sample_{sample_id:03d}",
+            metadata=inherited_metadata,
+        )
         factor_out = ""
         if scenario == "persistent_factor":
             factor_out = str(write_factor_file(factors, run_root, scenario, sample_id))

@@ -5,12 +5,13 @@ import time
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
+from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 
 
 def run_benchmark(repetitions: int = 100_000) -> None:
-    params = HestonParamsP(eta=1.5, kappa=3.0, vbar=0.04, sigma_v=0.4, rho=-0.7, r=0.02, q=0.0)
+    params = HestonPhysicalParameters(eta=1.5, kappa=3.0, vbar=0.04, sigma_v=0.4, rho=-0.7, r=0.02, q=0.0)
     config = HestonSimConfig(seed=7)
 
     rng = np.random.default_rng(config.seed)

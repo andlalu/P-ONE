@@ -2,12 +2,13 @@ import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
 from DGPSimulation.io import load_heston_path_npz, save_heston_path_npz
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
+from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 
 
-def _params() -> HestonParamsP:
-    return HestonParamsP(eta=1.1, kappa=1.8, vbar=0.03, sigma_v=0.4, rho=-0.5, r=0.01, q=0.0)
+def _params() -> HestonPhysicalParameters:
+    return HestonPhysicalParameters(eta=1.1, kappa=1.8, vbar=0.03, sigma_v=0.4, rho=-0.5, r=0.01, q=0.0)
 
 
 def test_npz_roundtrip_with_daily_series(tmp_path):

@@ -1,0 +1,2 @@
+"""Shared financial model definitions."""
+

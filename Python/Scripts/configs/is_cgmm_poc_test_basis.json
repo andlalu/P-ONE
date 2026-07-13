@@ -1,0 +1,6 @@
+{
+  "maturities": [0.25],
+  "effective_widths": [1.5],
+  "n_cos": 64,
+  "maturity_tolerance": 1e-10
+}

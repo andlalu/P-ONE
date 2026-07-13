@@ -8,16 +8,13 @@ from typing import Any
 
 import numpy as np
 
+from Estimation.ISCGMM.config import CcfQuadratureConfig, CgmmConfig
 from Estimation.ISCGMM.heston_transition_cf import heston_p_transition_cf
 from Estimation.ISCGMM.implied_state import imply_heston_variance_path
-from Estimation.ISCGMM.types import (
-    CgmmConfig,
-    CriterionDiagnostics,
-    EstimationPanel,
-    HestonEstimationParams,
-    QuadratureConfig,
-    from_free,
-)
+from Estimation.ISCGMM.parameter_transform import from_free
+from Estimation.ISCGMM.results import CriterionDiagnostics
+from Models.Heston.parameters import HestonParameters
+from OptionData.panel import OptionPanel
 
 
 def build_estimation_state(log_spot: np.ndarray, implied_variance: np.ndarray) -> np.ndarray:
@@ -32,25 +29,18 @@ def build_estimation_state(log_spot: np.ndarray, implied_variance: np.ndarray) -
     return np.column_stack((np.diff(log_s), variance[1:]))
 
 
-def make_cgmm_quadrature(config: QuadratureConfig | None = None) -> tuple[np.ndarray, np.ndarray]:
+def make_cgmm_quadrature(config: CcfQuadratureConfig | None = None) -> tuple[np.ndarray, np.ndarray]:
     """Create deterministic tensor quadrature nodes for CCF argument integration."""
 
-    cfg = QuadratureConfig() if config is None else config
+    cfg = CcfQuadratureConfig() if config is None else config
     cfg.validate()
-    if cfg.scheme == "gauss_hermite":
-        one_d_nodes, one_d_weights = np.polynomial.hermite.hermgauss(cfg.order)
-        one_d_nodes = math.sqrt(2.0) * cfg.scale * one_d_nodes
-        one_d_weights = one_d_weights / math.sqrt(math.pi)
-    elif cfg.scheme == "gauss_legendre":
-        one_d_nodes, one_d_weights = np.polynomial.legendre.leggauss(cfg.order)
-        one_d_nodes = cfg.scale * one_d_nodes
-        one_d_weights = one_d_weights / 2.0
-    else:
-        raise ValueError(f"unsupported quadrature scheme: {cfg.scheme}")
+    one_d_nodes, one_d_weights = np.polynomial.hermite.hermgauss(cfg.order)
+    one_d_nodes = math.sqrt(2.0) * cfg.scale * one_d_nodes
+    one_d_weights = one_d_weights / math.sqrt(math.pi)
 
     nodes: list[tuple[float, ...]] = []
     weights: list[float] = []
-    for multi_index in itertools.product(range(cfg.order), repeat=cfg.dim):
+    for multi_index in itertools.product(range(cfg.order), repeat=cfg.dimension):
         nodes.append(tuple(float(one_d_nodes[idx]) for idx in multi_index))
         weight = 1.0
         for idx in multi_index:
@@ -59,14 +49,14 @@ def make_cgmm_quadrature(config: QuadratureConfig | None = None) -> tuple[np.nda
     return np.array(nodes, dtype=float), np.array(weights, dtype=float)
 
 
-def _panel_dt(panel: EstimationPanel, config: CgmmConfig) -> float:
-    if config.dt is not None:
-        return float(config.dt)
+def _infer_constant_transition_interval(panel: OptionPanel, config: CgmmConfig) -> float:
     diffs = np.diff(panel.times)
-    positive = diffs[diffs > 0.0]
-    if positive.size == 0:
-        raise ValueError("panel times do not contain a positive transition interval")
-    return float(np.median(positive))
+    if diffs.size == 0 or np.any(diffs <= 0.0):
+        raise ValueError("panel times must contain strictly positive consecutive intervals")
+    interval = float(diffs[0])
+    if not np.allclose(diffs, interval, rtol=0.0, atol=config.spacing_tolerance):
+        raise ValueError("IS-CGMM requires equally spaced panel observations")
+    return float(config.dt) if config.dt is not None else interval
 
 
 def _gaussian_instrument_kernel(x_prev: np.ndarray, precision: tuple[float, float]) -> np.ndarray:
@@ -92,27 +82,29 @@ class CgmmFirstStepCriterion:
     weight, leaving numerical quadrature only over the CCF argument s.
     """
 
-    def __init__(self, panel: EstimationPanel, config: CgmmConfig | None = None):
+    def __init__(self, panel: OptionPanel, config: CgmmConfig):
         self.panel = panel
-        self.config = CgmmConfig() if config is None else config
+        self.config = config
         self.config.validate()
         self.s_nodes, self.s_weights = make_cgmm_quadrature(self.config.quadrature)
         if self.s_nodes.shape[1] != 2:
             raise ValueError("Heston IS-CGMM requires two-dimensional s nodes")
 
-    def evaluate(self, theta: HestonEstimationParams, *, return_diagnostics: bool = False) -> float | CriterionDiagnostics:
+    def evaluate(self, theta: HestonParameters, *, return_diagnostics: bool = False) -> float | CriterionDiagnostics:
         panel_rate, panel_dividend_yield = self.panel.first_rate_pair()
         theta = theta.with_rates(r=panel_rate, q=panel_dividend_yield)
         theta.validate()
 
         t0 = time.perf_counter()
         implied = imply_heston_variance_path(theta, self.panel, self.config.implied_state)
+        if np.any(implied.failed) or not np.all(np.isfinite(implied.objective)):
+            raise FloatingPointError("implied-state inversion failed")
         t_state = time.perf_counter()
 
         x_state = build_estimation_state(self.panel.log_spot, implied.variance)
         x_prev = x_state[:-1]
         x_next = x_state[1:]
-        dt = _panel_dt(self.panel, self.config)
+        dt = _infer_constant_transition_interval(self.panel, self.config)
         n_transitions = x_prev.shape[0]
         if n_transitions <= 0:
             raise ValueError("not enough dates for C-GMM transition residuals")
@@ -169,6 +161,7 @@ class CgmmFirstStepCriterion:
                 "quadratic_form": t_done - t_kernel,
                 "total": t_done - t0,
             },
+            metadata={"cos_basis": self.config.implied_state.cos_basis.to_metadata()},
         )
 
     def evaluate_free(self, free_theta: np.ndarray, *, r: float, q: float) -> float:
@@ -176,7 +169,7 @@ class CgmmFirstStepCriterion:
         return float(self.evaluate(theta))
 
 
-def criterion_diagnostics_to_dict(theta: HestonEstimationParams, diagnostics: CriterionDiagnostics) -> dict[str, Any]:
+def criterion_diagnostics_to_dict(theta: HestonParameters, diagnostics: CriterionDiagnostics) -> dict[str, Any]:
     implied = diagnostics.implied_state
     return {
         "theta": asdict(theta),
@@ -192,14 +185,11 @@ def criterion_diagnostics_to_dict(theta: HestonEstimationParams, diagnostics: Cr
             "objective_max": float(np.max(implied.objective)),
             "coefficient_solve_count": int(implied.coefficient_solve_count),
             "coefficient_cache_hits": int(implied.coefficient_cache_hits),
-            "coefficient_cache_misses": int(implied.coefficient_cache_misses),
             "fixed_coefficient_count": int(implied.fixed_coefficient_count),
         },
         "implied_variance": diagnostics.implied_variance_summary,
         "true_variance_rmse": diagnostics.true_variance_rmse,
         "true_variance_mae": diagnostics.true_variance_mae,
         "timings": diagnostics.timings,
+        "metadata": diagnostics.metadata,
     }
-
-
-CGMMFirstStepCriterion = CgmmFirstStepCriterion

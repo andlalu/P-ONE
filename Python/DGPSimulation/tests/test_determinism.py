@@ -1,12 +1,13 @@
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonParamsP, HestonSimConfig
+from DGPSimulation.types import HestonSimConfig
+from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer, EulerVarianceDrawer
 
 
-def _base_params() -> HestonParamsP:
-    return HestonParamsP(eta=1.2, kappa=2.0, vbar=0.04, sigma_v=0.5, rho=-0.6, r=0.01, q=0.0)
+def _base_params() -> HestonPhysicalParameters:
+    return HestonPhysicalParameters(eta=1.2, kappa=2.0, vbar=0.04, sigma_v=0.5, rho=-0.6, r=0.01, q=0.0)
 
 
 def test_determinism_qe_drawer():

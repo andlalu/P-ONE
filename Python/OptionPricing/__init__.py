@@ -1,11 +1,13 @@
 """Option pricing package."""
 
 from OptionPricing.clean_panel import generate_clean_option_panel_rows
+from OptionPricing.cos_basis import FixedCosBasisConfig
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.types import HestonPricingParamsQ
+from Models.Heston.parameters import HestonRiskNeutralParameters
 
 __all__ = [
     "CosOptionPricer",
-    "HestonPricingParamsQ",
+    "FixedCosBasisConfig",
+    "HestonRiskNeutralParameters",
     "generate_clean_option_panel_rows",
 ]

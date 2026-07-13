@@ -2,11 +2,11 @@ import numpy as np
 import pytest
 
 from Estimation.ISCGMM.heston_transition_cf import heston_p_transition_cf, heston_p_transform_coefficients
-from Estimation.ISCGMM.types import HestonEstimationParams
+from Models.Heston.parameters import HestonParameters
 
 
-def _theta() -> HestonEstimationParams:
-    return HestonEstimationParams(
+def _theta() -> HestonParameters:
+    return HestonParameters(
         eta=5.0,
         kappa=7.0,
         vbar=0.0225,
