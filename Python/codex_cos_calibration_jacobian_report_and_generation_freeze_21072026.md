@@ -21,7 +21,15 @@ Python/Scripts/configs
 Report:
 
 ```text
-Reports/18062026/draft_proposalJun26.tex
+Reports/21072026/
+```
+
+Identify the main LaTeX entry file inside this directory before editing. Update only that July 2026 report setup.
+
+The previous report setup is frozen and must not be modified:
+
+```text
+Reports/18062026/
 ```
 
 Read this specification in full before changing code. This task is the final numerical and configuration gate before the production Monte Carlo samples are generated. The task must leave the repository with a calibrated, documented and reproducible production-generation configuration.
@@ -797,10 +805,18 @@ Do not generate samples 001--099 in this task.
 
 # 10. Report updates
 
-Report file:
+Report setup:
 
 ```text
-Reports/18062026/draft_proposalJun26.tex
+Reports/21072026/
+```
+
+Before editing, identify the main LaTeX entry file in this directory and confirm that it is the file used to compile the July 2026 report.
+
+Do not modify, reformat, regenerate or copy changes into:
+
+```text
+Reports/18062026/
 ```
 
 ## 10.1 Critical writing-style requirement
@@ -922,9 +938,10 @@ Do not overstate efficiency based on a single sample.
 Provide:
 
 ```text
-a unified diff for the report
+a unified diff for the July 2026 report only
 a short list of inserted paragraphs/subsections
 a short list of equations and labels added
+a confirmation that Reports/18062026/ is unchanged
 ```
 
 Avoid unrelated formatting or wording changes.
@@ -1032,7 +1049,8 @@ The task is complete only when:
 9. one explicit generation CLI exists;
 10. run metadata records the actual numerical and execution configuration;
 11. one end-to-end sample and all requested noisy variants pass validation;
-12. the report concisely documents the fixed basis, Jacobian derivation and selected state solver;
+12. the July 2026 report under `Reports/21072026/` concisely documents the fixed basis, Jacobian derivation and selected state solver;
 13. all report additions match the existing writing style and are clearly reviewable;
-14. the full Python test suite passes;
-15. no samples beyond sample 000 have been generated.
+14. no file under `Reports/18062026/` has changed;
+15. the full Python test suite passes;
+16. no samples beyond sample 000 have been generated.
