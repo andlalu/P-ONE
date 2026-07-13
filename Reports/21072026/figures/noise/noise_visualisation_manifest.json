@@ -1,0 +1,26 @@
+{
+  "sample_id": 0,
+  "requested_date_index": 100,
+  "date_index": 129,
+  "time_window": {
+    "start_week_index": 100,
+    "end_week_index": 299,
+    "length": 200
+  },
+  "scenario_files": {
+    "clean": "outputs/generation/run_001/panels_clean/sample_000.parquet",
+    "low_iid": "outputs/generation/run_001/panels_observed/low_iid/sample_000.parquet",
+    "persistent_factor": "outputs/generation/run_001/panels_observed/persistent_factor/sample_000.parquet",
+    "spatial_corr": "outputs/generation/run_001/panels_observed/spatial_corr/sample_000.parquet"
+  },
+  "factor_file": "outputs/generation/run_001/noise_factors/persistent_factor/sample_000.csv",
+  "figures": [
+    "Reports/18062026/figures/noise/noise_surface_comparison_sample000_date129.pdf",
+    "Reports/18062026/figures/noise/noise_difference_comparison_sample000_date129.pdf",
+    "Reports/18062026/figures/noise/noise_design_cross_section_structure.pdf",
+    "Reports/18062026/figures/noise/noise_low_iid_timeseries_sample000.pdf",
+    "Reports/18062026/figures/noise/noise_persistent_factor_timeseries_sample000.pdf"
+  ],
+  "generated_or_regenerated": [],
+  "created_by": "Python/Scripts/make_noise_visualisations.py"
+}
