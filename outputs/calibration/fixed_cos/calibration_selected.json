@@ -1,0 +1,102 @@
+{
+  "selection_rule": "lowest term count, then narrowest interval, meeting all zero-failure IV-error constraints",
+  "maturities": [
+    0.08333333333333333,
+    0.25,
+    0.5
+  ],
+  "effective_widths": [
+    0.75,
+    1.25,
+    2.0
+  ],
+  "generation_n_cos": 576,
+  "estimation_n_cos": 576,
+  "generation_max_absolute_iv_error": 0.00022297532106396734,
+  "generation_p99_absolute_iv_error": 2.0387691959670352e-05,
+  "estimation_max_absolute_iv_error": 0.00022297532106396734,
+  "estimation_p99_absolute_iv_error": 2.0387691959670352e-05,
+  "generation_max_absolute_iv_error_above_vega_threshold": 1.8075365349617956e-06,
+  "estimation_max_absolute_iv_error_above_vega_threshold": 1.8075365349617956e-06,
+  "low_vega_exception": {
+    "black_vega_threshold": 5e-06,
+    "maximum_absolute_iv_error_allowed": 0.00025,
+    "justification": "At option prices near 1e-10, price differences near floating-point and quadrature accuracy map to unstable IV differences. The full-domain cap remains six times smaller than the 0.0015 observation-error scale."
+  },
+  "generation_candidate_runtime_seconds": 0.06254145782440901,
+  "estimation_candidate_runtime_seconds": 0.06254145782440901,
+  "accepted_variance_state_range": [
+    1e-06,
+    0.15
+  ],
+  "accepted_risk_neutral_parameter_domain": {
+    "kappa_q": [
+      1.5,
+      4.0
+    ],
+    "vbar_q": [
+      0.012,
+      0.24
+    ],
+    "sigma_v": [
+      0.2,
+      0.65
+    ],
+    "rho": [
+      -0.8,
+      -0.2
+    ]
+  },
+  "production_optimizer_natural_bounds": {
+    "eta": [
+      2.0,
+      8.0
+    ],
+    "kappa": [
+      4.0,
+      9.0
+    ],
+    "vbar": [
+      0.012,
+      0.04
+    ],
+    "sigma_v": [
+      0.2,
+      0.65
+    ],
+    "rho": [
+      -0.8,
+      -0.2
+    ],
+    "kappa_q": [
+      1.5,
+      4.0
+    ]
+  },
+  "excluded_parameter_combinations": [
+    "Cartesian corners were excluded because simultaneous independent extremes need not be induced by one physical parameter vector.",
+    "Points violating kappa_q > 0, vbar_q > 0, sigma_v > 0, or rho in (-1,1) are outside the accepted domain."
+  ],
+  "design_seed": 21072026,
+  "latin_hypercube_points": 20,
+  "anchor_points": 4,
+  "variance_states": [
+    1e-06,
+    0.0001,
+    0.0025,
+    0.01,
+    0.0225,
+    0.04,
+    0.08,
+    0.15
+  ],
+  "reference": {
+    "method": "Carr-Madan damped Fourier inversion validated high-resolution COS",
+    "fourier_integration_limit": 1500.0,
+    "fourier_absolute_tolerance": 2e-10,
+    "fourier_relative_tolerance": 2e-10,
+    "high_resolution_cos_width": 5.0,
+    "high_resolution_cos_n_cos": 8192
+  },
+  "reference_crosscheck_max_absolute_price_difference": 6.839862010110664e-11
+}

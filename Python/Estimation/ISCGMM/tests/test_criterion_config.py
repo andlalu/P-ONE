@@ -8,7 +8,7 @@ from OptionPricing.cos_basis import FixedCosBasisConfig
 
 
 def _panel(times):
-    basis = FixedCosBasisConfig((0.25,), (1.5,), 16)
+    basis = FixedCosBasisConfig((0.25,), (1.5,), 16, 16)
     dates = tuple(
         OptionPanelDate(
             date_index=index,
@@ -24,7 +24,7 @@ def _panel(times):
         )
         for index, time in enumerate(times)
     )
-    return OptionPanel(dates, metadata={"cos_basis": basis.to_metadata()}), CgmmConfig(ImpliedStateConfig(basis))
+    return OptionPanel(dates, metadata={"cos_basis": basis.generation_metadata()}), CgmmConfig(ImpliedStateConfig(basis))
 
 
 def test_constant_spacing_acceptance_and_irregular_rejection():
@@ -33,6 +33,15 @@ def test_constant_spacing_acceptance_and_irregular_rejection():
     irregular, config = _panel((0.0, 0.1, 0.21, 0.31))
     with pytest.raises(ValueError, match="equally spaced"):
         _infer_constant_transition_interval(irregular, config)
+
+
+def test_explicit_dt_must_match_inferred_panel_spacing():
+    panel, config = _panel((0.0, 0.1, 0.2, 0.3))
+    matching = CgmmConfig(config.implied_state, dt=0.1, spacing_tolerance=1e-12)
+    assert _infer_constant_transition_interval(panel, matching) == pytest.approx(0.1)
+    mismatched = CgmmConfig(config.implied_state, dt=0.11, spacing_tolerance=1e-12)
+    with pytest.raises(ValueError, match="differs from inferred"):
+        _infer_constant_transition_interval(panel, mismatched)
 
 
 def test_gauss_hermite_quadrature_shape_determinism_and_normalisation():
@@ -44,4 +53,3 @@ def test_gauss_hermite_quadrature_shape_determinism_and_normalisation():
     np.testing.assert_array_equal(nodes_a, nodes_b)
     np.testing.assert_array_equal(weights_a, weights_b)
     assert np.sum(weights_a) == pytest.approx(1.0)
-

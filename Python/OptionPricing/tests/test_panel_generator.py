@@ -19,7 +19,7 @@ def test_panel_generator_outputs_expected_shape():
         pricing_stack=stack,
         panel_config=panel_cfg,
         solver_params=HestonRiskNeutralParameters(kappa=2.0, vbar=0.04, sigma_v=0.5, rho=-0.5, r=0.01, q=0.0),
-        cos_basis=FixedCosBasisConfig(maturities=(0.25, 1.0), effective_widths=(1.5, 2.0), n_cos=32),
+        cos_basis=FixedCosBasisConfig((0.25, 1.0), (1.5, 2.0), 32, 16),
     )
     panel = gen.generate_panel(np.log(np.array([95.0, 100.0, 105.0])), np.array([0.03, 0.04, 0.05]))
     assert panel.prices.shape == (3, 2, 2)

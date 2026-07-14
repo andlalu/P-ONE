@@ -4,7 +4,10 @@ import argparse
 import json
 import logging
 import sys
+from dataclasses import asdict
 from pathlib import Path
+
+import numpy as np
 
 PYTHON_ROOT = Path(__file__).resolve().parents[1]
 if str(PYTHON_ROOT) not in sys.path:
@@ -19,6 +22,7 @@ from Estimation.ISCGMM.config import (
     PowellStageConfig,
 )
 from Estimation.ISCGMM.estimate import estimate_first_step
+from Estimation.ISCGMM.implied_state import imply_heston_variance_path
 from Models.Heston.parameters import HestonParameters
 from OptionData.io import load_option_panel
 from OptionPricing.cos_basis import FixedCosBasisConfig
@@ -35,15 +39,7 @@ def _load_json(path: str | Path) -> dict:
 
 
 def _load_basis(path: str | Path) -> FixedCosBasisConfig:
-    raw = _load_json(path)
-    config = FixedCosBasisConfig(
-        maturities=tuple(float(value) for value in raw["maturities"]),
-        effective_widths=tuple(float(value) for value in raw["effective_widths"]),
-        n_cos=int(raw["n_cos"]),
-        maturity_tolerance=float(raw.get("maturity_tolerance", 1e-10)),
-    )
-    config.validate()
-    return config
+    return FixedCosBasisConfig.load(path)
 
 
 def _load_profile(path: str | Path, basis: FixedCosBasisConfig) -> tuple[CgmmConfig, OptimizerConfig, LoggingConfig]:
@@ -63,6 +59,11 @@ def _load_profile(path: str | Path, basis: FixedCosBasisConfig) -> tuple[CgmmCon
             max_iter=int(state.get("max_iter", 40)),
             boundary_tol=float(state.get("boundary_tol", 1e-5)),
             warm_start_window=state.get("warm_start_window", 0.25),
+            state_solver=str(state.get("state_solver", "golden_section")),
+            fallback_solver=state.get("fallback_solver", "golden_section"),
+            finite_difference_relative_step=float(state.get("finite_difference_relative_step", 1e-4)),
+            finite_difference_absolute_step=float(state.get("finite_difference_absolute_step", 1e-7)),
+            minimum_black_vega=float(state.get("minimum_black_vega", 5e-6)),
         ),
         quadrature=CcfQuadratureConfig(
             dimension=int(quadrature.get("dimension", 2)),
@@ -105,6 +106,11 @@ def main() -> int:
     parser.add_argument("--cos-basis-config", required=True)
     parser.add_argument("--profile", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument(
+        "--state-only",
+        action="store_true",
+        help="Run only the clean implied-state inversion at the profile base start.",
+    )
     parser.add_argument("--log-level", choices=("DEBUG", "INFO", "WARNING", "ERROR"), default="INFO")
     args = parser.parse_args()
 
@@ -116,18 +122,38 @@ def main() -> int:
     basis = _load_basis(args.cos_basis_config)
     criterion_config, optimizer_config, log_config = _load_profile(args.profile, basis)
     panel = load_option_panel(args.panel, iv_column=args.iv_column, max_dates=args.max_dates)
-    estimate = estimate_first_step(
-        panel,
-        criterion_config=criterion_config,
-        optimizer_config=optimizer_config,
-        logging_config=log_config,
-    )
+    if args.state_only:
+        implied_state = imply_heston_variance_path(
+            optimizer_config.base_start,
+            panel,
+            criterion_config.implied_state,
+        )
+        true_variance = panel.true_variance
+        state_rmse = None
+        if true_variance is not None:
+            state_rmse = float(np.sqrt(np.mean((implied_state.variance - true_variance) ** 2)))
+        payload = {
+            "mode": "state_only",
+            "base_start": asdict(optimizer_config.base_start),
+            "state_rmse": state_rmse,
+            "implied_state": implied_state.to_dict(),
+        }
+        success = implied_state.success_rate == 1.0
+    else:
+        estimate = estimate_first_step(
+            panel,
+            criterion_config=criterion_config,
+            optimizer_config=optimizer_config,
+            logging_config=log_config,
+        )
+        payload = estimate.to_dict()
+        success = estimate.success
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w") as fh:
-        json.dump(estimate.to_dict(), fh, indent=2)
+        json.dump(payload, fh, indent=2)
     LOGGER.info("result written path=%s", output)
-    return 0 if estimate.success else 2
+    return 0 if success else 2
 
 
 if __name__ == "__main__":

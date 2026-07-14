@@ -1,6 +1,9 @@
 {
   "maturities": [0.25],
   "effective_widths": [1.5],
-  "n_cos": 64,
+  "generation_n_cos": 64,
+  "estimation_n_cos": 32,
+  "basis_convention": "fixed_effective_width",
+  "pricing_implementation": "heston_cos_fixed_basis_v1",
   "maturity_tolerance": 1e-10
 }

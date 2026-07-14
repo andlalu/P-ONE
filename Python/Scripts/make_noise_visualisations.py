@@ -313,6 +313,7 @@ def _ensure_panels(
                 sample_id=sample_id,
                 scenario=scenario,
                 config=config.noise,
+                panel_format=config.panel_format,
                 skip_existing=False,
             )
             if result.status == "error":
@@ -1002,7 +1003,7 @@ def _write_manifest(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create greyscale noise-panel visualisations for the June 2026 report.")
-    parser.add_argument("--config", default="Python/Scripts/configs/clean_generation_run_001.json")
+    parser.add_argument("--config", default="Python/Scripts/configs/generation_run_001.json")
     parser.add_argument("--sample-id", type=int, default=0)
     parser.add_argument("--date-index", type=int, default=100)
     parser.add_argument("--output-dir", default="Reports/18062026/figures/noise")

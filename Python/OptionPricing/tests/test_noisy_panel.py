@@ -89,7 +89,7 @@ def _panel_metadata():
     return {
         "sample_id": 0,
         "scenario": "clean",
-        "cos_basis": FixedCosBasisConfig((0.25, 0.5), (1.5, 2.0), 64).to_metadata(),
+        "cos_basis": FixedCosBasisConfig((0.25, 0.5), (1.5, 2.0), 64, 32).generation_metadata(),
     }
 
 
@@ -114,7 +114,9 @@ def test_spatial_corr_noise_has_contract_level_draws():
 def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
     config = default_noise_config()
     run_root = tmp_path / "run"
-    clean_path = write_table(_clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata())
+    clean_path = write_table(
+        _clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata(), panel_format="csv"
+    )
     results = []
     for scenario in config.enabled_scenarios():
         results.append(
@@ -124,6 +126,7 @@ def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
                 sample_id=0,
                 scenario=scenario,
                 config=config,
+                panel_format="csv",
             )
         )
     write_noise_config(run_root, config)
@@ -259,13 +262,16 @@ def test_tick_rounding_and_capping_are_recorded():
 def test_skip_existing_avoids_recomputation(tmp_path):
     config = default_noise_config()
     run_root = tmp_path / "run"
-    clean_path = write_table(_clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata())
+    clean_path = write_table(
+        _clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata(), panel_format="csv"
+    )
     first = generate_noisy_panel_file(
         clean_panel_path=clean_path,
         run_root=run_root,
         sample_id=0,
         scenario="low_iid",
         config=config,
+        panel_format="csv",
     )
     second = generate_noisy_panel_file(
         clean_panel_path=clean_path,
@@ -273,6 +279,7 @@ def test_skip_existing_avoids_recomputation(tmp_path):
         sample_id=0,
         scenario="low_iid",
         config=config,
+        panel_format="csv",
         skip_existing=True,
     )
     assert first.status == "ok"

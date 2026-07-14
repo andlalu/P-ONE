@@ -192,7 +192,7 @@ def estimate_first_step(
             stage_results=tuple(stage_results),
             total_runtime=time.perf_counter() - started,
             final_diagnostics=final_diagnostics,
-            metadata={"cos_basis": criterion_config.implied_state.cos_basis.to_metadata()},
+            metadata=dict(final_diagnostics.metadata),
         )
         LOGGER.info("job completed success=%s runtime=%.1fs", estimate.success, estimate.total_runtime)
         return estimate

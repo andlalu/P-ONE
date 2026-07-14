@@ -56,7 +56,11 @@ def _infer_constant_transition_interval(panel: OptionPanel, config: CgmmConfig) 
     interval = float(diffs[0])
     if not np.allclose(diffs, interval, rtol=0.0, atol=config.spacing_tolerance):
         raise ValueError("IS-CGMM requires equally spaced panel observations")
-    return float(config.dt) if config.dt is not None else interval
+    if config.dt is not None and not np.isclose(config.dt, interval, rtol=0.0, atol=config.spacing_tolerance):
+        raise ValueError(
+            f"configured transition interval dt={config.dt} differs from inferred panel interval {interval}"
+        )
+    return interval
 
 
 def _gaussian_instrument_kernel(x_prev: np.ndarray, precision: tuple[float, float]) -> np.ndarray:
@@ -161,7 +165,12 @@ class CgmmFirstStepCriterion:
                 "quadratic_form": t_done - t_kernel,
                 "total": t_done - t0,
             },
-            metadata={"cos_basis": self.config.implied_state.cos_basis.to_metadata()},
+            metadata={
+                "cos_basis": {
+                    **dict(self.panel.metadata["cos_basis"]),
+                    "estimation_n_cos": self.config.implied_state.cos_basis.estimation_n_cos,
+                }
+            },
         )
 
     def evaluate_free(self, free_theta: np.ndarray, *, r: float, q: float) -> float:
@@ -186,6 +195,9 @@ def criterion_diagnostics_to_dict(theta: HestonParameters, diagnostics: Criterio
             "coefficient_solve_count": int(implied.coefficient_solve_count),
             "coefficient_cache_hits": int(implied.coefficient_cache_hits),
             "fixed_coefficient_count": int(implied.fixed_coefficient_count),
+            "solver_name": implied.solver_name,
+            "fallback_count": implied.fallback_count,
+            "jacobian_evaluation_count": implied.jacobian_evaluation_count,
         },
         "implied_variance": diagnostics.implied_variance_summary,
         "true_variance_rmse": diagnostics.true_variance_rmse,

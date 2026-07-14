@@ -6,7 +6,12 @@ import numpy as np
 
 from Models.Heston.parameters import HestonRiskNeutralParameters
 from OptionPricing.base import OptionPricer
-from OptionPricing.types import CoefficientTensor, PreparedFixedCosBasis, VarianceScaledCosConfig
+from OptionPricing.types import (
+    CoefficientTensor,
+    FixedBasisPriceJacobian,
+    PreparedFixedCosBasis,
+    VarianceScaledCosConfig,
+)
 
 
 class CosOptionPricer(OptionPricer):
@@ -132,6 +137,71 @@ class CosOptionPricer(OptionPricer):
             effective_width=basis.effective_width,
             option_type=option_type,
             prepared_payoff_terms=basis.payoff_terms,
+        )
+
+    def price_and_initial_variance_jacobian_fixed_basis(
+        self,
+        *,
+        log_s: float,
+        variance: float,
+        strikes: np.ndarray,
+        rate: float,
+        dividend_yield: float,
+        basis: PreparedFixedCosBasis,
+        option_types: np.ndarray,
+    ) -> FixedBasisPriceJacobian:
+        """Evaluate prices and ``d price / d variance`` without rebuilding the basis.
+
+        The contract arrays have shape ``(n_contracts,)``. The derivative uses
+        ``B_k exp(A_k + B_k v)`` and is valid only because ``basis`` is fixed
+        with respect to the supplied initial variance.
+        """
+
+        strike_array = np.asarray(strikes, dtype=float)
+        option_type_array = np.char.lower(np.asarray(option_types).astype(str))
+        if strike_array.ndim != 1 or strike_array.size == 0:
+            raise ValueError("strikes must be a non-empty 1D array")
+        if option_type_array.shape != strike_array.shape:
+            raise ValueError("option_types must align with strikes")
+        if np.any(strike_array <= 0.0) or not np.all(np.isfinite(strike_array)):
+            raise ValueError("strikes must be finite and strictly positive")
+        if not np.all(np.isin(option_type_array, ("call", "put"))):
+            raise ValueError("option_types must contain only 'call' or 'put'")
+        if not math.isfinite(log_s) or not math.isfinite(variance) or variance < 0.0:
+            raise ValueError("log_s must be finite and variance must be finite and non-negative")
+
+        coefficients = basis.coefficients
+        if coefficients.cf_a.shape != (basis.n_cos, 1) or coefficients.cf_b.shape != (basis.n_cos, 1):
+            raise ValueError("prepared fixed basis must contain one maturity coefficient column")
+        if not np.array_equal(coefficients.u_grid, basis.u_grid):
+            raise ValueError("prepared frequency grid and affine coefficient grid differ")
+
+        maturity = basis.maturity
+        log_strikes = np.log(strike_array)
+        log_forward_moneyness = log_s + (rate - dividend_yield) * maturity - log_strikes
+        phase = np.exp(1j * basis.u_grid[:, None] * log_forward_moneyness[None, :])
+        affine = np.exp(coefficients.cf_a[:, 0] + coefficients.cf_b[:, 0] * variance)
+        affine_jacobian = coefficients.cf_b[:, 0] * affine
+        discounted_strikes = np.exp(-rate * maturity) * strike_array
+        call_series = np.real(np.sum(basis.payoff_terms[:, None] * affine[:, None] * phase, axis=0))
+        call_jacobian_series = np.real(
+            np.sum(basis.payoff_terms[:, None] * affine_jacobian[:, None] * phase, axis=0)
+        )
+        raw_call_prices = discounted_strikes * call_series
+        call_jacobian = discounted_strikes * call_jacobian_series
+
+        spot = math.exp(log_s)
+        forward = spot * math.exp((rate - dividend_yield) * maturity)
+        discount = math.exp(-rate * maturity)
+        raw_put_prices = raw_call_prices - discount * (forward - strike_array)
+        raw_prices = np.where(option_type_array == "call", raw_call_prices, raw_put_prices)
+        price_clipped = raw_prices <= 0.0
+        prices = np.maximum(raw_prices, 0.0)
+        price_jacobian = np.where(price_clipped, np.nan, call_jacobian)
+        return FixedBasisPriceJacobian(
+            prices=prices,
+            initial_variance_jacobian=price_jacobian,
+            price_clipped=price_clipped,
         )
 
     def price_matrix_variance_scaled_reference(

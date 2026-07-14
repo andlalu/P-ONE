@@ -10,13 +10,11 @@ Python/.idea/**
 Python/.idea/inspectionProfiles/Project_Default.xml
 Python/.idea/misc.xml
 Python/.idea/workspace.xml
-Python/sim/__pycache__/__init__.cpython-311.pyc
-Python/sim/__pycache__/base.cpython-311.pyc
-Python/sim/__pycache__/heston_simulator.cpython-311.pyc
 Python/.idea/codeStyles/Project.xml
 Python/.idea/codeStyles/Project.xml
 /Python/.idea/inspectionProfiles
 **/__pycache__/
+*.py[cod]
 Python/ImpliedVolatility/native/*.dylib
 Python/ImpliedVolatility/native/*.so
 Python/ImpliedVolatility/native/*.dll

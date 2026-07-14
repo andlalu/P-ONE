@@ -1,4 +1,5 @@
 import csv
+import math
 
 import pytest
 
@@ -14,7 +15,7 @@ def _rows():
                 "week_index": week,
                 "t": week / 52.0,
                 "S": 100.0 + week,
-                "logS": 4.605170186 + week * 0.01,
+                "logS": math.log(100.0 + week),
                 "V": 0.04,
                 "maturity_years": 0.25,
                 "strike": 100.0,
@@ -29,7 +30,11 @@ def _rows():
 
 
 def _metadata():
-    return {"sample_id": 0, "scenario": "clean", "cos_basis": FixedCosBasisConfig((0.25,), (1.5,), 32).to_metadata()}
+    return {
+        "sample_id": 0,
+        "scenario": "clean",
+        "cos_basis": FixedCosBasisConfig((0.25,), (1.5,), 32, 16).generation_metadata(),
+    }
 
 
 def test_canonical_panel_loading_from_csv_and_metadata_roundtrip(tmp_path):
@@ -54,4 +59,3 @@ def test_canonical_panel_loading_from_parquet(tmp_path):
     write_panel_metadata(target, _metadata())
     panel = load_option_panel(target, max_dates=2)
     assert panel.n_dates == 2
-

@@ -1,0 +1,48 @@
+{
+  "selected_production_solver": "bounded_brent",
+  "fallback_solver": "golden_section",
+  "selection_reason": "The scalar solver had zero failures on clean and three rounded/capped contaminations and avoided low-vega Jacobian fallbacks; the eligible scalar method with lower median runtime was selected.",
+  "deterministic_seeds": {
+    "low_iid": 301,
+    "spatial_corr": 302,
+    "persistent_factor": 303
+  },
+  "variance_dates": [
+    1e-06,
+    0.0025,
+    0.0225,
+    0.08,
+    0.149,
+    0.04
+  ],
+  "aggregate": {
+    "golden_section": {
+      "maximum_reference_deviation": 3.9476483051220645e-08,
+      "failure_count": 0,
+      "fallback_count": 0,
+      "median_runtime_seconds": 0.11373031232506037,
+      "median_pricing_calls": 233.0
+    },
+    "bounded_brent": {
+      "maximum_reference_deviation": 5.603642785640799e-08,
+      "failure_count": 0,
+      "fallback_count": 0,
+      "median_runtime_seconds": 0.09236752172000706,
+      "median_pricing_calls": 140.0
+    },
+    "least_squares_finite_difference": {
+      "maximum_reference_deviation": 1.5943201714475235e-05,
+      "failure_count": 0,
+      "fallback_count": 0,
+      "median_runtime_seconds": 0.13222872954793274,
+      "median_pricing_calls": 114.0
+    },
+    "least_squares_analytic": {
+      "maximum_reference_deviation": 1.5265250969676014e-06,
+      "failure_count": 0,
+      "fallback_count": 22,
+      "median_runtime_seconds": 0.08809827058576047,
+      "median_pricing_calls": 149.0
+    }
+  }
+}

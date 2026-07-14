@@ -6,6 +6,10 @@ from dataclasses import dataclass
 import numpy as np
 
 from Estimation.ISCGMM.config import ImpliedStateConfig
+from Estimation.ISCGMM.implied_state_jacobian import (
+    finite_difference_iv_variance_jacobian,
+    price_iv_and_initial_variance_jacobian_fixed_basis,
+)
 from Estimation.ISCGMM.results import ImpliedStateResult
 from ImpliedVolatility.black_iv import implied_vol_black76
 from Models.Heston.parameters import HestonParameters, HestonRiskNeutralParameters
@@ -21,6 +25,9 @@ class _ImpliedVarianceSolveResult:
     nfev: int
     nit: int
     success: bool
+    njev: int = 0
+    solver_name: str = "golden_section"
+    fallback_used: bool = False
 
 
 @dataclass
@@ -71,7 +78,7 @@ def imply_heston_variance_path(
     basis_metadata = panel.metadata.get("cos_basis")
     if not isinstance(basis_metadata, dict):
         raise ValueError("option panel is missing required fixed COS-basis metadata")
-    config.cos_basis.assert_matches_metadata(basis_metadata)
+    config.cos_basis.assert_panel_compatible(basis_metadata)
 
     pricer = CosOptionPricer()
     params_q = theta.to_risk_neutral()
@@ -99,6 +106,8 @@ def imply_heston_variance_path(
     failed = np.zeros(panel.n_dates, dtype=bool)
     nfev = np.zeros(panel.n_dates, dtype=int)
     start_values = np.empty(panel.n_dates, dtype=float)
+    jacobian_evaluation_count = 0
+    fallback_count = 0
 
     previous = min(max(theta.vbar, config.v_min), config.v_max)
     for date_index, context in enumerate(contexts):
@@ -113,6 +122,8 @@ def imply_heston_variance_path(
         objective[date_index] = result.fun
         nfev[date_index] = result.nfev
         failed[date_index] = not result.success
+        jacobian_evaluation_count += result.njev
+        fallback_count += int(result.fallback_used)
         boundary_hit[date_index] = (
             variance[date_index] <= config.v_min + config.boundary_tol
             or variance[date_index] >= config.v_max - config.boundary_tol
@@ -129,6 +140,9 @@ def imply_heston_variance_path(
         coefficient_solve_count=cache_diagnostics.coefficient_solve_count,
         coefficient_cache_hits=cache_diagnostics.coefficient_cache_hits,
         fixed_coefficient_count=cache_diagnostics.fixed_coefficient_count,
+        solver_name=config.state_solver,
+        fallback_count=fallback_count,
+        jacobian_evaluation_count=jacobian_evaluation_count,
     )
 
 
@@ -148,7 +162,7 @@ def _prepare_fixed_bases(
         prepared[maturity_value] = pricer.prepare_fixed_basis(
             maturity=maturity_value,
             effective_width=config.cos_basis.width_for_maturity(maturity_value),
-            n_cos=config.cos_basis.n_cos,
+            n_cos=config.cos_basis.estimation_n_cos,
             model_params=params_q,
         )
         diagnostics.coefficient_solve_count += 1
@@ -237,6 +251,55 @@ def _compute_model_implied_volatilities(
     return model_iv
 
 
+def _compute_model_iv_and_initial_variance_jacobian(
+    *,
+    variance: float,
+    context: _DateImpliedStatePricingContext,
+    config: ImpliedStateConfig,
+    jacobian_method: str,
+) -> tuple[np.ndarray, np.ndarray]:
+    model_iv = np.empty(context.date.n_contracts, dtype=float)
+    initial_variance_jacobian = np.empty(context.date.n_contracts, dtype=float)
+    for maturity_batch in context.maturity_batches:
+        if jacobian_method == "analytic":
+            derivative_output = price_iv_and_initial_variance_jacobian_fixed_basis(
+                log_spot=context.date.log_spot,
+                implied_variance=variance,
+                strikes=maturity_batch.strikes,
+                option_types=maturity_batch.option_types,
+                rate=maturity_batch.rate,
+                dividend_yield=maturity_batch.dividend_yield,
+                fixed_cos_basis=maturity_batch.basis,
+                minimum_black_vega=config.minimum_black_vega,
+            )
+            if np.any(derivative_output.failed_contracts):
+                raise FloatingPointError("semi-analytical IV Jacobian failed for one or more contracts")
+            batch_iv = derivative_output.model_iv
+            batch_jacobian = derivative_output.initial_variance_jacobian
+        elif jacobian_method == "finite_difference":
+            derivative_output = finite_difference_iv_variance_jacobian(
+                log_spot=context.date.log_spot,
+                implied_variance=variance,
+                strikes=maturity_batch.strikes,
+                option_types=maturity_batch.option_types,
+                rate=maturity_batch.rate,
+                dividend_yield=maturity_batch.dividend_yield,
+                fixed_cos_basis=maturity_batch.basis,
+                variance_bounds=(config.v_min, config.v_max),
+                relative_step=config.finite_difference_relative_step,
+                absolute_minimum_step=config.finite_difference_absolute_step,
+            )
+            batch_iv = derivative_output.model_iv
+            batch_jacobian = derivative_output.initial_variance_jacobian
+        else:
+            raise ValueError(f"unsupported Jacobian method: {jacobian_method}")
+        model_iv[maturity_batch.indices] = batch_iv
+        initial_variance_jacobian[maturity_batch.indices] = batch_jacobian
+    if not np.all(np.isfinite(model_iv)) or not np.all(np.isfinite(initial_variance_jacobian)):
+        raise FloatingPointError("date-level IV or initial-variance Jacobian contains non-finite entries")
+    return model_iv, initial_variance_jacobian
+
+
 def _implied_variance_fit_loss(
     *,
     variance: float,
@@ -276,25 +339,169 @@ def _imply_variance_for_date(
         variance=float(value), context=context, pricer=pricer, config=config
     )
     lower, upper = _local_variance_search_bounds(start_value, config)
-    result = _bounded_golden_section_search(objective, lower=lower, upper=upper, xatol=config.tol, max_iter=config.max_iter)
+    try:
+        result = _solve_implied_variance_with_method(
+            objective=objective,
+            context=context,
+            start_value=start_value,
+            lower=lower,
+            upper=upper,
+            config=config,
+            method=config.state_solver,
+        )
+    except (ValueError, FloatingPointError, OverflowError):
+        result = _fallback_implied_variance_solve(objective=objective, config=config)
     hit_artificial_lower = lower > config.v_min and result.x <= lower + config.boundary_tol
     hit_artificial_upper = upper < config.v_max and result.x >= upper - config.boundary_tol
     if hit_artificial_lower or hit_artificial_upper:
-        full = _bounded_golden_section_search(
-            objective,
-            lower=config.v_min,
-            upper=config.v_max,
-            xatol=config.tol,
-            max_iter=config.max_iter,
-        )
+        try:
+            full = _solve_implied_variance_with_method(
+                objective=objective,
+                context=context,
+                start_value=result.x,
+                lower=config.v_min,
+                upper=config.v_max,
+                config=config,
+                method=config.state_solver,
+            )
+        except (ValueError, FloatingPointError, OverflowError):
+            full = _fallback_implied_variance_solve(objective=objective, config=config)
         return _ImpliedVarianceSolveResult(
             x=full.x,
             fun=full.fun,
             nfev=result.nfev + full.nfev,
             nit=result.nit + full.nit,
             success=full.success,
+            njev=result.njev + full.njev,
+            solver_name=full.solver_name,
+            fallback_used=result.fallback_used or full.fallback_used,
         )
     return result
+
+
+def _fallback_implied_variance_solve(*, objective, config: ImpliedStateConfig) -> _ImpliedVarianceSolveResult:
+    if config.fallback_solver is None:
+        raise FloatingPointError("selected implied-state solver failed and no fallback is configured")
+    fallback_result = _solve_scalar_objective(
+        objective,
+        lower=config.v_min,
+        upper=config.v_max,
+        xatol=config.tol,
+        max_iter=config.max_iter,
+        method=config.fallback_solver,
+    )
+    return _ImpliedVarianceSolveResult(
+        x=fallback_result.x,
+        fun=fallback_result.fun,
+        nfev=fallback_result.nfev,
+        nit=fallback_result.nit,
+        success=fallback_result.success,
+        solver_name=fallback_result.solver_name,
+        fallback_used=True,
+    )
+
+
+def _solve_implied_variance_with_method(
+    *,
+    objective,
+    context: _DateImpliedStatePricingContext,
+    start_value: float,
+    lower: float,
+    upper: float,
+    config: ImpliedStateConfig,
+    method: str,
+) -> _ImpliedVarianceSolveResult:
+    if method in {"golden_section", "bounded_brent"}:
+        return _solve_scalar_objective(
+            objective,
+            lower=lower,
+            upper=upper,
+            xatol=config.tol,
+            max_iter=config.max_iter,
+            method=method,
+        )
+
+    from scipy.optimize import least_squares  # type: ignore[import-not-found]
+
+    jacobian_method = "analytic" if method == "least_squares_analytic" else "finite_difference"
+    residual_evaluation_count = 0
+    jacobian_evaluation_count = 0
+
+    def residual_function(candidate: np.ndarray) -> np.ndarray:
+        nonlocal residual_evaluation_count
+        residual_evaluation_count += 1
+        model_iv = _compute_model_implied_volatilities(
+            variance=float(candidate[0]), context=context, pricer=CosOptionPricer()
+        )
+        if not np.all(np.isfinite(model_iv)):
+            raise FloatingPointError("least-squares residual contains non-finite model IVs")
+        return context.date.observed_iv - model_iv
+
+    def jacobian_function(candidate: np.ndarray) -> np.ndarray:
+        nonlocal jacobian_evaluation_count
+        jacobian_evaluation_count += 1
+        _, model_iv_jacobian = _compute_model_iv_and_initial_variance_jacobian(
+            variance=float(candidate[0]),
+            context=context,
+            config=config,
+            jacobian_method=jacobian_method,
+        )
+        return -model_iv_jacobian[:, None]
+
+    initial_value = min(max(start_value, lower), upper)
+    least_squares_result = least_squares(
+        residual_function,
+        x0=np.array([initial_value]),
+        jac=jacobian_function,
+        bounds=(np.array([lower]), np.array([upper])),
+        xtol=config.tol,
+        ftol=config.tol,
+        gtol=config.tol,
+        max_nfev=config.max_iter,
+    )
+    loss = float(2.0 * least_squares_result.cost)
+    return _ImpliedVarianceSolveResult(
+        x=float(least_squares_result.x[0]),
+        fun=loss,
+        nfev=residual_evaluation_count,
+        nit=int(least_squares_result.nfev),
+        success=bool(least_squares_result.success and np.isfinite(loss)),
+        njev=jacobian_evaluation_count,
+        solver_name=method,
+    )
+
+
+def _solve_scalar_objective(
+    objective,
+    *,
+    lower: float,
+    upper: float,
+    xatol: float,
+    max_iter: int,
+    method: str,
+) -> _ImpliedVarianceSolveResult:
+    if method == "golden_section":
+        return _bounded_golden_section_search(
+            objective, lower=lower, upper=upper, xatol=xatol, max_iter=max_iter
+        )
+    if method != "bounded_brent":
+        raise ValueError(f"unsupported scalar implied-state solver: {method}")
+    from scipy.optimize import minimize_scalar  # type: ignore[import-not-found]
+
+    scipy_result = minimize_scalar(
+        objective,
+        method="bounded",
+        bounds=(lower, upper),
+        options={"xatol": xatol, "maxiter": max_iter},
+    )
+    return _ImpliedVarianceSolveResult(
+        x=float(scipy_result.x),
+        fun=float(scipy_result.fun),
+        nfev=int(scipy_result.nfev),
+        nit=int(scipy_result.nit),
+        success=bool(scipy_result.success and np.isfinite(scipy_result.fun)),
+        solver_name="bounded_brent",
+    )
 
 
 def _bounded_golden_section_search(

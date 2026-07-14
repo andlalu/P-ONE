@@ -23,7 +23,8 @@ def _basis() -> FixedCosBasisConfig:
     return FixedCosBasisConfig(
         maturities=(1.0 / 12.0, 0.25),
         effective_widths=(1.0, 1.5),
-        n_cos=64,
+        generation_n_cos=64,
+        estimation_n_cos=64,
     )
 
 
@@ -69,7 +70,8 @@ def _write_tiny_panel(tmp_path: Path, *, n_weeks: int = 7) -> Path:
     return write_panel(
         rows,
         tmp_path / "panel",
-        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": basis.to_metadata()},
+        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": basis.generation_metadata()},
+        panel_format="csv",
     )
 
 
@@ -108,8 +110,11 @@ def test_implied_state_reports_boundary_hits(tmp_path):
 def test_implied_state_rejects_panel_configuration_cos_basis_mismatch(tmp_path):
     _, theta = _true_params()
     panel = load_option_panel(_write_tiny_panel(tmp_path), max_dates=3)
-    mismatched = FixedCosBasisConfig(_basis().maturities, (1.1, 1.5), _basis().n_cos)
-    panel = OptionPanel(panel.dates, metadata={**panel.metadata, "cos_basis": mismatched.to_metadata()})
+    mismatched = FixedCosBasisConfig(_basis().maturities, (1.1, 1.5), 64, 64)
+    panel = OptionPanel(
+        panel.dates,
+        metadata={**panel.metadata, "cos_basis": mismatched.generation_metadata()},
+    )
     with pytest.raises(ValueError, match="width mismatch"):
         imply_heston_variance_path(theta, panel, _state_config())
 

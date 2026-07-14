@@ -40,7 +40,7 @@ class HestonOptionPriceCubeGenerator(OptionPriceCubeGenerator):
                 basis = self.pricing_stack.option_pricer.prepare_fixed_basis(
                     maturity=maturity_value,
                     effective_width=self.cos_basis.width_for_maturity(maturity_value),
-                    n_cos=self.cos_basis.n_cos,
+                    n_cos=self.cos_basis.generation_n_cos,
                     model_params=self.solver_params,
                 )
                 self._basis_cache[maturity_value] = basis
@@ -58,5 +58,5 @@ class HestonOptionPriceCubeGenerator(OptionPriceCubeGenerator):
             observation_index=np.arange(n_obs),
             strikes=self.panel_config.strikes,
             maturities=self.panel_config.maturities,
-            metadata={"engine": "heston_cos", "cos_basis": self.cos_basis.to_metadata()},
+            metadata={"engine": "heston_cos", "cos_basis": self.cos_basis.generation_metadata()},
         )

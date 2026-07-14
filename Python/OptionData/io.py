@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 from pathlib import Path
 from typing import Any
 
@@ -39,8 +40,12 @@ def _read_metadata(file_path: str | Path) -> dict[str, Any]:
 
 def write_panel_metadata(file_path: str | Path, metadata: dict[str, Any]) -> Path:
     sidecar = panel_metadata_path(file_path)
-    with sidecar.open("w") as fh:
+    temporary_sidecar = sidecar.with_name(sidecar.name + ".tmp")
+    with temporary_sidecar.open("w") as fh:
         json.dump(metadata, fh, indent=2, sort_keys=True)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(temporary_sidecar, sidecar)
     return sidecar
 
 

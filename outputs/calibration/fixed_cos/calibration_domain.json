@@ -1,0 +1,194 @@
+[
+  {
+    "point_id": "lhs_00",
+    "kappa_q": 3.18991543854489,
+    "vbar_q": 0.1347597340765409,
+    "sigma_v": 0.4018260338906173,
+    "rho": -0.7309702625218442,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_01",
+    "kappa_q": 3.5068362692004165,
+    "vbar_q": 0.05048563684594749,
+    "sigma_v": 0.23926078993823452,
+    "rho": -0.5860339984721687,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_02",
+    "kappa_q": 2.6075610997751624,
+    "vbar_q": 0.08768505229179341,
+    "sigma_v": 0.2664918363537182,
+    "rho": -0.3102513080834203,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_03",
+    "kappa_q": 2.4405888390835435,
+    "vbar_q": 0.19874822445674767,
+    "sigma_v": 0.5436304341997503,
+    "rho": -0.2040124240216511,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_04",
+    "kappa_q": 3.658237410503371,
+    "vbar_q": 0.23966337769737817,
+    "sigma_v": 0.5667412176556094,
+    "rho": -0.41955627583723915,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_05",
+    "kappa_q": 1.7019837777550655,
+    "vbar_q": 0.10115243283416779,
+    "sigma_v": 0.289790452546232,
+    "rho": -0.378930966831314,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_06",
+    "kappa_q": 3.948275585618668,
+    "vbar_q": 0.1256178915697065,
+    "sigma_v": 0.5104120333548828,
+    "rho": -0.46777660848642577,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_07",
+    "kappa_q": 2.292799102769554,
+    "vbar_q": 0.07432792780258274,
+    "sigma_v": 0.5989994063553364,
+    "rho": -0.3408430942351787,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_08",
+    "kappa_q": 2.0028364578965085,
+    "vbar_q": 0.04558967585264828,
+    "sigma_v": 0.3638149266099918,
+    "rho": -0.770387171215918,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_09",
+    "kappa_q": 2.1267120855471067,
+    "vbar_q": 0.1464095235961102,
+    "sigma_v": 0.5352734141732145,
+    "rho": -0.6495572023232709,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_10",
+    "kappa_q": 2.6508700321024063,
+    "vbar_q": 0.18659762597895885,
+    "sigma_v": 0.31747341907372817,
+    "rho": -0.6787034059459391,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_11",
+    "kappa_q": 3.7983208194065674,
+    "vbar_q": 0.20621286833949473,
+    "sigma_v": 0.612876577178057,
+    "rho": -0.27920429575317895,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_12",
+    "kappa_q": 1.5934339239479858,
+    "vbar_q": 0.16056983094180757,
+    "sigma_v": 0.40369790481346945,
+    "rho": -0.6908456537972096,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_13",
+    "kappa_q": 2.817348145101867,
+    "vbar_q": 0.023430867961188317,
+    "sigma_v": 0.43571633500712126,
+    "rho": -0.4051785828493493,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_14",
+    "kappa_q": 3.374717969021192,
+    "vbar_q": 0.10755840145663985,
+    "sigma_v": 0.4814033594528132,
+    "rho": -0.769449706800854,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_15",
+    "kappa_q": 1.8232323807897401,
+    "vbar_q": 0.22230826898878392,
+    "sigma_v": 0.35474705503086934,
+    "rho": -0.5288788219949394,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_16",
+    "kappa_q": 2.88557969957473,
+    "vbar_q": 0.023125968038546427,
+    "sigma_v": 0.2966607318651673,
+    "rho": -0.4945084915941509,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_17",
+    "kappa_q": 1.92829088832706,
+    "vbar_q": 0.0627662870124375,
+    "sigma_v": 0.44837334980239674,
+    "rho": -0.6165118529039775,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_18",
+    "kappa_q": 3.3782220138502757,
+    "vbar_q": 0.15377791475900207,
+    "sigma_v": 0.6391513035899823,
+    "rho": -0.5420377958611089,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "lhs_19",
+    "kappa_q": 3.090744663801143,
+    "vbar_q": 0.17625700594146476,
+    "sigma_v": 0.20450336671840194,
+    "rho": -0.2538923348700798,
+    "source": "seeded Latin hypercube"
+  },
+  {
+    "point_id": "true_dgp",
+    "kappa_q": 2.0,
+    "vbar_q": 0.07875,
+    "sigma_v": 0.4,
+    "rho": -0.5,
+    "source": "true DGP"
+  },
+  {
+    "point_id": "poc_start",
+    "kappa_q": 2.0,
+    "vbar_q": 0.0816,
+    "sigma_v": 0.42,
+    "rho": -0.52,
+    "source": "POC base start"
+  },
+  {
+    "point_id": "moderate_low",
+    "kappa_q": 1.75,
+    "vbar_q": 0.035,
+    "sigma_v": 0.3,
+    "rho": -0.65,
+    "source": "moderate perturbation"
+  },
+  {
+    "point_id": "moderate_high",
+    "kappa_q": 3.25,
+    "vbar_q": 0.14,
+    "sigma_v": 0.55,
+    "rho": -0.35,
+    "source": "moderate perturbation"
+  }
+]

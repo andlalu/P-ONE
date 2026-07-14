@@ -24,8 +24,8 @@ def _load_noise_config(config_path: str | Path) -> NoiseGenerationConfig:
     return parse_noise_config(raw.get("noise"))
 
 
-def _task(args: tuple[str, int, str, NoiseGenerationConfig, bool]):
-    run_root, sample_id, scenario, config, skip_existing = args
+def _task(args: tuple[str, int, str, NoiseGenerationConfig, str, bool]):
+    run_root, sample_id, scenario, config, panel_format, skip_existing = args
     clean_path = clean_panel_file(run_root, sample_id)
     return generate_noisy_panel_file(
         clean_panel_path=clean_path,
@@ -33,6 +33,7 @@ def _task(args: tuple[str, int, str, NoiseGenerationConfig, bool]):
         sample_id=sample_id,
         scenario=scenario,
         config=config,
+        panel_format=panel_format,
         skip_existing=skip_existing,
     )
 
@@ -58,6 +59,8 @@ def main() -> int:
 
     set_thread_env()
     config = _load_noise_config(args.config)
+    with Path(args.config).open() as file_handle:
+        panel_format = str(json.load(file_handle)["panel_format"])
     requested = tuple(item.strip() for item in args.scenarios.split(",") if item.strip())
     invalid = sorted(set(requested) - set(NOISE_SCENARIOS))
     if invalid:
@@ -68,7 +71,11 @@ def main() -> int:
     if args.sample_end is not None:
         sample_ids = [sample_id for sample_id in sample_ids if sample_id < args.sample_end]
 
-    tasks = [(args.run_root, sample_id, scenario, config, args.skip_existing) for sample_id in sample_ids for scenario in scenarios]
+    tasks = [
+        (args.run_root, sample_id, scenario, config, panel_format, args.skip_existing)
+        for sample_id in sample_ids
+        for scenario in scenarios
+    ]
     if not tasks:
         write_noise_config(args.run_root, config)
         write_noisy_manifest(args.run_root, [])
@@ -100,4 +107,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

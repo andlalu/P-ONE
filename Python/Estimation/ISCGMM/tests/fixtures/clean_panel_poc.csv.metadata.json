@@ -6,8 +6,10 @@
     "basis_convention": "fixed_effective_width",
     "maturities": [0.25],
     "effective_widths": [1.5],
-    "n_cos": 64,
+    "generation_n_cos": 64,
+    "estimation_n_cos": 32,
     "maturity_tolerance": 1e-10,
-    "pricing_implementation": "heston_cos_fixed_basis_v1"
+    "pricing_implementation": "heston_cos_fixed_basis_v1",
+    "basis_config_hash": "e46c51824e4ada2f79885baf55418474c5dc0a26f05c776751691b39ba7f796b"
   }
 }

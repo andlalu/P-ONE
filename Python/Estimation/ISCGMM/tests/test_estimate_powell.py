@@ -18,7 +18,7 @@ from OptionPricing.cos_basis import FixedCosBasisConfig
 
 
 def _basis():
-    return FixedCosBasisConfig((0.25,), (1.5,), 16)
+    return FixedCosBasisConfig((0.25,), (1.5,), 16, 16)
 
 
 def _panel():
@@ -26,7 +26,7 @@ def _panel():
         OptionPanelDate(
             date_index=index,
             time=index * 0.1,
-            spot=100.0,
+            spot=100.0 * np.exp(index * 0.01),
             log_spot=np.log(100.0) + index * 0.01,
             strikes=np.array([100.0]),
             maturities=np.array([0.25]),
@@ -37,7 +37,10 @@ def _panel():
         )
         for index in range(3)
     )
-    return OptionPanel(dates, metadata={"sample_id": 0, "scenario": "clean", "cos_basis": _basis().to_metadata()})
+    return OptionPanel(
+        dates,
+        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": _basis().generation_metadata()},
+    )
 
 
 def _optimizer():
@@ -69,7 +72,7 @@ class _QuadraticCriterion:
             nfev=np.ones(3, dtype=int),
             start_values=np.full(3, theta.vbar),
         )
-        return CriterionDiagnostics(value, 3, 1, 3, implied, {"min": theta.vbar, "max": theta.vbar, "mean": theta.vbar, "std": 0.0}, None, None, {"total": 0.0}, {"cos_basis": self.config.implied_state.cos_basis.to_metadata()})
+        return CriterionDiagnostics(value, 3, 1, 3, implied, {"min": theta.vbar, "max": theta.vbar, "mean": theta.vbar, "std": 0.0}, None, None, {"total": 0.0}, {"cos_basis": self.config.implied_state.cos_basis.to_dict()})
 
 
 class _PenaltyCriterion(_QuadraticCriterion):

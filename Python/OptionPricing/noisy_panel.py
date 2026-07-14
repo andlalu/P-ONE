@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -243,9 +244,9 @@ def validate_persistent_factor_config(config: PersistentFactorNoiseConfig) -> Pe
     )
 
 
-def parse_noise_config(raw_noise: dict[str, Any] | None) -> NoiseGenerationConfig:
+def parse_noise_config(raw_noise: dict[str, Any]) -> NoiseGenerationConfig:
     if raw_noise is None:
-        return default_noise_config()
+        raise ValueError("parse_noise_config requires an explicit noise block")
     scenarios = raw_noise.get("scenarios", {})
     low_raw = scenarios.get("low_iid", {})
     spatial_raw = scenarios.get("spatial_corr", {})
@@ -337,23 +338,37 @@ def write_table(
     target_without_suffix: str | Path,
     *,
     metadata: dict[str, Any] | None = None,
+    panel_format: str,
 ) -> Path:
     target = Path(target_without_suffix)
     target.parent.mkdir(parents=True, exist_ok=True)
-    if parquet_available():
+    if panel_format == "parquet":
+        if not parquet_available():
+            raise RuntimeError("panel_format='parquet' requires pandas and pyarrow or fastparquet")
         import pandas as pd  # type: ignore[import-not-found]
 
         out = target.with_suffix(".parquet")
-        pd.DataFrame(rows).to_parquet(out, index=False)
+        temporary = out.with_name(out.stem + ".tmp.parquet")
+        pd.DataFrame(rows).to_parquet(temporary, index=False)
+        if len(pd.read_parquet(temporary)) != len(rows):
+            temporary.unlink(missing_ok=True)
+            raise RuntimeError("atomic noisy Parquet validation failed before publication")
+        os.replace(temporary, out)
         if metadata is not None:
             write_panel_metadata(out, metadata)
         return out
+    if panel_format != "csv":
+        raise ValueError("panel_format must be 'parquet' or 'csv'")
     out = target.with_suffix(".csv")
+    temporary = out.with_name(out.stem + ".tmp.csv")
     fieldnames = list(rows[0].keys()) if rows else []
-    with out.open("w", newline="") as fh:
+    with temporary.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(temporary, out)
     if metadata is not None:
         write_panel_metadata(out, metadata)
     return out
@@ -369,8 +384,10 @@ def clean_panel_file(run_root: str | Path, sample_id: int) -> Path:
     raise FileNotFoundError(f"missing clean panel for sample {sample_id:03d} under {root / 'panels_clean'}")
 
 
-def observed_panel_file(run_root: str | Path, scenario: str, sample_id: int) -> Path:
-    suffix = ".parquet" if parquet_available() else ".csv"
+def observed_panel_file(run_root: str | Path, scenario: str, sample_id: int, panel_format: str) -> Path:
+    if panel_format not in {"parquet", "csv"}:
+        raise ValueError("panel_format must be 'parquet' or 'csv'")
+    suffix = f".{panel_format}"
     return Path(run_root) / "panels_observed" / scenario / f"sample_{sample_id:03d}{suffix}"
 
 
@@ -597,10 +614,14 @@ def generate_noisy_panel_rows(
 def write_factor_file(factors: list[dict[str, Any]], run_root: str | Path, scenario: str, sample_id: int) -> Path:
     target = Path(run_root) / "noise_factors" / scenario / f"sample_{sample_id:03d}.csv"
     target.parent.mkdir(parents=True, exist_ok=True)
-    with target.open("w", newline="") as fh:
+    temporary = target.with_name(target.stem + ".tmp.csv")
+    with temporary.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=["week_index", "factor_0", "factor_1", "factor_2"])
         writer.writeheader()
         writer.writerows(factors)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(temporary, target)
     return target
 
 
@@ -611,6 +632,7 @@ def generate_noisy_panel_file(
     sample_id: int,
     scenario: str,
     config: NoiseGenerationConfig,
+    panel_format: str,
     skip_existing: bool = False,
 ) -> NoisyPanelResult:
     import time
@@ -618,7 +640,7 @@ def generate_noisy_panel_file(
 
     started = time.perf_counter()
     seed = scenario_seed(config.base_seed, sample_id, scenario)
-    output = observed_panel_file(run_root, scenario, sample_id)
+    output = observed_panel_file(run_root, scenario, sample_id, panel_format)
     factor_file = Path(run_root) / "noise_factors" / scenario / f"sample_{sample_id:03d}.csv"
     if skip_existing and output.exists() and (scenario != "persistent_factor" or factor_file.exists()):
         rows = read_table(output)
@@ -646,17 +668,27 @@ def generate_noisy_panel_file(
             raise ValueError("clean panel is missing required COS-basis metadata sidecar")
         with clean_metadata_path.open() as fh:
             inherited_metadata = json.load(fh)
-        inherited_metadata.update({"scenario": scenario, "sample_id": sample_id})
+        lower = sum(1 for row in rows if row["cap_direction"] == "lower")
+        upper = sum(1 for row in rows if row["cap_direction"] == "upper")
+        inherited_metadata.update(
+            {
+                "scenario": scenario,
+                "sample_id": sample_id,
+                "noise_seed": seed,
+                "n_capped_lower": lower,
+                "n_capped_upper": upper,
+                "n_capped_total": lower + upper,
+            }
+        )
         output = write_table(
             rows,
             Path(run_root) / "panels_observed" / scenario / f"sample_{sample_id:03d}",
             metadata=inherited_metadata,
+            panel_format=panel_format,
         )
         factor_out = ""
         if scenario == "persistent_factor":
             factor_out = str(write_factor_file(factors, run_root, scenario, sample_id))
-        lower = sum(1 for row in rows if row["cap_direction"] == "lower")
-        upper = sum(1 for row in rows if row["cap_direction"] == "upper")
         return NoisyPanelResult(
             sample_id=sample_id,
             noise_scenario=scenario,
@@ -692,8 +724,13 @@ def generate_noisy_panel_file(
 def write_noise_config(run_root: str | Path, config: NoiseGenerationConfig) -> None:
     config_dir = Path(run_root) / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
-    with (config_dir / "noise_scenarios.json").open("w") as fh:
+    target = config_dir / "noise_scenarios.json"
+    temporary = target.with_name(target.name + ".tmp")
+    with temporary.open("w") as fh:
         json.dump(noise_config_to_dict(config), fh, indent=2)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(temporary, target)
 
 
 def write_noisy_manifest(run_root: str | Path, results: Iterable[NoisyPanelResult]) -> None:
@@ -714,8 +751,13 @@ def write_noisy_manifest(run_root: str | Path, results: Iterable[NoisyPanelResul
         "n_capped_total",
         "error_message",
     ]
-    with (config_dir / "manifest_noisy_panels.csv").open("w", newline="") as fh:
+    target = config_dir / "manifest_noisy_panels.csv"
+    temporary = target.with_name(target.stem + ".tmp.csv")
+    with temporary.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
         for result in sorted(results, key=lambda item: (item.sample_id, item.noise_scenario)):
             writer.writerow(asdict(result))
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(temporary, target)

@@ -57,6 +57,15 @@ class PreparedFixedCosBasis:
 
 
 @dataclass(frozen=True)
+class FixedBasisPriceJacobian:
+    """Prices and initial-variance derivatives for one fixed-basis maturity."""
+
+    prices: np.ndarray
+    initial_variance_jacobian: np.ndarray
+    price_clipped: np.ndarray
+
+
+@dataclass(frozen=True)
 class OptionPriceCube:
     """Legacy dense vectorised pricing output; not a market-data panel."""
 

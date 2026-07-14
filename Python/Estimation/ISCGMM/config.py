@@ -15,6 +15,11 @@ class ImpliedStateConfig:
     max_iter: int = 40
     boundary_tol: float = 1e-5
     warm_start_window: float | None = 0.25
+    state_solver: str = "golden_section"
+    fallback_solver: str | None = "golden_section"
+    finite_difference_relative_step: float = 1e-4
+    finite_difference_absolute_step: float = 1e-7
+    minimum_black_vega: float = 5e-6
 
     def validate(self) -> None:
         self.cos_basis.validate()
@@ -26,6 +31,24 @@ class ImpliedStateConfig:
             raise ValueError("boundary_tol must be non-negative")
         if self.warm_start_window is not None and self.warm_start_window <= 0.0:
             raise ValueError("warm_start_window must be positive when provided")
+        supported_solvers = {
+            "golden_section",
+            "bounded_brent",
+            "least_squares_finite_difference",
+            "least_squares_analytic",
+        }
+        if self.state_solver not in supported_solvers:
+            raise ValueError(f"unsupported state_solver: {self.state_solver!r}")
+        if self.fallback_solver not in {None, "golden_section", "bounded_brent"}:
+            raise ValueError("fallback_solver must be None, 'golden_section', or 'bounded_brent'")
+        if self.fallback_solver == self.state_solver:
+            self_fallback_allowed = self.state_solver in {"golden_section", "bounded_brent"}
+            if not self_fallback_allowed:
+                raise ValueError("fallback_solver must differ from the selected derivative state solver")
+        if self.finite_difference_relative_step <= 0.0 or self.finite_difference_absolute_step <= 0.0:
+            raise ValueError("finite-difference Jacobian steps must be strictly positive")
+        if self.minimum_black_vega <= 0.0:
+            raise ValueError("minimum_black_vega must be strictly positive")
 
 
 @dataclass(frozen=True)
@@ -112,4 +135,3 @@ class LoggingConfig:
     def validate(self) -> None:
         if self.progress_every <= 0:
             raise ValueError("progress_every must be positive")
-

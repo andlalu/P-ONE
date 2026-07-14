@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import importlib.util
 import math
-import warnings
+import os
 from pathlib import Path
 from typing import Iterable
 
@@ -112,7 +112,7 @@ def generate_clean_option_panel_rows(
         basis = pricer.prepare_fixed_basis(
             maturity=maturity,
             effective_width=cos_basis.width_for_maturity(maturity),
-            n_cos=cos_basis.n_cos,
+            n_cos=cos_basis.generation_n_cos,
             model_params=params_q,
         )
         prices[:, :, maturity_index] = pricer.price_matrix_fixed_basis(
@@ -185,22 +185,43 @@ def parquet_available() -> bool:
     )
 
 
-def write_panel(rows: list[dict[str, object]], target_without_suffix: Path, *, metadata: dict[str, object]) -> Path:
+def write_panel(
+    rows: list[dict[str, object]],
+    target_without_suffix: Path,
+    *,
+    metadata: dict[str, object],
+    panel_format: str,
+) -> Path:
     target_without_suffix.parent.mkdir(parents=True, exist_ok=True)
-    if parquet_available():
+    if panel_format == "parquet":
+        if not parquet_available():
+            raise RuntimeError("panel_format='parquet' requires pandas and pyarrow or fastparquet")
         import pandas as pd  # type: ignore[import-not-found]
 
         out = target_without_suffix.with_suffix(".parquet")
-        pd.DataFrame(rows, columns=PANEL_COLUMNS).to_parquet(out, index=False)
+        temporary = out.with_name(out.stem + ".tmp.parquet")
+        pd.DataFrame(rows, columns=PANEL_COLUMNS).to_parquet(temporary, index=False)
+        if len(pd.read_parquet(temporary)) != len(rows):
+            temporary.unlink(missing_ok=True)
+            raise RuntimeError("atomic Parquet validation failed before publication")
+        os.replace(temporary, out)
         write_panel_metadata(out, metadata)
         return out
-
-    warnings.warn("Parquet dependencies unavailable; writing clean option panel as CSV.", RuntimeWarning)
+    if panel_format != "csv":
+        raise ValueError("panel_format must be 'parquet' or 'csv'")
     out = target_without_suffix.with_suffix(".csv")
-    with out.open("w", newline="") as fh:
+    temporary = out.with_name(out.stem + ".tmp.csv")
+    with temporary.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=PANEL_COLUMNS)
         writer.writeheader()
         writer.writerows(rows)
+        fh.flush()
+        os.fsync(fh.fileno())
+    with temporary.open(newline="") as fh:
+        if sum(1 for _ in csv.DictReader(fh)) != len(rows):
+            temporary.unlink(missing_ok=True)
+            raise RuntimeError("atomic CSV validation failed before publication")
+    os.replace(temporary, out)
     write_panel_metadata(out, metadata)
     return out
 

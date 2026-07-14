@@ -31,6 +31,9 @@ class ImpliedStateResult:
     coefficient_solve_count: int = 0
     coefficient_cache_hits: int = 0
     fixed_coefficient_count: int = 0
+    solver_name: str = "golden_section"
+    fallback_count: int = 0
+    jacobian_evaluation_count: int = 0
 
     @property
     def success_rate(self) -> float:

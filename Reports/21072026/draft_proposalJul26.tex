@@ -338,6 +338,8 @@ denote the model-implied Black-Scholes volatility of contract \(j\) obtained fro
 \]
 where \(\mathcal V\) is the admissible domain for the variance state. In the absence of observation error, and evaluated at the true parameter vector, this inversion recovers the latent variance sequence up to numerical approximation error. In noisy option panels, \(\widehat V_i^{\theta_{\mathbb Q}}\) is instead a parameter-dependent transformation of the noisy option cross-section. This is the main channel through which option observation errors affect the implied-state estimator.
 
+The option pricing step uses a maturity-specific fixed effective COS interval. The same interval is used when generating the option panels and when reconstructing the implied variance states, while the number of COS terms may differ between these two steps if this is supported by the numerical validation. The calibration of the fixed intervals and the numerical implementation of the state inversion are reported in Appendix~\ref{app:is_cgmm_implementation}.
+
 Define the observed log-return increment
 \[
 R_i
@@ -819,6 +821,70 @@ For each observation date \(t_i\), the implied-state step solves the scalar mini
 The minimisation is one dimensional because the Heston design contains a single latent variance state. The search is carried out over a bounded interval \(\mathcal V=[\underline V,\overline V]\). Consecutive option panels are close in time, so the numerical search can be "warm-started" from the previously implied variance level. In the clean-panel case, evaluating the state-implying step at the true risk-neutral parameter vector provides a direct numerical check on the implementation, since the recovered sequence should be close to the simulated variance path.
 
 The same procedure is applied to clean and noisy option panels. Hence, differences between the implied states recovered from the different observation error designs are driven by the observation error mechanisms themselves and not by changes in the pricing or implied-volatility inversion convention.
+
+\subsection{Fixed COS basis}
+
+For an option maturity \(\mathcal T\), the COS frequencies are fixed as
+\begin{equation}
+u_k(\mathcal T)
+=
+\frac{k\pi}{2L_{\mathcal T}},
+\qquad k=0,\ldots,N-1,
+\label{eq:app_fixed_cos_grid}
+\end{equation}
+where \([-L_{\mathcal T},L_{\mathcal T}]\) is the effective interval for log-forward moneyness. The interval does not depend on the candidate variance value. The payoff expansion and the affine coefficients \(A_k(\mathcal T)\) and \(B_k(\mathcal T)\) are therefore prepared once for each maturity and risk-neutral parameter vector and reused across strikes and dates.
+
+The variance domain is \(V\in[10^{-6},0.15]\). The parameter ranges are \(\kappa_{\mathbb Q}\in[1.5,4.0]\), \(\bar V_{\mathbb Q}\in[0.012,0.24]\), \(\sigma_v\in[0.20,0.65]\) and \(\rho\in[-0.80,-0.20]\). The calibration uses a seeded Latin-hypercube design together with the true DGP, the initial parameter value and two moderate perturbations. A Carr--Madan Fourier inversion is used to validate an 8192-term COS reference. Table~\ref{tab:app_fixed_cos_calibration} reports the selected specification. Prices with Black-Scholes vega below \(5\times10^{-6}\) are reported separately because numerical price differences close to \(10^{-10}\) produce unstable implied-volatility differences. There are no invalid prices or implied-volatility inversions in the calibration design.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\(\mathcal T\) & \(L_{\mathcal T}\) & \(N\) & Max. IV error & Max. IV error, vega screen \\
+\midrule
+\(1/12\) & 0.75 & 576 & \(2.23\times10^{-4}\) & \(1.81\times10^{-6}\) \\
+\(1/4\)  & 1.25 & 576 & \(2.82\times10^{-7}\) & \(2.82\times10^{-7}\) \\
+\(1/2\)  & 2.00 & 576 & \(2.77\times10^{-8}\) & \(2.77\times10^{-8}\) \\
+\bottomrule
+\end{tabular}
+\caption{Selected fixed COS basis. The generation and estimation term counts are both 576. The selection uses the lowest term count and then the narrowest interval satisfying the zero-failure error conditions.}
+\label{tab:app_fixed_cos_calibration}
+\end{table}
+
+\subsection{Variance derivative and state solver}
+
+Let
+\[
+J_i(v;\theta_{\mathbb Q})
+=
+\frac{\partial\sigma_i^{\mathrm{model}}(v;\theta_{\mathbb Q})}{\partial v}.
+\]
+Since the COS basis is fixed, the affine contribution can be differentiated without rebuilding the pricing grid:
+\begin{equation}
+\frac{\partial}{\partial v}\exp(A_k+B_kv)
+=
+B_k\exp(A_k+B_kv).
+\label{eq:app_cos_variance_derivative}
+\end{equation}
+For an interior implied-volatility solution with sufficient Black-Scholes vega, this gives
+\begin{equation}
+\frac{\partial\sigma_i^{(j),\mathrm{model}}}{\partial v}
+=
+\frac{\partial P_i^{(j),\mathrm{model}}/\partial v}
+{\operatorname{Vega}_i^{(j)}}.
+\label{eq:app_iv_variance_derivative}
+\end{equation}
+Writing \(L_i(v)=[\sigma_i^{\mathrm{obs}}-\sigma_i^{\mathrm{model}}(v;\theta_{\mathbb Q})]^\top[\sigma_i^{\mathrm{obs}}-\sigma_i^{\mathrm{model}}(v;\theta_{\mathbb Q})]\), the date-level derivative is
+\begin{equation}
+\frac{\partial L_i(v)}{\partial v}
+=
+-2J_i(v;\theta_{\mathbb Q})^\top
+\left[\sigma_i^{\mathrm{obs}}-\sigma_i^{\mathrm{model}}(v;\theta_{\mathbb Q})\right].
+\label{eq:app_state_loss_derivative}
+\end{equation}
+A central finite-difference derivative is retained for validation, with one-sided differences at the variance boundaries. The derivative formula is not used for low-vega contracts or when price and implied-volatility clipping makes the inversion locally non-differentiable.
+
+The state-solver benchmark compares golden-section search, bounded Brent minimisation and bounded least-squares procedures using finite-difference and semi-analytical Jacobians. Bounded Brent is used in the production configuration on \(\mathcal V=[10^{-6},0.15]\), with a warm-start window of 0.04 and golden-section search retained as a fallback. The benchmark has zero failures for bounded Brent across the clean panel and the three rounded and capped observation-error designs. Solver name, objective evaluations, boundary hits, Jacobian evaluations and fallback use are recorded. The outer first-step C-GMM criterion remains derivative free.
 
 \subsection{Heston transition characteristic function under \(\mathbb P\)}
 
