@@ -5,10 +5,15 @@ import csv
 import json
 import logging
 import math
+import sys
 import time
 from pathlib import Path
 
 import numpy as np
+
+PYTHON_ROOT = Path(__file__).resolve().parents[1]
+if str(PYTHON_ROOT) not in sys.path:
+    sys.path.insert(0, str(PYTHON_ROOT))
 
 from Estimation.ISCGMM.config import ImpliedStateConfig
 from Estimation.ISCGMM.implied_state import imply_heston_variance_path
@@ -16,8 +21,9 @@ from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price
 from Models.Heston.parameters import HestonParameters
 from OptionData.panel import OptionPanel, OptionPanelDate
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
+from Scripts.experiment_config import load_experiment_config
 
 LOGGER = logging.getLogger(__name__)
 SOLVERS = (
@@ -103,7 +109,7 @@ def _clean_panel(basis_config: FixedCosBasisConfig) -> OptionPanel:
                 true_variance=float(variance),
             )
         )
-    return OptionPanel(tuple(dates), metadata={"cos_basis": basis_config.generation_metadata()})
+    return OptionPanel(tuple(dates), metadata={"cos_basis": cos_specification_metadata(basis_config)})
 
 
 def _contaminated_panel(clean_panel: OptionPanel, scenario: str) -> OptionPanel:
@@ -182,8 +188,8 @@ def _contaminated_panel(clean_panel: OptionPanel, scenario: str) -> OptionPanel:
     return OptionPanel(tuple(dates), metadata={**clean_panel.metadata, "scenario": scenario})
 
 
-def run_benchmark(basis_path: Path, output_directory: Path) -> dict[str, object]:
-    basis_config = FixedCosBasisConfig.load(basis_path)
+def run_benchmark(config_path: Path, output_directory: Path) -> dict[str, object]:
+    basis_config = load_experiment_config(config_path).cos_basis
     clean = _clean_panel(basis_config)
     panels = {scenario: _contaminated_panel(clean, scenario) for scenario in SCENARIOS}
     references: dict[str, np.ndarray] = {}
@@ -286,13 +292,13 @@ def run_benchmark(basis_path: Path, output_directory: Path) -> dict[str, object]
 def main() -> int:
     parser = argparse.ArgumentParser(description="Benchmark implied-state solvers on clean and noisy panels.")
     parser.add_argument(
-        "--basis", type=Path, default=Path("Python/Scripts/configs/heston_cos_basis_production.json")
+        "--config", type=Path, default=Path("Python/Scripts/configs/heston_experiment_run_001.json")
     )
     parser.add_argument("--output", type=Path, default=Path("outputs/calibration/fixed_cos"))
     parser.add_argument("--log-level", default="INFO")
     arguments = parser.parse_args()
     logging.basicConfig(level=getattr(logging, arguments.log_level.upper()), format="%(levelname)s %(message)s")
-    run_benchmark(arguments.basis, arguments.output)
+    run_benchmark(arguments.config, arguments.output)
     return 0
 
 

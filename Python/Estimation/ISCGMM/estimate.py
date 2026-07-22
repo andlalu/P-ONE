@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 
 from Estimation.ISCGMM.cgmm_criterion import CgmmFirstStepCriterion
-from Estimation.ISCGMM.config import CgmmConfig, LoggingConfig, OptimizerConfig, PowellStageConfig
+from Estimation.ISCGMM.config import CgmmConfig, OptimizerConfig
 from Estimation.ISCGMM.parameter_transform import free_parameter_bounds, from_free, to_free
 from Estimation.ISCGMM.results import FirstStepEstimate, OptimizerStageResult
 from Models.Heston.parameters import HestonParameters
@@ -60,16 +60,13 @@ def estimate_first_step(
     *,
     criterion_config: CgmmConfig,
     optimizer_config: OptimizerConfig,
-    logging_config: LoggingConfig | None = None,
 ) -> FirstStepEstimate:
     """Estimate first-step IS-CGMM with deterministic screening and bounded Powell."""
 
     from scipy.optimize import Bounds, minimize  # type: ignore[import-not-found]
 
-    log_config = LoggingConfig() if logging_config is None else logging_config
     criterion_config.validate()
     optimizer_config.validate()
-    log_config.validate()
     started = time.perf_counter()
     LOGGER.info("estimation job started")
     LOGGER.info(
@@ -101,7 +98,7 @@ def estimate_first_step(
                 penalty_count += 1
                 value = float(optimizer_config.penalty_value)
             best_value = min(best_value, value)
-            if evaluation_count % log_config.progress_every == 0:
+            if evaluation_count % optimizer_config.progress_every == 0:
                 LOGGER.info(
                     "Powell progress evaluations=%d best=%.8g elapsed=%.1fs penalties=%d",
                     evaluation_count,

@@ -5,7 +5,6 @@ from Estimation.ISCGMM.config import (
     CcfQuadratureConfig,
     CgmmConfig,
     ImpliedStateConfig,
-    LoggingConfig,
     OptimizerConfig,
     PowellStageConfig,
 )
@@ -29,7 +28,6 @@ __all__ = [
     "FirstStepEstimate",
     "HestonParameters",
     "ImpliedStateConfig",
-    "LoggingConfig",
     "OptimizerConfig",
     "OptionPanel",
     "OptionPanelDate",

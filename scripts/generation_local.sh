@@ -16,7 +16,7 @@ export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
 export NUMEXPR_NUM_THREADS="${NUMEXPR_NUM_THREADS:-1}"
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
-CONFIG="${CONFIG:-Python/Scripts/configs/clean_generation_run_001.json}"
+CONFIG="${CONFIG:-Python/Scripts/configs/heston_experiment_run_001.json}"
 OUTPUT_ROOT="${OUTPUT_ROOT:-outputs/generation/local_run}"
 N_SAMPLES="${N_SAMPLES:-2}"
 WORKERS="${WORKERS:-2}"

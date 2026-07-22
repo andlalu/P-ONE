@@ -14,7 +14,7 @@ from Models.Heston.parameters import HestonParameters, HestonPhysicalParameters
 from OptionData.io import load_option_panel
 from OptionData.panel import OptionPanel
 from OptionPricing.clean_panel import generate_clean_option_panel_rows, write_panel
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
 
@@ -70,7 +70,7 @@ def _write_tiny_panel(tmp_path: Path, *, n_weeks: int = 7) -> Path:
     return write_panel(
         rows,
         tmp_path / "panel",
-        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": basis.generation_metadata()},
+        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": cos_specification_metadata(basis)},
         panel_format="csv",
     )
 
@@ -113,7 +113,7 @@ def test_implied_state_rejects_panel_configuration_cos_basis_mismatch(tmp_path):
     mismatched = FixedCosBasisConfig(_basis().maturities, (1.1, 1.5), 64, 64)
     panel = OptionPanel(
         panel.dates,
-        metadata={**panel.metadata, "cos_basis": mismatched.generation_metadata()},
+        metadata={**panel.metadata, "cos_basis": cos_specification_metadata(mismatched)},
     )
     with pytest.raises(ValueError, match="width mismatch"):
         imply_heston_variance_path(theta, panel, _state_config())

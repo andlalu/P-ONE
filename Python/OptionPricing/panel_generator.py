@@ -4,7 +4,7 @@ import numpy as np
 
 from Models.Heston.parameters import HestonRiskNeutralParameters
 from OptionPricing.base import OptionPriceCubeGenerator
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 from OptionPricing.types import (
     OptionPriceCube,
     OptionPriceCubeConfig,
@@ -58,5 +58,5 @@ class HestonOptionPriceCubeGenerator(OptionPriceCubeGenerator):
             observation_index=np.arange(n_obs),
             strikes=self.panel_config.strikes,
             maturities=self.panel_config.maturities,
-            metadata={"engine": "heston_cos", "cos_basis": self.cos_basis.generation_metadata()},
+            metadata={"engine": "heston_cos", "cos_basis": cos_specification_metadata(self.cos_basis)},
         )

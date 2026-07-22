@@ -14,6 +14,7 @@ from Estimation.ISCGMM.results import ImpliedStateResult
 from ImpliedVolatility.black_iv import implied_vol_black76
 from Models.Heston.parameters import HestonParameters, HestonRiskNeutralParameters
 from OptionData.panel import OptionPanel, OptionPanelDate
+from OptionPricing.cos_basis import validate_panel_cos_compatibility
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.types import PreparedFixedCosBasis
 
@@ -78,7 +79,7 @@ def imply_heston_variance_path(
     basis_metadata = panel.metadata.get("cos_basis")
     if not isinstance(basis_metadata, dict):
         raise ValueError("option panel is missing required fixed COS-basis metadata")
-    config.cos_basis.assert_panel_compatible(basis_metadata)
+    validate_panel_cos_compatibility(config.cos_basis, basis_metadata)
 
     pricer = CosOptionPricer()
     params_q = theta.to_risk_neutral()

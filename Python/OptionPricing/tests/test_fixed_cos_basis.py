@@ -1,9 +1,12 @@
 import numpy as np
 import pytest
-from pathlib import Path
 
 from Models.Heston.parameters import HestonRiskNeutralParameters
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import (
+    FixedCosBasisConfig,
+    cos_specification_metadata,
+    validate_panel_cos_compatibility,
+)
 from OptionPricing.cos_pricer import CosOptionPricer
 
 
@@ -41,48 +44,24 @@ def test_fixed_basis_grid_is_independent_of_candidate_variance(monkeypatch):
     np.testing.assert_array_equal(basis.u_grid, u_before)
 
 
-def test_cos_basis_metadata_roundtrip_and_mismatch_rejection():
-    config = FixedCosBasisConfig((0.25, 0.5), (1.2, 1.8), 64, 32)
-    restored = FixedCosBasisConfig.from_dict(config.to_dict())
-    assert restored == config
-    config.assert_panel_compatible(restored.generation_metadata())
-    with pytest.raises(ValueError, match="width mismatch"):
-        FixedCosBasisConfig((0.25, 0.5), (1.2, 1.9), 64, 32).assert_panel_compatible(
-            config.generation_metadata()
-        )
-
-
-def test_generation_and_estimation_term_counts_are_role_specific_but_compatible():
+def test_panel_compatibility_uses_generation_settings_only():
     panel_basis = FixedCosBasisConfig((0.25,), (1.5,), 128, 64)
     estimator_basis = FixedCosBasisConfig((0.25,), (1.5,), 128, 32)
-    with pytest.raises(ValueError, match="configuration hash"):
-        estimator_basis.assert_panel_compatible(panel_basis.generation_metadata())
+    validate_panel_cos_compatibility(estimator_basis, cos_specification_metadata(panel_basis))
 
-    shared_basis = FixedCosBasisConfig((0.25,), (1.5,), 128, 32)
-    shared_basis.assert_panel_compatible(shared_basis.generation_metadata())
+    mismatched_terms = FixedCosBasisConfig((0.25,), (1.5,), 64, 32)
+    with pytest.raises(ValueError, match="generation_n_cos"):
+        validate_panel_cos_compatibility(mismatched_terms, cos_specification_metadata(panel_basis))
 
 
-@pytest.mark.parametrize(
-    ("field", "value", "message"),
-    [
-        ("basis_convention", "variance_scaled", "conventions differ"),
-        ("pricing_implementation", "another_version", "implementations differ"),
-        ("maturities", [0.25, 1.0], "maturity grids differ"),
-        ("effective_widths", [1.2, 1.9], "width mismatch"),
-    ],
-)
-def test_panel_basis_metadata_rejects_exact_architecture_mismatches(field, value, message):
+def test_panel_compatibility_rejects_maturity_and_width_mismatches():
     config = FixedCosBasisConfig((0.25, 0.5), (1.2, 1.8), 64, 32)
-    metadata = config.generation_metadata()
-    metadata[field] = value
-    with pytest.raises(ValueError, match=message):
-        config.assert_panel_compatible(metadata)
+    metadata = cos_specification_metadata(config)
+    metadata["effective_widths"] = [1.2, 1.9]
+    with pytest.raises(ValueError, match="width mismatch"):
+        validate_panel_cos_compatibility(config, metadata)
 
-
-def test_production_basis_load_and_hash_are_stable():
-    basis_path = (
-        Path(__file__).resolve().parents[2] / "Scripts" / "configs" / "heston_cos_basis_production.json"
-    )
-    config = FixedCosBasisConfig.load(basis_path)
-    assert config.stable_hash() == FixedCosBasisConfig.from_dict(config.to_dict()).stable_hash()
-    assert config.generation_n_cos >= config.estimation_n_cos
+    metadata = cos_specification_metadata(config)
+    metadata["maturities"] = [0.25, 1.0]
+    with pytest.raises(ValueError, match="maturity grids differ"):
+        validate_panel_cos_compatibility(config, metadata)

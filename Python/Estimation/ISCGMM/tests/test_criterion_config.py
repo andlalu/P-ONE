@@ -4,7 +4,7 @@ import pytest
 from Estimation.ISCGMM.cgmm_criterion import _infer_constant_transition_interval, make_cgmm_quadrature
 from Estimation.ISCGMM.config import CcfQuadratureConfig, CgmmConfig, ImpliedStateConfig
 from OptionData.panel import OptionPanel, OptionPanelDate
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 
 
 def _panel(times):
@@ -24,7 +24,7 @@ def _panel(times):
         )
         for index, time in enumerate(times)
     )
-    return OptionPanel(dates, metadata={"cos_basis": basis.generation_metadata()}), CgmmConfig(ImpliedStateConfig(basis))
+    return OptionPanel(dates, metadata={"cos_basis": cos_specification_metadata(basis)}), CgmmConfig(ImpliedStateConfig(basis))
 
 
 def test_constant_spacing_acceptance_and_irregular_rejection():

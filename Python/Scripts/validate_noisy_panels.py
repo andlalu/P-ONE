@@ -23,8 +23,12 @@ REQUIRED_COLUMNS = {
 
 
 def _load_noise_config(run_root: Path) -> dict:
-    with (run_root / "config" / "noise_scenarios.json").open() as fh:
-        return json.load(fh)
+    with (run_root / "config" / "experiment_config.json").open() as file_handle:
+        experiment = json.load(file_handle)
+    noise = experiment.get("noise")
+    if not isinstance(noise, dict):
+        raise ValueError("experiment configuration does not contain noise settings")
+    return noise
 
 
 def _panel_files(panel_dir: Path) -> list[Path]:
@@ -33,7 +37,7 @@ def _panel_files(panel_dir: Path) -> list[Path]:
 
 def _enabled_scenarios(config: dict) -> list[str]:
     scenarios = config.get("scenarios", {})
-    return [scenario for scenario in NOISE_SCENARIOS if scenarios.get(scenario, {}).get("enabled", True)]
+    return [scenario for scenario in NOISE_SCENARIOS if scenario in scenarios]
 
 
 def _as_bool(value: object) -> bool:
@@ -114,4 +118,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

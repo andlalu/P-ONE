@@ -14,7 +14,7 @@ import numpy as np
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_vega
 from Models.Heston.parameters import HestonRiskNeutralParameters
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.heston_fourier_reference import heston_option_price_fourier_reference
 
@@ -481,9 +481,9 @@ def run_calibration(output_directory: Path, basis_path: Path) -> dict[str, objec
     )
     basis_path.parent.mkdir(parents=True, exist_ok=True)
     with basis_path.open("w") as file_handle:
-        json.dump(production_basis.to_dict(), file_handle, indent=2)
+        json.dump(cos_specification_metadata(production_basis), file_handle, indent=2)
         file_handle.write("\n")
-    LOGGER.info("selected production basis %s (hash %s)", production_basis.to_dict(), production_basis.stable_hash())
+    LOGGER.info("selected calibration basis %s", cos_specification_metadata(production_basis))
     return selected
 
 
@@ -493,7 +493,7 @@ def main() -> int:
     parser.add_argument(
         "--basis-output",
         type=Path,
-        default=Path("Python/Scripts/configs/heston_cos_basis_production.json"),
+        default=Path("outputs/calibration/fixed_cos/calibrated_cos_basis.json"),
     )
     parser.add_argument("--log-level", default="INFO")
     arguments = parser.parse_args()

@@ -1,109 +1,36 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import logging
 import multiprocessing as mp
 import os
 import platform
 import subprocess
-import sys
 import time
 import traceback
 from dataclasses import asdict, dataclass, replace
-from importlib import metadata as importlib_metadata
 from pathlib import Path
 from typing import Any
-
-import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
 from DGPSimulation.io import load_heston_path_npz, save_heston_path_npz
 from DGPSimulation.types import HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
-from Models.Heston.parameters import HestonPhysicalParameters
 from OptionData.io import panel_metadata_path
 from OptionPricing.clean_panel import generate_clean_option_panel_rows, parquet_available, write_panel
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import cos_specification_metadata, validate_panel_cos_compatibility
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.noisy_panel import (
-    NoiseGenerationConfig,
     NoisyPanelResult,
     generate_noisy_panel_file,
-    parse_noise_config,
-    write_noise_config,
+    read_table,
     write_noisy_manifest,
 )
+from Scripts.experiment_config import ExperimentConfig, load_experiment_config
 
 LOGGER = logging.getLogger(__name__)
 THREAD_ENV_KEYS = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS")
-SUPPORTED_OPTION_RULE = "otm_by_forward_moneyness"
-SUPPORTED_PRICING_METHOD = "COS"
-SUPPORTED_IV_METHOD = "lets_be_rational"
-
-
-@dataclass(frozen=True)
-class PanelConfig:
-    maturities_years: tuple[float, ...]
-    log_moneyness: tuple[float, ...]
-    option_type_rule: str
-    atm_option_type: str
-    pricing_method: str
-    iv_method: str
-
-    def validate(self) -> None:
-        if self.option_type_rule != SUPPORTED_OPTION_RULE:
-            raise ValueError(f"option_type_rule must be {SUPPORTED_OPTION_RULE!r}")
-        if self.pricing_method != SUPPORTED_PRICING_METHOD:
-            raise ValueError(f"pricing_method must be {SUPPORTED_PRICING_METHOD!r}")
-        if self.iv_method != SUPPORTED_IV_METHOD:
-            raise ValueError(f"iv_method must be {SUPPORTED_IV_METHOD!r}")
-        if self.atm_option_type not in {"call", "put"}:
-            raise ValueError("atm_option_type must be 'call' or 'put'")
-        if not self.maturities_years or any(value <= 0.0 for value in self.maturities_years):
-            raise ValueError("panel maturities must be non-empty and positive")
-        if not self.log_moneyness or not all(math_is_finite(value) for value in self.log_moneyness):
-            raise ValueError("panel log-moneyness grid must be non-empty and finite")
-
-
-@dataclass(frozen=True)
-class GenerationConfig:
-    run_id: str
-    n_samples: int
-    base_seed: int
-    output_root: str
-    dgp: HestonPhysicalParameters
-    simulation: HestonSimConfig
-    eta_v: float
-    panel: PanelConfig
-    panel_format: str
-    cos_basis: FixedCosBasisConfig
-    cos_basis_path: str
-    daily_array_semantics: str = (
-        "When return_daily is true, saved daily arrays include the initial state and burn-in observations, "
-        "followed by the production observations."
-    )
-    source_config_path: str = ""
-    configuration_hash: str = ""
-    workers: int | None = None
-    skip_existing: bool = False
-    paths_only: bool = False
-    panels_only: bool = False
-    noise: NoiseGenerationConfig | None = None
-
-    def validate(self) -> None:
-        if not self.run_id or self.n_samples <= 0:
-            raise ValueError("run_id must be non-empty and n_samples must be positive")
-        if self.panel_format not in {"parquet", "csv"}:
-            raise ValueError("panel_format must be 'parquet' or 'csv'")
-        if self.paths_only and self.panels_only:
-            raise ValueError("paths_only and panels_only cannot both be true")
-        self.dgp.validate()
-        self.simulation.validate()
-        self.panel.validate()
-        self.cos_basis.validate()
-        self.cos_basis.validate_requested_maturities(self.panel.maturities_years)
 
 
 @dataclass(frozen=True)
@@ -120,75 +47,19 @@ class SampleGenerationResult:
     error: str = ""
 
 
-def math_is_finite(value: float) -> bool:
-    return bool(np.isfinite(float(value)))
-
-
-def _stable_json_hash(payload: Any) -> str:
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
-    return hashlib.sha256(encoded).hexdigest()
-
-
 def _atomic_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     with temporary.open("w") as file_handle:
-        json.dump(payload, file_handle, indent=2, sort_keys=True)
+        json.dump(payload, file_handle, indent=2, sort_keys=True, allow_nan=False)
         file_handle.write("\n")
         file_handle.flush()
         os.fsync(file_handle.fileno())
     os.replace(temporary, path)
 
 
-def _resolve_relative(base_directory: Path, configured_path: str) -> Path:
-    path = Path(configured_path).expanduser()
-    return (base_directory / path).resolve() if not path.is_absolute() else path.resolve()
-
-
-def load_config(config_path: str | Path) -> GenerationConfig:
-    source = Path(config_path).expanduser().resolve()
-    with source.open() as file_handle:
-        raw = json.load(file_handle)
-    if not isinstance(raw, dict):
-        raise ValueError("generation configuration must contain one JSON object")
-    panel_raw = raw["panel"]
-    basis_path = _resolve_relative(source.parent, str(raw["cos_basis_path"]))
-    output_root = _resolve_relative(source.parent, str(raw["output_root"]))
-    noise_raw = raw.get("noise")
-    config = GenerationConfig(
-        run_id=str(raw["run_id"]),
-        n_samples=int(raw["n_samples"]),
-        base_seed=int(raw["base_seed"]),
-        output_root=str(output_root),
-        dgp=HestonPhysicalParameters(**raw["dgp"]),
-        simulation=HestonSimConfig(**raw["simulation"]),
-        eta_v=float(raw["q_measure"]["eta_v"]),
-        panel=PanelConfig(
-            maturities_years=tuple(float(value) for value in panel_raw["maturities_years"]),
-            log_moneyness=tuple(float(value) for value in panel_raw["log_moneyness"]),
-            option_type_rule=str(panel_raw["option_type_rule"]),
-            atm_option_type=str(panel_raw.get("atm_option_type", "call")),
-            pricing_method=str(panel_raw["pricing_method"]),
-            iv_method=str(panel_raw["iv_method"]),
-        ),
-        panel_format=str(raw["panel_format"]),
-        cos_basis=FixedCosBasisConfig.load(basis_path),
-        cos_basis_path=str(basis_path),
-        daily_array_semantics=str(
-            raw.get(
-                "daily_array_semantics",
-                "When return_daily is true, saved daily arrays include the initial state and burn-in "
-                "observations, followed by the production observations.",
-            )
-        ),
-        source_config_path=str(source),
-        configuration_hash=_stable_json_hash(raw),
-        workers=raw.get("parallel", {}).get("workers"),
-        noise=None if noise_raw is None else parse_noise_config(noise_raw),
-    )
-    config.validate()
-    validate_panel_dependencies(config.panel_format)
-    return config
+def load_config(config_path: str | Path) -> ExperimentConfig:
+    return load_experiment_config(config_path)
 
 
 def validate_panel_dependencies(panel_format: str) -> None:
@@ -212,37 +83,8 @@ def _git_sha() -> str:
         return "unavailable"
 
 
-def _package_version(name: str) -> str:
-    try:
-        return importlib_metadata.version(name)
-    except importlib_metadata.PackageNotFoundError:
-        return "unavailable"
-
-
-def resolved_config_dict(
-    config: GenerationConfig, *, requested_workers: int | None = None, resolved_workers: int | None = None
-) -> dict[str, Any]:
-    payload = asdict(config)
-    payload["cos_basis_hash"] = config.cos_basis.stable_hash()
-    payload["execution"] = {
-        "git_sha": _git_sha(),
-        "configuration_hash": config.configuration_hash,
-        "python_version": platform.python_version(),
-        "numpy_version": np.__version__,
-        "scipy_version": _package_version("scipy"),
-        "pandas_version": _package_version("pandas"),
-        "pyarrow_version": _package_version("pyarrow"),
-        "requested_worker_count": requested_workers,
-        "resolved_worker_count": resolved_workers,
-        "thread_environment": {key: os.environ.get(key) for key in THREAD_ENV_KEYS},
-        "platform": platform.platform(),
-        "panel_format": config.panel_format,
-    }
-    return payload
-
-
 def with_overrides(
-    config: GenerationConfig,
+    config: ExperimentConfig,
     *,
     n_samples: int | None = None,
     workers: int | None = None,
@@ -250,7 +92,9 @@ def with_overrides(
     skip_existing: bool | None = None,
     paths_only: bool | None = None,
     panels_only: bool | None = None,
-) -> GenerationConfig:
+) -> ExperimentConfig:
+    """Apply direct execution overrides without changing the experiment hash."""
+
     updates: dict[str, Any] = {}
     for name, value in {
         "n_samples": n_samples,
@@ -264,17 +108,22 @@ def with_overrides(
     if output_root is not None:
         updates["output_root"] = str(Path(output_root).expanduser().resolve())
     result = replace(config, **updates)
-    result.validate()
+    if result.n_samples <= 0:
+        raise ValueError("n_samples must be positive")
+    if result.workers is not None and result.workers <= 0:
+        raise ValueError("workers must be positive")
+    if result.paths_only and result.panels_only:
+        raise ValueError("paths_only and panels_only cannot both be true")
     return result
 
 
-def default_workers(n_samples: int, requested: int | None) -> int:
+def default_workers(n_tasks: int, requested: int | None) -> int:
     if requested is not None:
-        return max(1, min(int(requested), n_samples))
-    return min(max((os.cpu_count() or 2) - 1, 1), n_samples)
+        return max(1, min(int(requested), n_tasks))
+    return min(max((os.cpu_count() or 2) - 1, 1), n_tasks)
 
 
-def sample_artifact_paths(config: GenerationConfig, sample_id: int) -> tuple[Path, Path, Path]:
+def sample_artifact_paths(config: ExperimentConfig, sample_id: int) -> tuple[Path, Path, Path]:
     root = Path(config.output_root)
     stem = f"sample_{sample_id:03d}"
     return (
@@ -292,7 +141,7 @@ def _read_json(path: Path) -> dict[str, Any]:
     return payload
 
 
-def sample_is_complete(config: GenerationConfig, sample_id: int) -> bool:
+def sample_is_complete(config: ExperimentConfig, sample_id: int) -> bool:
     path_file, panel_file, completion_file = sample_artifact_paths(config, sample_id)
     required: list[Path] = []
     if not config.panels_only:
@@ -300,7 +149,7 @@ def sample_is_complete(config: GenerationConfig, sample_id: int) -> bool:
     if not config.paths_only:
         required.extend([panel_file, panel_metadata_path(panel_file)])
         if config.noise is not None:
-            for scenario in config.noise.enabled_scenarios():
+            for scenario in config.noise.scenario_names():
                 noisy = Path(config.output_root) / "panels_observed" / scenario / f"sample_{sample_id:03d}.{config.panel_format}"
                 required.extend([noisy, panel_metadata_path(noisy)])
                 if scenario == "persistent_factor":
@@ -312,19 +161,24 @@ def sample_is_complete(config: GenerationConfig, sample_id: int) -> bool:
         return False
     try:
         completion = _read_json(completion_file)
-        if completion.get("configuration_hash") != config.configuration_hash:
+        if completion.get("status") != "complete":
             return False
-        if completion.get("cos_basis_hash") != config.cos_basis.stable_hash():
+        if completion.get("experiment_config_hash") != config.experiment_config_hash:
             return False
         if not config.paths_only:
             metadata = _read_json(panel_metadata_path(panel_file))
-            config.cos_basis.assert_panel_compatible(metadata["cos_basis"])
+            if metadata.get("experiment_config_hash") != config.experiment_config_hash:
+                return False
+            validate_panel_cos_compatibility(config.cos_basis, metadata["cos_basis"])
             expected_rows = (
                 (config.simulation.t_week + 1)
-                * len(config.panel.maturities_years)
-                * len(config.panel.log_moneyness)
+                * len(config.cos_basis.maturities)
+                * len(config.log_moneyness)
             )
-            if int(completion.get("clean_panel_rows", -1)) != expected_rows:
+            if (
+                int(completion.get("clean_panel_rows", -1)) != expected_rows
+                or len(read_table(panel_file)) != expected_rows
+            ):
                 return False
         if not config.panels_only:
             path, _, stored_config = load_heston_path_npz(path_file)
@@ -345,7 +199,7 @@ def _save_path_atomically(path_file: Path, path: Any, params: Any, simulation: H
     os.replace(temporary, path_file)
 
 
-def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGenerationResult:
+def generate_one_sample(sample_id: int, config: ExperimentConfig) -> SampleGenerationResult:
     started = time.perf_counter()
     seed = config.base_seed + sample_id
     path_file, panel_file, completion_file = sample_artifact_paths(config, sample_id)
@@ -382,11 +236,11 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
                 path=path,
                 params_p=parameters,
                 eta_v=config.eta_v,
-                maturities_years=config.panel.maturities_years,
-                log_moneyness=config.panel.log_moneyness,
-                atm_option_type=config.panel.atm_option_type,
-                pricing_method=config.panel.pricing_method,
-                iv_method=config.panel.iv_method,
+                maturities_years=config.cos_basis.maturities,
+                log_moneyness=config.log_moneyness,
+                atm_option_type=config.atm_option_type,
+                pricing_method="COS",
+                iv_method="lets_be_rational",
                 pricer=CosOptionPricer(),
                 cos_basis=config.cos_basis,
             )
@@ -400,16 +254,14 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
                     "sample_id": sample_id,
                     "seed": seed,
                     "scenario": "clean",
-                    "configuration_hash": config.configuration_hash,
-                    "git_sha": _git_sha(),
                     "panel_format": config.panel_format,
-                    "cos_basis": config.cos_basis.generation_metadata(
-                        resolved_basis_path=config.cos_basis_path
-                    ),
+                    "experiment_config_hash": config.experiment_config_hash,
+                    "git_sha": _git_sha(),
+                    "cos_basis": cos_specification_metadata(config.cos_basis),
                 },
             )
             if config.noise is not None:
-                for scenario in config.noise.enabled_scenarios():
+                for scenario in config.noise.scenario_names():
                     result = generate_noisy_panel_file(
                         clean_panel_path=panel_file,
                         run_root=config.output_root,
@@ -425,15 +277,12 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
         _atomic_json(
             completion_file,
             {
-                "run_id": config.run_id,
                 "sample_id": sample_id,
                 "seed": seed,
-                "configuration_hash": config.configuration_hash,
-                "cos_basis_hash": config.cos_basis.stable_hash(),
+                "experiment_config_hash": config.experiment_config_hash,
                 "git_sha": _git_sha(),
-                "panel_format": config.panel_format,
                 "clean_panel_rows": clean_rows,
-                "noise_scenarios": [] if config.noise is None else list(config.noise.enabled_scenarios()),
+                "generated_scenarios": [result.noise_scenario for result in noisy_results],
                 "status": "complete",
             },
         )
@@ -464,14 +313,16 @@ def generate_one_sample(sample_id: int, config: GenerationConfig) -> SampleGener
         )
 
 
-def _generate_one_star(arguments: tuple[int, GenerationConfig]) -> SampleGenerationResult:
+def _generate_one_star(arguments: tuple[int, ExperimentConfig]) -> SampleGenerationResult:
     return generate_one_sample(*arguments)
 
 
 def run_samples(
-    *, config: GenerationConfig, sample_start: int = 0, sample_end: int | None = None
+    *, config: ExperimentConfig, sample_start: int = 0, sample_end: int | None = None
 ) -> list[SampleGenerationResult]:
-    config.validate()
+    if config.paths_only and config.panels_only:
+        raise ValueError("paths_only and panels_only cannot both be true")
+    validate_panel_dependencies(config.panel_format)
     set_thread_env()
     end = config.n_samples if sample_end is None else min(sample_end, config.n_samples)
     if sample_start < 0 or end < sample_start:
@@ -488,23 +339,29 @@ def run_samples(
         return list(pool.imap_unordered(_generate_one_star, [(sample_id, config) for sample_id in sample_ids]))
 
 
-def write_run_metadata(config: GenerationConfig, results: list[SampleGenerationResult]) -> None:
+def write_run_metadata(config: ExperimentConfig, results: list[SampleGenerationResult]) -> None:
     config_directory = Path(config.output_root) / "config"
     requested_workers = config.workers
     resolved_workers = default_workers(max(len(results), 1), requested_workers)
-    resolved_payload = resolved_config_dict(
-        config, requested_workers=requested_workers, resolved_workers=resolved_workers
+    sample_range = (
+        [min(result.sample_id for result in results), max(result.sample_id for result in results) + 1]
+        if results
+        else []
     )
-    if results:
-        resolved_payload["execution"]["sample_range"] = [
-            min(result.sample_id for result in results),
-            max(result.sample_id for result in results) + 1,
-        ]
-    else:
-        resolved_payload["execution"]["sample_range"] = []
-    _atomic_json(config_directory / "run_config_resolved.json", resolved_payload)
-    if config.noise is not None:
-        write_noise_config(config.output_root, config.noise)
+    _atomic_json(config_directory / "experiment_config.json", config.raw_config)
+    _atomic_json(
+        config_directory / "run_metadata.json",
+        {
+            "git_sha": _git_sha(),
+            "experiment_config_hash": config.experiment_config_hash,
+            "requested_workers": requested_workers,
+            "resolved_workers": resolved_workers,
+            "sample_range": sample_range,
+            "thread_environment": {key: os.environ.get(key) for key in THREAD_ENV_KEYS},
+            "panel_format": config.panel_format,
+            "python_version": platform.python_version(),
+        },
+    )
     manifest_path = config_directory / "manifest_generation.csv"
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     temporary = manifest_path.with_name(manifest_path.stem + ".tmp.csv")
@@ -529,8 +386,8 @@ def write_run_metadata(config: GenerationConfig, results: list[SampleGenerationR
             write_noisy_manifest(config.output_root, noisy_results)
 
 
-def write_noisy_metadata(config: GenerationConfig, sample_results: list[SampleGenerationResult]) -> None:
-    """Write the in-memory noisy manifest without rescanning or regenerating panels."""
+def write_noisy_metadata(config: ExperimentConfig, sample_results: list[SampleGenerationResult]) -> None:
+    """Write the in-memory noisy manifest without rescanning panels."""
 
     if config.noise is not None:
         noisy_results = [noisy for result in sample_results for noisy in result.noisy_results]

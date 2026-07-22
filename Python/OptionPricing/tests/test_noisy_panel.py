@@ -1,6 +1,7 @@
 import csv
 import json
 import math
+from dataclasses import asdict
 
 import numpy as np
 import pytest
@@ -8,20 +9,19 @@ import pytest
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price, black76_vega
 from OptionData.io import panel_metadata_path
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 from OptionPricing.noisy_panel import (
     _apply_price_mechanics,
     _marginal_scale,
     _persistent_factor_noise,
     compute_q_diag_from_stationary_std,
-    default_noise_config,
+    default_noise_settings,
     generate_noisy_panel_file,
     generate_noisy_panel_rows,
-    parse_noise_config,
     persistent_factor_residual_scale,
     read_table,
-    write_noise_config,
     write_table,
+    validate_persistent_factor_settings,
 )
 from Scripts.validate_noisy_panels import validate_noisy_panels
 
@@ -89,12 +89,14 @@ def _panel_metadata():
     return {
         "sample_id": 0,
         "scenario": "clean",
-        "cos_basis": FixedCosBasisConfig((0.25, 0.5), (1.5, 2.0), 64, 32).generation_metadata(),
+        "cos_basis": cos_specification_metadata(
+            FixedCosBasisConfig((0.25, 0.5), (1.5, 2.0), 64, 32)
+        ),
     }
 
 
 def test_low_iid_noise_is_deterministic():
-    config = default_noise_config()
+    config = default_noise_settings()
     rows = _clean_rows()
     first, _ = generate_noisy_panel_rows(rows, scenario="low_iid", seed=123, config=config)
     second, _ = generate_noisy_panel_rows(rows, scenario="low_iid", seed=123, config=config)
@@ -104,7 +106,7 @@ def test_low_iid_noise_is_deterministic():
 
 
 def test_spatial_corr_noise_has_contract_level_draws():
-    config = default_noise_config()
+    config = default_noise_settings()
     rows, _ = generate_noisy_panel_rows(_clean_rows(), scenario="spatial_corr", seed=456, config=config)
     draws = np.array([row["noise_draw"] for row in rows])
     assert np.std(draws) > 0.0
@@ -112,13 +114,13 @@ def test_spatial_corr_noise_has_contract_level_draws():
 
 
 def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
-    config = default_noise_config()
+    config = default_noise_settings()
     run_root = tmp_path / "run"
     clean_path = write_table(
         _clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata(), panel_format="csv"
     )
     results = []
-    for scenario in config.enabled_scenarios():
+    for scenario in config.scenario_names():
         results.append(
             generate_noisy_panel_file(
                 clean_panel_path=clean_path,
@@ -129,7 +131,6 @@ def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
                 panel_format="csv",
             )
         )
-    write_noise_config(run_root, config)
     assert {result.status for result in results} == {"ok"}
     with panel_metadata_path(results[0].output_observed_panel).open() as fh:
         observed_metadata = json.load(fh)
@@ -138,6 +139,9 @@ def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
     assert factor_file.exists()
     with factor_file.open(newline="") as fh:
         assert len(list(csv.DictReader(fh))) == 2
+    config_directory = run_root / "config"
+    config_directory.mkdir(parents=True)
+    (config_directory / "experiment_config.json").write_text(json.dumps({"noise": asdict(config)}))
     validate_noisy_panels(run_root=run_root)
 
 
@@ -148,32 +152,15 @@ def test_persistent_factor_q_diag_is_computed_from_stationary_std():
 
     assert np.allclose(compute_q_diag_from_stationary_std(a_diag, stationary_factor_std), expected)
 
-    config = parse_noise_config(
-        {
-            "scenarios": {
-                "persistent_factor": {
-                    "a_diag": a_diag.tolist(),
-                    "stationary_factor_std": stationary_factor_std.tolist(),
-                }
-            }
-        }
-    )
-    assert np.allclose(np.array(config.persistent_factor.q_diag), expected)
+    config = default_noise_settings().scenarios["persistent_factor"]
+    assert np.allclose(np.array(config["q_diag"]), expected)
 
 
 def test_persistent_factor_q_diag_consistency_validation_rejects_stationary_std_values():
+    factor = dict(default_noise_settings().scenarios["persistent_factor"])
+    factor["q_diag"] = [0.0007, 0.0025, 0.0008]
     with pytest.raises(ValueError, match="innovation covariance diagonal"):
-        parse_noise_config(
-            {
-                "scenarios": {
-                    "persistent_factor": {
-                        "a_diag": [0.85, 0.65, 0.65],
-                        "stationary_factor_std": [0.0007, 0.0025, 0.0008],
-                        "q_diag": [0.0007, 0.0025, 0.0008],
-                    }
-                }
-            }
-        )
+        validate_persistent_factor_settings(factor)
 
 
 @pytest.mark.parametrize(
@@ -186,18 +173,15 @@ def test_persistent_factor_q_diag_consistency_validation_rejects_stationary_std_
     ],
 )
 def test_persistent_factor_config_validation_rejects_invalid_values(bad_fields, message):
-    factor_config = {
-        "a_diag": [0.85, 0.65, 0.65],
-        "stationary_factor_std": [0.0007, 0.0025, 0.0008],
-    }
+    factor_config = dict(default_noise_settings().scenarios["persistent_factor"])
     factor_config.update(bad_fields)
 
     with pytest.raises(ValueError, match=message):
-        parse_noise_config({"scenarios": {"persistent_factor": factor_config}})
+        validate_persistent_factor_settings(factor_config)
 
 
 def test_persistent_factor_innovation_draw_uses_sqrt_q_diag_scale():
-    config = default_noise_config()
+    config = default_noise_settings()
 
     class RecordingRng:
         def __init__(self):
@@ -215,11 +199,14 @@ def test_persistent_factor_innovation_draw_uses_sqrt_q_diag_scale():
     _persistent_factor_noise(rows, rng, config)  # type: ignore[arg-type]
 
     assert len(rng.normal_scales) == 1
-    assert np.allclose(rng.normal_scales[0], np.sqrt(np.array(config.persistent_factor.q_diag)))
+    assert np.allclose(
+        rng.normal_scales[0],
+        np.sqrt(np.array(config.scenarios["persistent_factor"]["q_diag"])),
+    )
 
 
 def test_persistent_factor_residual_policy_matches_total_marginal_scale():
-    config = default_noise_config().persistent_factor
+    config = default_noise_settings().scenarios["persistent_factor"]
     lm = np.array([-0.15, -0.075, 0.0, 0.075, 0.15])
     tau = np.array([1.0 / 12.0, 1.0 / 4.0, 1.0 / 2.0])
     grid_lm, grid_tau = np.meshgrid(lm, tau, indexing="ij")
@@ -227,7 +214,7 @@ def test_persistent_factor_residual_policy_matches_total_marginal_scale():
     grid_tau = grid_tau.ravel()
 
     residual_scale = persistent_factor_residual_scale(grid_lm, grid_tau, config)
-    stationary_std = np.array(config.stationary_factor_std)
+    stationary_std = np.array(config["stationary_factor_std"])
     factor_variance = (
         stationary_std[0] * stationary_std[0]
         + grid_lm * grid_lm * stationary_std[1] * stationary_std[1]
@@ -239,7 +226,7 @@ def test_persistent_factor_residual_policy_matches_total_marginal_scale():
 
 
 def test_tick_rounding_and_capping_are_recorded():
-    config = default_noise_config()
+    config = default_noise_settings()
     rows = _clean_rows()
     noisy, _ = generate_noisy_panel_rows(rows, scenario="low_iid", seed=1, config=config)
     assert all(abs(row["price_after_rounding"] / config.tick_size - round(row["price_after_rounding"] / config.tick_size)) < 1e-9 for row in noisy)
@@ -260,7 +247,7 @@ def test_tick_rounding_and_capping_are_recorded():
 
 
 def test_skip_existing_avoids_recomputation(tmp_path):
-    config = default_noise_config()
+    config = default_noise_settings()
     run_root = tmp_path / "run"
     clean_path = write_table(
         _clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata(), panel_format="csv"

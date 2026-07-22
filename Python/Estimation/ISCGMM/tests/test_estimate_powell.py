@@ -7,14 +7,13 @@ import Estimation.ISCGMM.estimate as estimate_module
 from Estimation.ISCGMM.config import (
     CgmmConfig,
     ImpliedStateConfig,
-    LoggingConfig,
     OptimizerConfig,
     PowellStageConfig,
 )
 from Estimation.ISCGMM.results import CriterionDiagnostics, ImpliedStateResult
 from Models.Heston.parameters import HestonParameters
 from OptionData.panel import OptionPanel, OptionPanelDate
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 
 
 def _basis():
@@ -39,7 +38,7 @@ def _panel():
     )
     return OptionPanel(
         dates,
-        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": _basis().generation_metadata()},
+        metadata={"sample_id": 0, "scenario": "clean", "cos_basis": cos_specification_metadata(_basis())},
     )
 
 
@@ -50,6 +49,7 @@ def _optimizer():
         candidate_relative_perturbations=((0.1, -0.1, 0.1, 0.1, 0.1, 0.1), (-0.1, 0.1, -0.1, -0.1, -0.1, -0.1)),
         stage1=PowellStageConfig(30, 1e-2, 1e-3),
         stage2=PowellStageConfig(40, 1e-4, 1e-5),
+        progress_every=5,
     )
 
 
@@ -72,7 +72,7 @@ class _QuadraticCriterion:
             nfev=np.ones(3, dtype=int),
             start_values=np.full(3, theta.vbar),
         )
-        return CriterionDiagnostics(value, 3, 1, 3, implied, {"min": theta.vbar, "max": theta.vbar, "mean": theta.vbar, "std": 0.0}, None, None, {"total": 0.0}, {"cos_basis": self.config.implied_state.cos_basis.to_dict()})
+        return CriterionDiagnostics(value, 3, 1, 3, implied, {"min": theta.vbar, "max": theta.vbar, "mean": theta.vbar, "std": 0.0}, None, None, {"total": 0.0}, {"cos_basis": cos_specification_metadata(self.config.implied_state.cos_basis)})
 
 
 class _PenaltyCriterion(_QuadraticCriterion):
@@ -87,10 +87,10 @@ def test_powell_reproducibility_bounds_start_limit_logging_and_serialisation(mon
     config = CgmmConfig(ImpliedStateConfig(_basis()))
     caplog.set_level(logging.INFO)
     first = estimate_module.estimate_first_step(
-        _panel(), criterion_config=config, optimizer_config=_optimizer(), logging_config=LoggingConfig(progress_every=5)
+        _panel(), criterion_config=config, optimizer_config=_optimizer()
     )
     second = estimate_module.estimate_first_step(
-        _panel(), criterion_config=config, optimizer_config=_optimizer(), logging_config=LoggingConfig(progress_every=5)
+        _panel(), criterion_config=config, optimizer_config=_optimizer()
     )
     np.testing.assert_allclose(first.free_parameters, second.free_parameters, rtol=0.0, atol=0.0)
     assert first.final_criterion == second.final_criterion
@@ -116,7 +116,6 @@ def test_powell_expected_numerical_failures_use_finite_penalty(monkeypatch):
         _panel(),
         criterion_config=CgmmConfig(ImpliedStateConfig(_basis())),
         optimizer_config=_optimizer(),
-        logging_config=LoggingConfig(progress_every=100),
     )
     assert result.penalty_evaluations > 0
     assert np.isfinite(result.final_criterion)

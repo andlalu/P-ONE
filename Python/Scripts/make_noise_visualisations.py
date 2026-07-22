@@ -11,11 +11,10 @@ import pandas as pd
 
 from OptionPricing.noisy_panel import (
     NOISE_SCENARIOS,
-    NoiseGenerationConfig,
+    NoiseSettings,
     clean_panel_file,
     generate_noisy_panel_file,
     observed_panel_file,
-    write_noise_config,
 )
 from Scripts.generation import generate_one_sample, load_config, set_thread_env, with_overrides
 
@@ -272,7 +271,7 @@ def _ensure_panels(
     config_path: Path,
     sample_id: int,
     generate_if_missing: bool,
-) -> tuple[Path, dict[str, Path], Path | None, list[str], NoiseGenerationConfig]:
+) -> tuple[Path, dict[str, Path], Path | None, list[str], NoiseSettings]:
     config = load_config(config_path)
     if config.noise is None:
         raise ValueError("configuration does not contain noise scenarios")
@@ -295,11 +294,11 @@ def _ensure_panels(
             raise RuntimeError(result.error)
         clean_path = Path(result.panel_file)
         generated.append("clean")
-        generated.extend(config.noise.enabled_scenarios())
+        generated.extend(config.noise.scenario_names())
 
     scenario_paths: dict[str, Path] = {}
     for scenario in NOISE_SCENARIOS:
-        if scenario not in config.noise.enabled_scenarios():
+        if scenario not in config.noise.scenario_names():
             continue
         existing = _panel_file_for_scenario(run_root, scenario, sample_id)
         factor_file = run_root / "noise_factors" / scenario / f"sample_{sample_id:03d}.csv"
@@ -322,7 +321,6 @@ def _ensure_panels(
             generated.append(scenario)
         scenario_paths[scenario] = existing
 
-    write_noise_config(run_root, config.noise)
     factor_path = run_root / "noise_factors" / "persistent_factor" / f"sample_{sample_id:03d}.csv"
     return clean_path, scenario_paths, factor_path if factor_path.exists() else None, generated, config.noise
 
@@ -740,7 +738,7 @@ def _make_structure_figure(
     output: Path,
     *,
     clean: pd.DataFrame,
-    noise_config: NoiseGenerationConfig,
+    noise_config: NoiseSettings,
 ) -> None:
     base = _date_slice(clean, int(clean["week_index"].iloc[0]))
     maturities = np.array(sorted(float(x) for x in base["maturity_years"].drop_duplicates()), dtype=float)
@@ -748,13 +746,20 @@ def _make_structure_figure(
     scale = np.empty((len(maturities), len(moneyness)), dtype=float)
     for i, tau in enumerate(maturities):
         for j, lm in enumerate(moneyness):
-            scale[i, j] = float(_marginal_scale(np.array([lm]), np.array([tau]), noise_config.low_iid)[0]) * 10000.0
+            scale[i, j] = float(
+                _marginal_scale(
+                    np.array([lm]),
+                    np.array([tau]),
+                    noise_config.scenarios["low_iid"],
+                )[0]
+            ) * 10000.0
 
     ordered = base.sort_values(["maturity_years", "log_moneyness"]).reset_index(drop=True)
     lm = ordered["log_moneyness"].astype(float).to_numpy()
     tau = ordered["maturity_years"].astype(float).to_numpy()
-    distance = np.abs(lm[:, None] - lm[None, :]) / noise_config.spatial_corr.ell_m
-    distance += np.abs(tau[:, None] - tau[None, :]) / noise_config.spatial_corr.ell_tau
+    spatial = noise_config.scenarios["spatial_corr"]
+    distance = np.abs(lm[:, None] - lm[None, :]) / float(spatial["ell_m"])
+    distance += np.abs(tau[:, None] - tau[None, :]) / float(spatial["ell_tau"])
     corr = np.exp(-distance)
 
     pdf = PdfFigure(7.2, 4.8)
@@ -1003,7 +1008,7 @@ def _write_manifest(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create greyscale noise-panel visualisations for the June 2026 report.")
-    parser.add_argument("--config", default="Python/Scripts/configs/generation_run_001.json")
+    parser.add_argument("--config", default="Python/Scripts/configs/heston_experiment_run_001.json")
     parser.add_argument("--sample-id", type=int, default=0)
     parser.add_argument("--date-index", type=int, default=100)
     parser.add_argument("--output-dir", default="Reports/18062026/figures/noise")

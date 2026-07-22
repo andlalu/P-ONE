@@ -22,7 +22,6 @@ class ImpliedStateConfig:
     minimum_black_vega: float = 5e-6
 
     def validate(self) -> None:
-        self.cos_basis.validate()
         if self.v_min < 0.0 or self.v_max <= self.v_min:
             raise ValueError("variance bounds must satisfy 0 <= v_min < v_max")
         if self.tol <= 0.0 or self.max_iter <= 0:
@@ -75,8 +74,6 @@ class CgmmConfig:
     spacing_tolerance: float = 1e-10
 
     def validate(self) -> None:
-        self.implied_state.validate()
-        self.quadrature.validate()
         if len(self.instrument_precision) != 2 or any(value <= 0.0 for value in self.instrument_precision):
             raise ValueError("instrument_precision must contain two positive entries")
         if self.transition_rk_steps <= 0:
@@ -111,9 +108,9 @@ class OptimizerConfig:
     stage1: PowellStageConfig = field(default_factory=lambda: PowellStageConfig(120, 2e-2, 2e-3))
     stage2: PowellStageConfig = field(default_factory=lambda: PowellStageConfig(300, 2e-4, 2e-5))
     penalty_value: float = 1e12
+    progress_every: int = 10
 
     def validate(self) -> None:
-        self.base_start.validate()
         if len(self.natural_bounds) != 6:
             raise ValueError("natural_bounds must contain six (lower, upper) pairs")
         if any(len(pair) != 2 or pair[0] >= pair[1] for pair in self.natural_bounds):
@@ -124,14 +121,5 @@ class OptimizerConfig:
             raise ValueError("each candidate perturbation must contain six entries")
         if self.penalty_value <= 0.0:
             raise ValueError("penalty_value must be positive")
-        self.stage1.validate()
-        self.stage2.validate()
-
-
-@dataclass(frozen=True)
-class LoggingConfig:
-    progress_every: int = 10
-
-    def validate(self) -> None:
         if self.progress_every <= 0:
             raise ValueError("progress_every must be positive")

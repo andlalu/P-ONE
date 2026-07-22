@@ -4,7 +4,7 @@ import math
 import pytest
 
 from OptionData.io import load_option_panel, write_panel_metadata
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 
 
 def _rows():
@@ -33,7 +33,7 @@ def _metadata():
     return {
         "sample_id": 0,
         "scenario": "clean",
-        "cos_basis": FixedCosBasisConfig((0.25,), (1.5,), 32, 16).generation_metadata(),
+        "cos_basis": cos_specification_metadata(FixedCosBasisConfig((0.25,), (1.5,), 32, 16)),
     }
 
 

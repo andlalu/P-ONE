@@ -1,30 +1,22 @@
 from __future__ import annotations
 
 import argparse
-import json
 import multiprocessing as mp
 import sys
 from pathlib import Path
 
 from OptionPricing.noisy_panel import (
     NOISE_SCENARIOS,
-    NoiseGenerationConfig,
+    NoiseSettings,
     clean_panel_file,
     generate_noisy_panel_file,
-    parse_noise_config,
-    write_noise_config,
     write_noisy_manifest,
 )
 from Scripts.generation import default_workers, set_thread_env
+from Scripts.experiment_config import load_experiment_config
 
 
-def _load_noise_config(config_path: str | Path) -> NoiseGenerationConfig:
-    with Path(config_path).open() as fh:
-        raw = json.load(fh)
-    return parse_noise_config(raw.get("noise"))
-
-
-def _task(args: tuple[str, int, str, NoiseGenerationConfig, str, bool]):
+def _task(args: tuple[str, int, str, NoiseSettings, str, bool]):
     run_root, sample_id, scenario, config, panel_format, skip_existing = args
     clean_path = clean_panel_file(run_root, sample_id)
     return generate_noisy_panel_file(
@@ -58,14 +50,16 @@ def main() -> int:
     args = parser.parse_args()
 
     set_thread_env()
-    config = _load_noise_config(args.config)
-    with Path(args.config).open() as file_handle:
-        panel_format = str(json.load(file_handle)["panel_format"])
+    experiment = load_experiment_config(args.config)
+    if experiment.noise is None:
+        parser.error("experiment configuration does not contain noise scenarios")
+    config = experiment.noise
+    panel_format = experiment.panel_format
     requested = tuple(item.strip() for item in args.scenarios.split(",") if item.strip())
     invalid = sorted(set(requested) - set(NOISE_SCENARIOS))
     if invalid:
         parser.error(f"unsupported scenarios: {', '.join(invalid)}")
-    enabled = set(config.enabled_scenarios())
+    enabled = set(config.scenario_names())
     scenarios = tuple(scenario for scenario in requested if scenario in enabled)
     sample_ids = [sample_id for sample_id in _clean_sample_ids(args.run_root) if sample_id >= args.sample_start]
     if args.sample_end is not None:
@@ -77,7 +71,6 @@ def main() -> int:
         for scenario in scenarios
     ]
     if not tasks:
-        write_noise_config(args.run_root, config)
         write_noisy_manifest(args.run_root, [])
         return 0
 
@@ -90,7 +83,6 @@ def main() -> int:
         with ctx.Pool(processes=workers) as pool:
             results = list(pool.imap_unordered(_task, tasks))
 
-    write_noise_config(args.run_root, config)
     write_noisy_manifest(args.run_root, results)
     errors = [result for result in results if result.status == "error"]
     for result in sorted(results, key=lambda item: (item.sample_id, item.noise_scenario)):

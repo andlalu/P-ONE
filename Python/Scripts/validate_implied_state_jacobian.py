@@ -5,16 +5,20 @@ import csv
 import json
 import logging
 import math
+import sys
 import time
 from pathlib import Path
 
 import numpy as np
 
+PYTHON_ROOT = Path(__file__).resolve().parents[1]
+if str(PYTHON_ROOT) not in sys.path:
+    sys.path.insert(0, str(PYTHON_ROOT))
+
 from Estimation.ISCGMM.implied_state_jacobian import (
     finite_difference_iv_variance_jacobian,
     price_iv_and_initial_variance_jacobian_fixed_basis,
 )
-from OptionPricing.cos_basis import FixedCosBasisConfig
 from OptionPricing.cos_pricer import CosOptionPricer
 from Scripts.calibrate_fixed_cos_basis import (
     LOG_MONEYNESS,
@@ -24,12 +28,14 @@ from Scripts.calibrate_fixed_cos_basis import (
     _contract,
     calibration_parameter_design,
 )
+from Scripts.experiment_config import load_experiment_config
 
 LOGGER = logging.getLogger(__name__)
 
 
-def validate_jacobians(basis_path: Path, output_directory: Path) -> dict[str, object]:
-    basis_config = FixedCosBasisConfig.load(basis_path)
+def validate_jacobians(config_path: Path, output_directory: Path) -> dict[str, object]:
+    experiment = load_experiment_config(config_path)
+    basis_config = experiment.cos_basis
     pricer = CosOptionPricer()
     rows: list[dict[str, object]] = []
     for point in calibration_parameter_design():
@@ -177,8 +183,7 @@ def validate_jacobians(basis_path: Path, output_directory: Path) -> dict[str, ob
     interior = [row for row in comparable if not row["boundary_case"]]
     boundary = [row for row in comparable if row["boundary_case"]]
     summary: dict[str, object] = {
-        "basis_path": str(basis_path.resolve()),
-        "basis_hash": basis_config.stable_hash(),
+        "experiment_config_hash": experiment.experiment_config_hash,
         "record_count": len(rows),
         "comparison_count_at_selected_step": len(comparable),
         "maximum_absolute_derivative_error": float(np.max(absolute_errors)),
@@ -239,15 +244,15 @@ def validate_jacobians(basis_path: Path, output_directory: Path) -> dict[str, ob
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate semi-analytical implied-state Jacobians.")
     parser.add_argument(
-        "--basis",
+        "--config",
         type=Path,
-        default=Path("Python/Scripts/configs/heston_cos_basis_production.json"),
+        default=Path("Python/Scripts/configs/heston_experiment_run_001.json"),
     )
     parser.add_argument("--output", type=Path, default=Path("outputs/calibration/fixed_cos"))
     parser.add_argument("--log-level", default="INFO")
     arguments = parser.parse_args()
     logging.basicConfig(level=getattr(logging, arguments.log_level.upper()), format="%(levelname)s %(message)s")
-    validate_jacobians(arguments.basis, arguments.output)
+    validate_jacobians(arguments.config, arguments.output)
     return 0
 
 
