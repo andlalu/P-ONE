@@ -16,7 +16,7 @@ from ImpliedVolatility.black_price import black76_vega
 from Models.Heston.parameters import HestonRiskNeutralParameters
 from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.heston_fourier_reference import heston_option_price_fourier_reference
+from OptionPricing.fft_pricer import heston_option_price_fourier_reference
 
 LOGGER = logging.getLogger(__name__)
 MATURITIES = (1.0 / 12.0, 0.25, 0.5)
