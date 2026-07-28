@@ -9,14 +9,15 @@ from typing import Any, Callable
 import numpy as np
 import pandas as pd
 
-from OptionPricing.noisy_panel import (
-    NOISE_SCENARIOS,
-    NoiseSettings,
-    clean_panel_file,
+from OptionData.io import clean_panel_file, noisy_panel_file
+from OptionData.noise_common import NOISE_SCENARIOS, NoiseSettings
+from Scripts.generation import (
     generate_noisy_panel_file,
-    observed_panel_file,
+    generate_one_sample,
+    load_config,
+    set_thread_env,
+    with_overrides,
 )
-from Scripts.generation import generate_one_sample, load_config, set_thread_env, with_overrides
 
 
 SCENARIO_LABELS = {
@@ -317,7 +318,7 @@ def _ensure_panels(
             )
             if result.status == "error":
                 raise RuntimeError(result.error_message)
-            existing = Path(result.output_observed_panel)
+            existing = Path(result.output_noisy_panel)
             generated.append(scenario)
         scenario_paths[scenario] = existing
 
@@ -629,7 +630,7 @@ def _make_surface_figure(
     y_max += pad
 
     pdf = PdfFigure(7.2, 5.2)
-    pdf.text(pdf.width / 2.0, pdf.height - 18.0, "Clean and contaminated implied-volatility panels", size=10.0, align="center", bold=True)
+    pdf.text(pdf.width / 2.0, pdf.height - 18.0, "Clean and noisy implied-volatility panels", size=10.0, align="center", bold=True)
     left = 72.0
     right = 18.0
     bottom = 66.0

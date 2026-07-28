@@ -21,7 +21,8 @@ from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price
 from Models.Heston.parameters import HestonParameters
 from OptionData.panel import OptionPanel, OptionPanelDate
-from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
+from OptionPricing.config import FixedCosBasisConfig
+from OptionPricing.cos_basis import cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
 from Scripts.experiment_config import load_experiment_config
 
@@ -112,7 +113,7 @@ def _clean_panel(basis_config: FixedCosBasisConfig) -> OptionPanel:
     return OptionPanel(tuple(dates), metadata={"cos_basis": cos_specification_metadata(basis_config)})
 
 
-def _contaminated_panel(clean_panel: OptionPanel, scenario: str) -> OptionPanel:
+def _noisy_panel(clean_panel: OptionPanel, scenario: str) -> OptionPanel:
     if scenario == "clean":
         return clean_panel
     rng = np.random.default_rng({"low_iid": 301, "spatial_corr": 302, "persistent_factor": 303}[scenario])
@@ -128,7 +129,7 @@ def _contaminated_panel(clean_panel: OptionPanel, scenario: str) -> OptionPanel:
         else:
             factor = 0.85 * factor + rng.normal(scale=0.0007)
             noise = factor + 0.0013 * rng.standard_normal(panel_date.n_contracts)
-        contaminated_iv = np.maximum(0.0001, clean_iv + noise)
+        noisy_iv = np.maximum(0.0001, clean_iv + noise)
         observed_price = np.empty(panel_date.n_contracts)
         observed_iv = np.empty(panel_date.n_contracts)
         for index, (maturity, strike, option_type, volatility, rate) in enumerate(
@@ -136,7 +137,7 @@ def _contaminated_panel(clean_panel: OptionPanel, scenario: str) -> OptionPanel:
                 panel_date.maturities,
                 panel_date.strikes,
                 panel_date.option_types,
-                contaminated_iv,
+                noisy_iv,
                 panel_date.rates,
             )
         ):
@@ -191,7 +192,7 @@ def _contaminated_panel(clean_panel: OptionPanel, scenario: str) -> OptionPanel:
 def run_benchmark(config_path: Path, output_directory: Path) -> dict[str, object]:
     basis_config = load_experiment_config(config_path).cos_basis
     clean = _clean_panel(basis_config)
-    panels = {scenario: _contaminated_panel(clean, scenario) for scenario in SCENARIOS}
+    panels = {scenario: _noisy_panel(clean, scenario) for scenario in SCENARIOS}
     references: dict[str, np.ndarray] = {}
     for scenario, panel in panels.items():
         references[scenario] = imply_heston_variance_path(
@@ -278,7 +279,7 @@ def run_benchmark(config_path: Path, output_directory: Path) -> dict[str, object
     summary: dict[str, object] = {
         "selected_production_solver": selected_solver,
         "fallback_solver": "golden_section" if selected_solver != "golden_section" else None,
-        "selection_reason": "The scalar solver had zero failures on clean and three rounded/capped contaminations and avoided low-vega Jacobian fallbacks; the eligible scalar method with lower median runtime was selected.",
+        "selection_reason": "The scalar solver had zero failures on clean and three rounded/capped noisy panels and avoided low-vega Jacobian fallbacks; the eligible scalar method with lower median runtime was selected.",
         "deterministic_seeds": {"low_iid": 301, "spatial_corr": 302, "persistent_factor": 303},
         "variance_dates": VARIANCE_PATH.tolist(),
         "aggregate": aggregate,

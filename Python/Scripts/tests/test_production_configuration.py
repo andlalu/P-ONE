@@ -45,8 +45,8 @@ def test_frozen_production_experiment_values():
     assert state.fallback_solver == "golden_section"
     assert (state.v_min, state.v_max, state.tol, state.max_iter) == (1e-6, 0.15, 1e-7, 100)
 
-    optimizer = experiment.optimizer_config
-    assert asdict(optimizer.base_start) == {
+    powell = experiment.powell_config
+    assert asdict(powell.base_start) == {
         "eta": 4.8,
         "kappa": 6.8,
         "vbar": 0.024,
@@ -56,7 +56,7 @@ def test_frozen_production_experiment_values():
         "r": 0.02,
         "q": 0.0,
     }
-    assert optimizer.natural_bounds == (
+    assert powell.natural_bounds == (
         (2.0, 8.0),
         (4.0, 9.0),
         (0.012, 0.04),
@@ -64,11 +64,11 @@ def test_frozen_production_experiment_values():
         (-0.8, -0.2),
         (1.5, 4.0),
     )
-    assert optimizer.stage1.max_evaluations == 120
-    assert (optimizer.stage1.xtol, optimizer.stage1.ftol) == (0.02, 0.002)
-    assert optimizer.stage2.max_evaluations == 300
-    assert (optimizer.stage2.xtol, optimizer.stage2.ftol) == (0.0002, 0.00002)
-    assert optimizer.progress_every == 10
+    assert powell.coarse_pass.max_evaluations == 120
+    assert (powell.coarse_pass.xtol, powell.coarse_pass.ftol) == (0.02, 0.002)
+    assert powell.refinement_pass.max_evaluations == 300
+    assert (powell.refinement_pass.xtol, powell.refinement_pass.ftol) == (0.0002, 0.00002)
+    assert powell.progress_every == 10
 
 
 def test_mismatched_cos_maturities_and_widths_are_rejected(tmp_path):

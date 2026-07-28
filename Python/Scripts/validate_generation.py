@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from DGPSimulation.io import load_heston_path_npz
-from OptionPricing.clean_panel import option_type_for_log_moneyness
+from OptionData.clean_panel import option_type_for_log_moneyness
 
 
 def _panel_files(root: Path) -> list[Path]:

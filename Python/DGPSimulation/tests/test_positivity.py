@@ -1,7 +1,7 @@
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonSimConfig
+from DGPSimulation.config import HestonSimConfig
 from Models.Heston.parameters import HestonPhysicalParameters
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer, EulerVarianceDrawer
 

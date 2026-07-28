@@ -14,7 +14,8 @@ import numpy as np
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_vega
 from Models.Heston.parameters import HestonRiskNeutralParameters
-from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
+from OptionPricing.config import FixedCosBasisConfig
+from OptionPricing.cos_basis import cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
 from OptionPricing.fft_pricer import heston_option_price_fourier_reference
 

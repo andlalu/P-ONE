@@ -12,6 +12,22 @@ def test_joint_heston_parameter_projections_are_canonical():
     assert risk_neutral.vbar == pytest.approx(7.0 * 0.0225 / 2.0)
 
 
+def test_joint_parameters_are_constructed_from_physical_parameters():
+    physical = HestonPhysicalParameters(
+        5.0,
+        7.0,
+        0.0225,
+        0.4,
+        -0.5,
+        0.02,
+        0.0,
+    )
+    theta = HestonParameters.from_physical(physical, eta_v=5.0)
+    assert theta.to_physical() == physical
+    assert theta.to_risk_neutral().kappa == pytest.approx(2.0)
+    assert theta.to_risk_neutral().vbar == pytest.approx(0.07875)
+
+
 @pytest.mark.parametrize(
     "parameters",
     [

@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one local fixed-basis Heston first-step IS-CGMM job.")
     parser.add_argument("--config", required=True, help="Unified experiment configuration.")
-    parser.add_argument("--panel", required=True, help="Input clean or contaminated CSV/Parquet panel.")
+    parser.add_argument("--panel", required=True, help="Input clean or noisy CSV/Parquet panel.")
     parser.add_argument("--iv-column", choices=("model_iv", "clean_iv", "observed_iv"), default=None)
     parser.add_argument("--max-dates", type=int, default=None)
     parser.add_argument("--output", required=True)
@@ -45,7 +45,7 @@ def main() -> int:
     panel = load_option_panel(args.panel, iv_column=args.iv_column, max_dates=args.max_dates)
     if args.state_only:
         implied_state = imply_heston_variance_path(
-            experiment.optimizer_config.base_start,
+            experiment.powell_config.base_start,
             panel,
             experiment.criterion_config.implied_state,
         )
@@ -55,7 +55,7 @@ def main() -> int:
             state_rmse = float(np.sqrt(np.mean((implied_state.variance - true_variance) ** 2)))
         payload = {
             "mode": "state_only",
-            "base_start": asdict(experiment.optimizer_config.base_start),
+            "base_start": asdict(experiment.powell_config.base_start),
             "state_rmse": state_rmse,
             "implied_state": implied_state.to_dict(),
         }
@@ -64,7 +64,7 @@ def main() -> int:
         estimate = estimate_first_step(
             panel,
             criterion_config=experiment.criterion_config,
-            optimizer_config=experiment.optimizer_config,
+            powell_config=experiment.powell_config,
         )
         payload = estimate.to_dict()
         success = estimate.success

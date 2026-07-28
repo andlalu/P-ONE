@@ -7,7 +7,8 @@ from typing import Tuple
 
 import numpy as np
 
-from DGPSimulation.types import HestonPath, HestonSimConfig
+from DGPSimulation.config import HestonSimConfig
+from DGPSimulation.path import HestonPath
 from Models.Heston.parameters import HestonPhysicalParameters
 
 _FORMAT_VERSION = 1

@@ -13,24 +13,46 @@ from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import Any
 
+from DGPSimulation.config import HestonSimConfig
 from DGPSimulation.heston_simulator import HestonPathSimulator
 from DGPSimulation.io import load_heston_path_npz, save_heston_path_npz
-from DGPSimulation.types import HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
-from OptionData.io import panel_metadata_path
-from OptionPricing.clean_panel import generate_clean_option_panel_rows, parquet_available, write_panel
+from OptionData.add_noise import generate_noisy_panel_rows
+from OptionData.clean_panel import generate_clean_option_panel_rows
+from OptionData.io import (
+    noisy_panel_file,
+    panel_metadata_path,
+    parquet_available,
+    read_panel_metadata,
+    read_records,
+    write_panel,
+    write_persistent_factor_records,
+    write_records,
+)
+from OptionData.noise_common import NoiseSettings, scenario_seed
 from OptionPricing.cos_basis import cos_specification_metadata, validate_panel_cos_compatibility
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.noisy_panel import (
-    NoisyPanelResult,
-    generate_noisy_panel_file,
-    read_table,
-    write_noisy_manifest,
-)
 from Scripts.experiment_config import ExperimentConfig, load_experiment_config
 
 LOGGER = logging.getLogger(__name__)
 THREAD_ENV_KEYS = ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS")
+
+
+@dataclass(frozen=True)
+class NoisyPanelResult:
+    sample_id: int
+    noise_scenario: str
+    seed: int
+    input_clean_panel: str
+    output_noisy_panel: str
+    factor_file: str
+    status: str
+    elapsed_seconds: float
+    n_rows: int
+    n_capped_lower: int
+    n_capped_upper: int
+    n_capped_total: int
+    error_message: str = ""
 
 
 @dataclass(frozen=True)
@@ -177,7 +199,7 @@ def sample_is_complete(config: ExperimentConfig, sample_id: int) -> bool:
             )
             if (
                 int(completion.get("clean_panel_rows", -1)) != expected_rows
-                or len(read_table(panel_file)) != expected_rows
+                or len(read_records(panel_file)) != expected_rows
             ):
                 return False
         if not config.panels_only:
@@ -197,6 +219,174 @@ def _save_path_atomically(path_file: Path, path: Any, params: Any, simulation: H
         temporary.unlink(missing_ok=True)
         raise RuntimeError("atomic path validation failed before publication")
     os.replace(temporary, path_file)
+
+
+def generate_noisy_panel_file(
+    *,
+    clean_panel_path: str | Path,
+    run_root: str | Path,
+    sample_id: int,
+    scenario: str,
+    config: NoiseSettings,
+    panel_format: str,
+    skip_existing: bool = False,
+) -> NoisyPanelResult:
+    """Add one noise scenario and save the resulting panel."""
+
+    started = time.perf_counter()
+    seed = scenario_seed(config.base_seed, sample_id, scenario)
+    output = noisy_panel_file(run_root, scenario, sample_id, panel_format)
+    factor_file = (
+        Path(run_root)
+        / "noise_factors"
+        / scenario
+        / f"sample_{sample_id:03d}.csv"
+    )
+    if (
+        skip_existing
+        and output.exists()
+        and (scenario != "persistent_factor" or factor_file.exists())
+    ):
+        rows = read_records(output)
+        lower = sum(
+            1 for row in rows if str(row.get("cap_direction")) == "lower"
+        )
+        upper = sum(
+            1 for row in rows if str(row.get("cap_direction")) == "upper"
+        )
+        return NoisyPanelResult(
+            sample_id=sample_id,
+            noise_scenario=scenario,
+            seed=seed,
+            input_clean_panel=str(clean_panel_path),
+            output_noisy_panel=str(output),
+            factor_file=str(
+                factor_file if scenario == "persistent_factor" else ""
+            ),
+            status="skipped",
+            elapsed_seconds=time.perf_counter() - started,
+            n_rows=len(rows),
+            n_capped_lower=lower,
+            n_capped_upper=upper,
+            n_capped_total=lower + upper,
+        )
+    try:
+        clean_rows = read_records(clean_panel_path)
+        rows, factors = generate_noisy_panel_rows(
+            clean_rows,
+            scenario=scenario,
+            seed=seed,
+            config=config,
+        )
+        inherited_metadata = read_panel_metadata(clean_panel_path)
+        if not inherited_metadata:
+            raise ValueError(
+                "clean panel is missing required COS-basis metadata sidecar"
+            )
+        lower = sum(1 for row in rows if row["cap_direction"] == "lower")
+        upper = sum(1 for row in rows if row["cap_direction"] == "upper")
+        inherited_metadata.update(
+            {
+                "scenario": scenario,
+                "sample_id": sample_id,
+                "noise_seed": seed,
+                "n_capped_lower": lower,
+                "n_capped_upper": upper,
+                "n_capped_total": lower + upper,
+            }
+        )
+        output = write_records(
+            rows,
+            Path(run_root)
+            / "panels_observed"
+            / scenario
+            / f"sample_{sample_id:03d}",
+            metadata=inherited_metadata,
+            panel_format=panel_format,
+        )
+        factor_output = ""
+        if scenario == "persistent_factor":
+            factor_output = str(
+                write_persistent_factor_records(
+                    factors,
+                    run_root,
+                    scenario,
+                    sample_id,
+                )
+            )
+        return NoisyPanelResult(
+            sample_id=sample_id,
+            noise_scenario=scenario,
+            seed=seed,
+            input_clean_panel=str(clean_panel_path),
+            output_noisy_panel=str(output),
+            factor_file=factor_output,
+            status="ok",
+            elapsed_seconds=time.perf_counter() - started,
+            n_rows=len(rows),
+            n_capped_lower=lower,
+            n_capped_upper=upper,
+            n_capped_total=lower + upper,
+        )
+    except Exception as exception:
+        return NoisyPanelResult(
+            sample_id=sample_id,
+            noise_scenario=scenario,
+            seed=seed,
+            input_clean_panel=str(clean_panel_path),
+            output_noisy_panel=str(output),
+            factor_file=str(
+                factor_file if scenario == "persistent_factor" else ""
+            ),
+            status="error",
+            elapsed_seconds=time.perf_counter() - started,
+            n_rows=0,
+            n_capped_lower=0,
+            n_capped_upper=0,
+            n_capped_total=0,
+            error_message=(
+                f"{type(exception).__name__}: {exception}\n"
+                f"{traceback.format_exc()}"
+            ),
+        )
+
+
+def write_noisy_manifest(
+    run_root: str | Path,
+    results: list[NoisyPanelResult],
+) -> None:
+    """Write the noisy-panel manifest."""
+
+    config_directory = Path(run_root) / "config"
+    config_directory.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "sample_id",
+        "noise_scenario",
+        "seed",
+        "input_clean_panel",
+        "output_noisy_panel",
+        "factor_file",
+        "status",
+        "elapsed_seconds",
+        "n_rows",
+        "n_capped_lower",
+        "n_capped_upper",
+        "n_capped_total",
+        "error_message",
+    ]
+    target = config_directory / "manifest_noisy_panels.csv"
+    temporary = target.with_name(target.stem + ".tmp.csv")
+    with temporary.open("w", newline="") as file_handle:
+        writer = csv.DictWriter(file_handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for result in sorted(
+            results,
+            key=lambda item: (item.sample_id, item.noise_scenario),
+        ):
+            writer.writerow(asdict(result))
+        file_handle.flush()
+        os.fsync(file_handle.fileno())
+    os.replace(temporary, target)
 
 
 def generate_one_sample(sample_id: int, config: ExperimentConfig) -> SampleGenerationResult:

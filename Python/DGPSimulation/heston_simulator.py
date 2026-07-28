@@ -5,14 +5,17 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from DGPSimulation.base import PathSimulator, VarianceDrawer
-from DGPSimulation.types import HestonPath, HestonSimConfig
-from Models.Heston.parameters import HestonPhysicalParameters
+from DGPSimulation.config import HestonSimConfig
+from DGPSimulation.path import HestonPath
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
+from DGPSimulation.variance_drawers import EulerVarianceDrawer
+from Models.Heston.parameters import HestonPhysicalParameters
+
+VarianceDrawer = AndersenQeVarianceDrawer | EulerVarianceDrawer
 
 
 @dataclass
-class HestonPathSimulator(PathSimulator):
+class HestonPathSimulator:
     params: HestonPhysicalParameters
     config: HestonSimConfig
     variance_drawer: VarianceDrawer = AndersenQeVarianceDrawer()

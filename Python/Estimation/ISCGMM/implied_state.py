@@ -16,7 +16,7 @@ from Models.Heston.parameters import HestonParameters, HestonRiskNeutralParamete
 from OptionData.panel import OptionPanel, OptionPanelDate
 from OptionPricing.cos_basis import validate_panel_cos_compatibility
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.types import PreparedFixedCosBasis
+from OptionPricing.cos_basis import PreparedFixedCosBasis
 
 
 @dataclass(frozen=True)

@@ -5,9 +5,13 @@ import pytest
 
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price
-from OptionPricing.tests.pricing_test_helpers import cos_heston_price, forward_strike, mc_heston_price
+from OptionPricing.tests.pricing_test_helpers import (
+    ReferenceCosConfig,
+    cos_heston_price,
+    forward_strike,
+    mc_heston_price,
+)
 from Models.Heston.parameters import HestonRiskNeutralParameters
-from OptionPricing.types import VarianceScaledCosConfig
 
 
 def _baseline_params() -> HestonRiskNeutralParameters:
@@ -16,7 +20,7 @@ def _baseline_params() -> HestonRiskNeutralParameters:
 
 def test_cos_put_call_parity():
     params = _baseline_params()
-    config = VarianceScaledCosConfig(n_cos=256, width_multiplier=10.0)
+    config = ReferenceCosConfig(n_cos=256, width_multiplier=10.0)
     spot = 100.0
     variance = 0.04
     tau = 60.0 / 252.0
@@ -48,7 +52,7 @@ def test_cos_put_call_parity():
 
 def test_cos_otm_prices_are_finite_and_bounded():
     params = _baseline_params()
-    config = VarianceScaledCosConfig(n_cos=256, width_multiplier=10.0)
+    config = ReferenceCosConfig(n_cos=256, width_multiplier=10.0)
     spot = 100.0
     variance = 0.04
     tau = 60.0 / 252.0
@@ -87,7 +91,7 @@ def test_cos_price_stabilizes_as_terms_increase():
         strike=strike,
         option_type="call",
         params=params,
-        config=VarianceScaledCosConfig(n_cos=128, width_multiplier=10.0),
+        config=ReferenceCosConfig(n_cos=128, width_multiplier=10.0),
     )
     p256 = cos_heston_price(
         spot=spot,
@@ -96,7 +100,7 @@ def test_cos_price_stabilizes_as_terms_increase():
         strike=strike,
         option_type="call",
         params=params,
-        config=VarianceScaledCosConfig(n_cos=256, width_multiplier=10.0),
+        config=ReferenceCosConfig(n_cos=256, width_multiplier=10.0),
     )
 
     assert p256 == pytest.approx(p128, abs=2e-3)
@@ -143,7 +147,7 @@ def test_black_scholes_pricing_and_iv_edges():
 )
 def test_cos_matches_q_measure_monte_carlo_for_otm_options(n_weeks, log_moneyness, option_type):
     params = _baseline_params()
-    config = VarianceScaledCosConfig(n_cos=256, width_multiplier=10.0)
+    config = ReferenceCosConfig(n_cos=256, width_multiplier=10.0)
     spot = 100.0
     variance = 0.04
     tau = n_weeks * 5.0 / 252.0
@@ -181,7 +185,7 @@ def test_cos_matches_q_measure_monte_carlo_for_otm_options(n_weeks, log_moneynes
     ],
 )
 def test_cos_monte_carlo_stress_cases_are_plausible(params):
-    config = VarianceScaledCosConfig(n_cos=256, width_multiplier=10.0)
+    config = ReferenceCosConfig(n_cos=256, width_multiplier=10.0)
     spot = 100.0
     variance = 0.04
     n_weeks = 12

@@ -3,13 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-import numpy as np
-
-from DGPSimulation.base import SimulationConfig, SimulationPath
-
 
 @dataclass(frozen=True)
-class HestonSimConfig(SimulationConfig):
+class HestonSimConfig:
+    """Settings for one physical-measure Heston path."""
+
     delta: float = 1.0 / 252.0
     m_week: int = 5
     t_week: int = 525
@@ -32,15 +30,3 @@ class HestonSimConfig(SimulationConfig):
             raise ValueError("s0 must be strictly positive")
         if self.v0 is not None and self.v0 < 0.0:
             raise ValueError("v0 must be non-negative when provided")
-
-
-@dataclass(frozen=True)
-class HestonPath(SimulationPath):
-    t_week: np.ndarray
-    logS_week: np.ndarray
-    V_week: np.ndarray
-    dlogS_week: np.ndarray
-    logS_daily: Optional[np.ndarray] = None
-    V_daily: Optional[np.ndarray] = None
-    seed: Optional[int] = None
-

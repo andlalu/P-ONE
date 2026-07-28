@@ -7,13 +7,14 @@ import Estimation.ISCGMM.estimate as estimate_module
 from Estimation.ISCGMM.config import (
     CgmmConfig,
     ImpliedStateConfig,
-    OptimizerConfig,
-    PowellStageConfig,
+    PowellConfig,
+    PowellPassConfig,
 )
 from Estimation.ISCGMM.results import CriterionDiagnostics, ImpliedStateResult
 from Models.Heston.parameters import HestonParameters
 from OptionData.panel import OptionPanel, OptionPanelDate
-from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
+from OptionPricing.config import FixedCosBasisConfig
+from OptionPricing.cos_basis import cos_specification_metadata
 
 
 def _basis():
@@ -43,12 +44,12 @@ def _panel():
 
 
 def _optimizer():
-    return OptimizerConfig(
+    return PowellConfig(
         base_start=HestonParameters(5.0, 7.0, 0.0225, 0.4, -0.5, 5.0, 0.02, 0.0),
         natural_bounds=((0.0, 10.0), (2.0, 12.0), (0.005, 0.08), (0.15, 0.8), (-0.9, -0.1), (0.5, 6.0)),
         candidate_relative_perturbations=((0.1, -0.1, 0.1, 0.1, 0.1, 0.1), (-0.1, 0.1, -0.1, -0.1, -0.1, -0.1)),
-        stage1=PowellStageConfig(30, 1e-2, 1e-3),
-        stage2=PowellStageConfig(40, 1e-4, 1e-5),
+        coarse_pass=PowellPassConfig(30, 1e-2, 1e-3),
+        refinement_pass=PowellPassConfig(40, 1e-4, 1e-5),
         progress_every=5,
     )
 
@@ -87,10 +88,10 @@ def test_powell_reproducibility_bounds_start_limit_logging_and_serialisation(mon
     config = CgmmConfig(ImpliedStateConfig(_basis()))
     caplog.set_level(logging.INFO)
     first = estimate_module.estimate_first_step(
-        _panel(), criterion_config=config, optimizer_config=_optimizer()
+        _panel(), criterion_config=config, powell_config=_optimizer()
     )
     second = estimate_module.estimate_first_step(
-        _panel(), criterion_config=config, optimizer_config=_optimizer()
+        _panel(), criterion_config=config, powell_config=_optimizer()
     )
     np.testing.assert_allclose(first.free_parameters, second.free_parameters, rtol=0.0, atol=0.0)
     assert first.final_criterion == second.final_criterion
@@ -107,7 +108,15 @@ def test_powell_reproducibility_bounds_start_limit_logging_and_serialisation(mon
     assert np.all(natural >= bounds[:, 0]) and np.all(natural <= bounds[:, 1])
     assert any("Powell progress" in record.message for record in caplog.records)
     assert not any("implied variance" in record.message.lower() for record in caplog.records)
-    json.dumps(first.to_dict())
+    payload = first.to_dict()
+    json.dumps(payload)
+    assert [item["pass_name"] for item in payload["powell_passes"]] == [
+        "coarse",
+        "refinement",
+    ]
+    assert len(payload["powell_passes"]) == 2
+    assert any("Powell coarse pass started" in record.message for record in caplog.records)
+    assert any("Powell refinement pass started" in record.message for record in caplog.records)
 
 
 def test_powell_expected_numerical_failures_use_finite_penalty(monkeypatch):
@@ -115,7 +124,7 @@ def test_powell_expected_numerical_failures_use_finite_penalty(monkeypatch):
     result = estimate_module.estimate_first_step(
         _panel(),
         criterion_config=CgmmConfig(ImpliedStateConfig(_basis())),
-        optimizer_config=_optimizer(),
+        powell_config=_optimizer(),
     )
     assert result.penalty_evaluations > 0
     assert np.isfinite(result.final_criterion)

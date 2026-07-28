@@ -7,7 +7,7 @@ import numpy as np
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_vega
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.types import PreparedFixedCosBasis
+from OptionPricing.cos_basis import PreparedFixedCosBasis
 
 
 @dataclass(frozen=True)

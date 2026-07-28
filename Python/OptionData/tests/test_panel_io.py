@@ -4,7 +4,8 @@ import math
 import pytest
 
 from OptionData.io import load_option_panel, write_panel_metadata
-from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
+from OptionPricing.config import FixedCosBasisConfig
+from OptionPricing.cos_basis import cos_specification_metadata
 
 
 def _rows():

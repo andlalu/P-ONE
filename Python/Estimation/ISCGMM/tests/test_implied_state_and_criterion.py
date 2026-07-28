@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonSimConfig
+from DGPSimulation.config import HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 from Estimation.ISCGMM.cgmm_criterion import CgmmFirstStepCriterion, criterion_diagnostics_to_dict
 from Estimation.ISCGMM.config import CcfQuadratureConfig, CgmmConfig, ImpliedStateConfig
@@ -13,10 +13,12 @@ from Estimation.ISCGMM.implied_state import imply_heston_variance_path
 from Models.Heston.parameters import HestonParameters, HestonPhysicalParameters
 from OptionData.io import load_option_panel
 from OptionData.panel import OptionPanel
-from OptionPricing.clean_panel import generate_clean_option_panel_rows, write_panel
-from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
+from OptionData.clean_panel import generate_clean_option_panel_rows
+from OptionData.io import write_panel
+from OptionPricing.config import FixedCosBasisConfig
+from OptionPricing.cos_basis import cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
+from OptionPricing.heston_ccf import HestonCcf
 
 
 def _basis() -> FixedCosBasisConfig:
@@ -123,13 +125,13 @@ def test_fixed_width_inversion_reuses_heston_coefficients_across_dates(tmp_path,
     _, theta = _true_params()
     panel = load_option_panel(_write_tiny_panel(tmp_path), max_dates=4)
     calls = []
-    original = HestonAnalyticCcfSolver.solve_coefficients
+    original = HestonCcf.coefficients
 
     def counting_solve(self, *args, **kwargs):
         calls.append(1)
         return original(self, *args, **kwargs)
 
-    monkeypatch.setattr(HestonAnalyticCcfSolver, "solve_coefficients", counting_solve)
+    monkeypatch.setattr(HestonCcf, "coefficients", counting_solve)
     result = imply_heston_variance_path(theta, panel, _state_config())
     n_maturities = len(np.unique(np.concatenate([date.maturities for date in panel.dates])))
     assert result.success_rate == pytest.approx(1.0)

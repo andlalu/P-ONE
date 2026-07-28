@@ -129,18 +129,16 @@
         [0.08, -0.08, 0.08, 0.08, 0.08, 0.08],
         [-0.08, 0.08, -0.08, -0.08, -0.08, -0.08]
       ],
-      "stages": [
-        {
-          "max_evaluations": 120,
-          "xtol": 0.02,
-          "ftol": 0.002
-        },
-        {
-          "max_evaluations": 300,
-          "xtol": 0.0002,
-          "ftol": 0.00002
-        }
-      ],
+      "coarse_pass": {
+        "max_evaluations": 120,
+        "xtol": 0.02,
+        "ftol": 0.002
+      },
+      "refinement_pass": {
+        "max_evaluations": 300,
+        "xtol": 0.0002,
+        "ftol": 0.00002
+      },
       "penalty_value": 1000000000000.0,
       "progress_every": 10
     }

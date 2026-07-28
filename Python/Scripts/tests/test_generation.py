@@ -5,9 +5,7 @@ from pathlib import Path
 import pytest
 
 from DGPSimulation.io import load_heston_path_npz
-from OptionData.io import load_option_panel, panel_metadata_path
-from OptionPricing.clean_panel import write_panel
-from OptionPricing.noisy_panel import read_table
+from OptionData.io import load_option_panel, panel_metadata_path, read_records, write_panel
 from Scripts.experiment_config import load_experiment_config
 from Scripts.generation import run_samples, with_overrides, write_run_metadata
 from Scripts.validate_generation import validate_run
@@ -61,7 +59,7 @@ def test_clean_and_noisy_generation_workflow_and_skip_existing(tmp_path):
     assert panel.metadata["cos_basis"]["effective_widths"] == [1.5]
     assert panel.metadata["cos_basis"]["generation_n_cos"] == 64
     assert panel.metadata["experiment_config_hash"] == config.experiment_config_hash
-    assert len(read_table(result.panel_file)) == 15
+    assert len(read_records(result.panel_file)) == 15
     assert {item.noise_scenario for item in result.noisy_results} == {
         "low_iid",
         "spatial_corr",
@@ -112,7 +110,7 @@ def test_run_metadata_and_completeness_aware_skip(tmp_path):
 
 
 def test_requested_parquet_format_does_not_fall_back_to_csv(tmp_path, monkeypatch):
-    monkeypatch.setattr("OptionPricing.clean_panel.parquet_available", lambda: False)
+    monkeypatch.setattr("OptionData.io.parquet_available", lambda: False)
     with pytest.raises(RuntimeError, match="requires pandas"):
         write_panel([], tmp_path / "panel", metadata={}, panel_format="parquet")
     assert not (tmp_path / "panel.csv").exists()

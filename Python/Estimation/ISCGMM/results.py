@@ -66,8 +66,8 @@ class CriterionDiagnostics:
 
 
 @dataclass(frozen=True)
-class OptimizerStageResult:
-    stage: int
+class PowellPassResult:
+    pass_name: str
     success: bool
     status: int
     message: str
@@ -94,7 +94,7 @@ class FirstStepEstimate:
     iterations: int
     function_evaluations: int
     penalty_evaluations: int
-    stage_results: tuple[OptimizerStageResult, ...]
+    powell_passes: tuple[PowellPassResult, ...]
     total_runtime: float
     final_diagnostics: CriterionDiagnostics
     metadata: dict[str, Any]

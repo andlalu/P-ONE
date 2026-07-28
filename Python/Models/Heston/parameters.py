@@ -66,7 +66,11 @@ class HestonRiskNeutralParameters:
 
 @dataclass(frozen=True)
 class HestonParameters:
-    """Canonical joint Heston parameter vector used by estimation."""
+    """One parameter set linking the physical and pricing measures.
+
+    The pricing parameters follow ``kappa_q = kappa - eta_v`` and
+    ``vbar_q = kappa * vbar / kappa_q``.
+    """
 
     eta: float
     kappa: float
@@ -76,6 +80,26 @@ class HestonParameters:
     eta_v: float
     r: float = 0.0
     q: float = 0.0
+
+    @classmethod
+    def from_physical(
+        cls,
+        params: HestonPhysicalParameters,
+        *,
+        eta_v: float,
+    ) -> HestonParameters:
+        """Add the variance-risk premium to physical parameters."""
+
+        return cls(
+            eta=params.eta,
+            kappa=params.kappa,
+            vbar=params.vbar,
+            sigma_v=params.sigma_v,
+            rho=params.rho,
+            eta_v=eta_v,
+            r=params.r,
+            q=params.q,
+        )
 
     @property
     def kappa_q(self) -> float:
@@ -124,4 +148,3 @@ class HestonParameters:
 
     def with_rates(self, *, r: float, q: float) -> HestonParameters:
         return replace(self, r=float(r), q=float(q))
-

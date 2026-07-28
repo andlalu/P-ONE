@@ -9,22 +9,22 @@ from typing import Any
 
 import numpy as np
 
-from DGPSimulation.types import HestonSimConfig
+from DGPSimulation.config import HestonSimConfig
 from Estimation.ISCGMM.config import (
     CcfQuadratureConfig,
     CgmmConfig,
     ImpliedStateConfig,
-    OptimizerConfig,
-    PowellStageConfig,
+    PowellConfig,
+    PowellPassConfig,
 )
 from Models.Heston.parameters import HestonParameters, HestonPhysicalParameters
-from OptionPricing.cos_basis import FixedCosBasisConfig
-from OptionPricing.noisy_panel import (
-    NoiseSettings,
+from OptionData.add_noise import validate_noise_settings
+from OptionData.noise_common import NoiseSettings
+from OptionData.noise_persistent_factor import (
     compute_q_diag_from_stationary_std,
     compute_stationary_std_from_q_diag,
-    validate_noise_settings,
 )
+from OptionPricing.config import FixedCosBasisConfig
 
 
 @dataclass(frozen=True)
@@ -48,7 +48,7 @@ class ExperimentConfig:
     cos_basis: FixedCosBasisConfig
     noise: NoiseSettings | None
     criterion_config: CgmmConfig
-    optimizer_config: OptimizerConfig
+    powell_config: PowellConfig
     skip_existing: bool = False
     paths_only: bool = False
     panels_only: bool = False
@@ -153,10 +153,10 @@ def _validate_experiment(config: ExperimentConfig) -> None:
     config.criterion_config.implied_state.validate()
     config.criterion_config.quadrature.validate()
     config.criterion_config.validate()
-    config.optimizer_config.base_start.validate()
-    config.optimizer_config.stage1.validate()
-    config.optimizer_config.stage2.validate()
-    config.optimizer_config.validate()
+    config.powell_config.base_start.validate()
+    config.powell_config.coarse_pass.validate()
+    config.powell_config.refinement_pass.validate()
+    config.powell_config.validate()
     if config.noise is not None:
         validate_noise_settings(config.noise)
 
@@ -179,9 +179,8 @@ def load_experiment_config(config_path: str | Path) -> ExperimentConfig:
     quadrature = estimation["quadrature"]
     cgmm = estimation["cgmm"]
     optimizer = estimation["optimizer"]
-    stages = optimizer["stages"]
-    if len(stages) != 2:
-        raise ValueError("estimation.optimizer.stages must contain exactly two Powell stages")
+    coarse_pass = optimizer["coarse_pass"]
+    refinement_pass = optimizer["refinement_pass"]
 
     cos_basis = FixedCosBasisConfig(
         maturities=tuple(float(value) for value in cos["maturities_years"]),
@@ -217,22 +216,22 @@ def load_experiment_config(config_path: str | Path) -> ExperimentConfig:
         dt=None if cgmm.get("dt") is None else float(cgmm["dt"]),
         spacing_tolerance=float(cgmm["spacing_tolerance"]),
     )
-    powell = OptimizerConfig(
+    powell = PowellConfig(
         base_start=HestonParameters(**optimizer["base_start"]),
         natural_bounds=tuple(tuple(float(value) for value in pair) for pair in optimizer["natural_bounds"]),
         candidate_relative_perturbations=tuple(
             tuple(float(value) for value in perturbation)
             for perturbation in optimizer["candidate_relative_perturbations"]
         ),
-        stage1=PowellStageConfig(
-            max_evaluations=int(stages[0]["max_evaluations"]),
-            xtol=float(stages[0]["xtol"]),
-            ftol=float(stages[0]["ftol"]),
+        coarse_pass=PowellPassConfig(
+            max_evaluations=int(coarse_pass["max_evaluations"]),
+            xtol=float(coarse_pass["xtol"]),
+            ftol=float(coarse_pass["ftol"]),
         ),
-        stage2=PowellStageConfig(
-            max_evaluations=int(stages[1]["max_evaluations"]),
-            xtol=float(stages[1]["xtol"]),
-            ftol=float(stages[1]["ftol"]),
+        refinement_pass=PowellPassConfig(
+            max_evaluations=int(refinement_pass["max_evaluations"]),
+            xtol=float(refinement_pass["xtol"]),
+            ftol=float(refinement_pass["ftol"]),
         ),
         penalty_value=float(optimizer["penalty_value"]),
         progress_every=int(optimizer["progress_every"]),
@@ -255,7 +254,7 @@ def load_experiment_config(config_path: str | Path) -> ExperimentConfig:
         cos_basis=cos_basis,
         noise=_normalise_noise_settings(raw.get("noise")),
         criterion_config=criterion,
-        optimizer_config=powell,
+        powell_config=powell,
     )
     _validate_experiment(config)
     return config

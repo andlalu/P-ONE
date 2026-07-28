@@ -3,11 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from Models.Heston.parameters import HestonParameters
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from OptionPricing.config import FixedCosBasisConfig
 
 
 @dataclass(frozen=True)
 class ImpliedStateConfig:
+    """Controls the inner variance recovery.
+
+    The COS basis stays fixed. Bounds, tolerance and iteration limit control
+    the scalar solve; the boundary tolerance marks edge solutions, and the
+    warm-start window follows the previous date. The remaining fields choose
+    the solvers and keep numerical derivatives away from tiny steps or
+    contracts with too little Black vega.
+    """
+
     cos_basis: FixedCosBasisConfig
     v_min: float = 1e-8
     v_max: float = 1.0
@@ -52,6 +61,8 @@ class ImpliedStateConfig:
 
 @dataclass(frozen=True)
 class CcfQuadratureConfig:
+    """Shape and scale of the Gauss-Hermite rule."""
+
     dimension: int = 2
     order: int = 3
     scale: float = 1.0
@@ -65,6 +76,13 @@ class CcfQuadratureConfig:
 
 @dataclass(frozen=True)
 class CgmmConfig:
+    """Settings for the first-step C-GMM criterion.
+
+    Instrument precision sets the frequency scales. The transition fields
+    choose the analytic or RK4 CCF and, for RK4, its resolution. Observation
+    spacing can be supplied with ``dt`` or inferred and checked from the panel.
+    """
+
     implied_state: ImpliedStateConfig
     quadrature: CcfQuadratureConfig = field(default_factory=CcfQuadratureConfig)
     instrument_precision: tuple[float, float] = (10.0, 50.0)
@@ -87,26 +105,40 @@ class CgmmConfig:
 
 
 @dataclass(frozen=True)
-class PowellStageConfig:
+class PowellPassConfig:
+    """Stopping settings for one Powell pass."""
+
     max_evaluations: int
     xtol: float
     ftol: float
 
     def validate(self) -> None:
         if self.max_evaluations <= 0 or self.xtol <= 0.0 or self.ftol <= 0.0:
-            raise ValueError("Powell stage limits and tolerances must be strictly positive")
+            raise ValueError("Powell pass limits and tolerances must be strictly positive")
 
 
 @dataclass(frozen=True)
-class OptimizerConfig:
+class PowellConfig:
+    """Runs Powell twice on the same first-step criterion.
+
+    The base start, natural Heston bounds and small relative perturbations give
+    the candidate starts. A broad coarse pass is followed by a tighter
+    refinement pass. Expected numerical failures receive a finite penalty, and
+    progress messages are spaced by ``progress_every`` evaluations.
+    """
+
     base_start: HestonParameters
     natural_bounds: tuple[tuple[float, float], ...]
     candidate_relative_perturbations: tuple[tuple[float, ...], ...] = (
         (0.12, -0.12, 0.12, 0.12, 0.12, 0.12),
         (-0.12, 0.12, -0.12, -0.12, -0.12, -0.12),
     )
-    stage1: PowellStageConfig = field(default_factory=lambda: PowellStageConfig(120, 2e-2, 2e-3))
-    stage2: PowellStageConfig = field(default_factory=lambda: PowellStageConfig(300, 2e-4, 2e-5))
+    coarse_pass: PowellPassConfig = field(
+        default_factory=lambda: PowellPassConfig(120, 2e-2, 2e-3)
+    )
+    refinement_pass: PowellPassConfig = field(
+        default_factory=lambda: PowellPassConfig(300, 2e-4, 2e-5)
+    )
     penalty_value: float = 1e12
     progress_every: int = 10
 

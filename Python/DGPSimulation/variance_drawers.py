@@ -4,12 +4,11 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
-from DGPSimulation.base import VarianceDrawer
 from Models.Heston.parameters import HestonPhysicalParameters
 
 
 @dataclass(frozen=True)
-class AndersenQeVarianceDrawer(VarianceDrawer):
+class AndersenQeVarianceDrawer:
     psi_c: float = 1.5
     eps: float = 1e-16
 
@@ -24,6 +23,7 @@ class AndersenQeVarianceDrawer(VarianceDrawer):
         m = max(m, self.eps)
         psi = s2 / (m * m)
 
+        # Small psi: use Andersen's quadratic-Gaussian branch.
         if psi <= self.psi_c:
             psi_eff = max(psi, self.eps)
             two_over_psi = 2.0 / psi_eff
@@ -33,6 +33,7 @@ class AndersenQeVarianceDrawer(VarianceDrawer):
             v_next = a * ((math.sqrt(b2) + z) ** 2)
             return max(v_next, 0.0)
 
+        # Large psi: use the point-mass/exponential branch.
         p = (psi - 1.0) / (psi + 1.0)
         p = min(max(p, 0.0), 1.0 - self.eps)
         beta = (1.0 - p) / m
@@ -46,7 +47,7 @@ class AndersenQeVarianceDrawer(VarianceDrawer):
 
 
 @dataclass(frozen=True)
-class EulerVarianceDrawer(VarianceDrawer):
+class EulerVarianceDrawer:
     """Euler-Maruyama with full truncation to keep variance non-negative."""
 
     def draw_next_variance(self, v_n: float, delta: float, rng: Any, params: HestonPhysicalParameters) -> float:

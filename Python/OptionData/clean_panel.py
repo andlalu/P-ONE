@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-import csv
-import importlib.util
 import math
-import os
-from pathlib import Path
 from typing import Iterable
 
 import numpy as np
 
-from DGPSimulation.types import HestonPath
+from DGPSimulation.path import HestonPath
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_vega
-from Models.Heston.parameters import HestonParameters, HestonPhysicalParameters, HestonRiskNeutralParameters
-from OptionData.io import write_panel_metadata
-from OptionPricing.cos_basis import FixedCosBasisConfig
+from Models.Heston.parameters import HestonParameters, HestonPhysicalParameters
+from OptionPricing.config import FixedCosBasisConfig
 from OptionPricing.cos_pricer import CosOptionPricer
 
 PANEL_COLUMNS = [
@@ -40,19 +35,6 @@ PANEL_COLUMNS = [
     "model_vega",
     "iv_method",
 ]
-
-
-def heston_q_from_p(params_p: HestonPhysicalParameters, eta_v: float) -> HestonRiskNeutralParameters:
-    return HestonParameters(
-        eta=params_p.eta,
-        kappa=params_p.kappa,
-        vbar=params_p.vbar,
-        sigma_v=params_p.sigma_v,
-        rho=params_p.rho,
-        eta_v=eta_v,
-        r=params_p.r,
-        q=params_p.q,
-    ).to_risk_neutral()
 
 
 def option_type_for_log_moneyness(log_moneyness: float, atm_option_type: str = "call") -> str:
@@ -83,7 +65,10 @@ def generate_clean_option_panel_rows(
     if pricing_method.upper() != "COS":
         raise NotImplementedError(f"unsupported pricing_method: {pricing_method}")
 
-    params_q = heston_q_from_p(params_p, eta_v)
+    params_q = HestonParameters.from_physical(
+        params_p,
+        eta_v=eta_v,
+    ).to_risk_neutral()
     maturities = [float(x) for x in maturities_years]
     cos_basis.validate_requested_maturities(maturities)
     moneyness_grid = [float(x) for x in log_moneyness]
@@ -177,55 +162,3 @@ def generate_clean_option_panel_rows(
                     }
                 )
     return rows
-
-
-def parquet_available() -> bool:
-    return importlib.util.find_spec("pandas") is not None and (
-        importlib.util.find_spec("pyarrow") is not None or importlib.util.find_spec("fastparquet") is not None
-    )
-
-
-def write_panel(
-    rows: list[dict[str, object]],
-    target_without_suffix: Path,
-    *,
-    metadata: dict[str, object],
-    panel_format: str,
-) -> Path:
-    target_without_suffix.parent.mkdir(parents=True, exist_ok=True)
-    if panel_format == "parquet":
-        if not parquet_available():
-            raise RuntimeError("panel_format='parquet' requires pandas and pyarrow or fastparquet")
-        import pandas as pd  # type: ignore[import-not-found]
-
-        out = target_without_suffix.with_suffix(".parquet")
-        temporary = out.with_name(out.stem + ".tmp.parquet")
-        pd.DataFrame(rows, columns=PANEL_COLUMNS).to_parquet(temporary, index=False)
-        if len(pd.read_parquet(temporary)) != len(rows):
-            temporary.unlink(missing_ok=True)
-            raise RuntimeError("atomic Parquet validation failed before publication")
-        os.replace(temporary, out)
-        write_panel_metadata(out, metadata)
-        return out
-    if panel_format != "csv":
-        raise ValueError("panel_format must be 'parquet' or 'csv'")
-    out = target_without_suffix.with_suffix(".csv")
-    temporary = out.with_name(out.stem + ".tmp.csv")
-    with temporary.open("w", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=PANEL_COLUMNS)
-        writer.writeheader()
-        writer.writerows(rows)
-        fh.flush()
-        os.fsync(fh.fileno())
-    with temporary.open(newline="") as fh:
-        if sum(1 for _ in csv.DictReader(fh)) != len(rows):
-            temporary.unlink(missing_ok=True)
-            raise RuntimeError("atomic CSV validation failed before publication")
-    os.replace(temporary, out)
-    write_panel_metadata(out, metadata)
-    return out
-
-
-def read_panel_csv(file_path: str | Path) -> list[dict[str, str]]:
-    with Path(file_path).open(newline="") as fh:
-        return list(csv.DictReader(fh))

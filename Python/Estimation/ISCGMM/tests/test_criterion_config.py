@@ -4,7 +4,8 @@ import pytest
 from Estimation.ISCGMM.cgmm_criterion import _infer_constant_transition_interval, make_cgmm_quadrature
 from Estimation.ISCGMM.config import CcfQuadratureConfig, CgmmConfig, ImpliedStateConfig
 from OptionData.panel import OptionPanel, OptionPanelDate
-from OptionPricing.cos_basis import FixedCosBasisConfig, cos_specification_metadata
+from OptionPricing.config import FixedCosBasisConfig
+from OptionPricing.cos_basis import cos_specification_metadata
 
 
 def _panel(times):

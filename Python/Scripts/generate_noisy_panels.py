@@ -5,14 +5,14 @@ import multiprocessing as mp
 import sys
 from pathlib import Path
 
-from OptionPricing.noisy_panel import (
-    NOISE_SCENARIOS,
-    NoiseSettings,
-    clean_panel_file,
+from OptionData.io import clean_panel_file
+from OptionData.noise_common import NOISE_SCENARIOS, NoiseSettings
+from Scripts.generation import (
+    default_workers,
     generate_noisy_panel_file,
+    set_thread_env,
     write_noisy_manifest,
 )
-from Scripts.generation import default_workers, set_thread_env
 from Scripts.experiment_config import load_experiment_config
 
 
@@ -88,7 +88,7 @@ def main() -> int:
     for result in sorted(results, key=lambda item: (item.sample_id, item.noise_scenario)):
         print(
             f"sample={result.sample_id} scenario={result.noise_scenario} status={result.status} "
-            f"rows={result.n_rows} capped={result.n_capped_total} output={result.output_observed_panel}"
+            f"rows={result.n_rows} capped={result.n_capped_total} output={result.output_noisy_panel}"
         )
     if errors:
         for result in errors:

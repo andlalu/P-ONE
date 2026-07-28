@@ -1,20 +1,25 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import math
 
 import numpy as np
 
 from Models.Heston.parameters import HestonRiskNeutralParameters
-from OptionPricing.base import OptionPricer
-from OptionPricing.types import (
-    CoefficientTensor,
-    FixedBasisPriceJacobian,
-    PreparedFixedCosBasis,
-    VarianceScaledCosConfig,
-)
+from OptionPricing.cos_basis import PreparedFixedCosBasis
+from OptionPricing.heston_ccf import CoefficientTensor, HestonCcf
 
 
-class CosOptionPricer(OptionPricer):
+@dataclass(frozen=True)
+class FixedBasisPriceJacobian:
+    """Prices and variance derivatives for one fixed COS maturity."""
+
+    prices: np.ndarray
+    initial_variance_jacobian: np.ndarray
+    price_clipped: np.ndarray
+
+
+class CosOptionPricer:
     """Fang-Oosterlee COS pricing with an explicit effective-width convention."""
 
     _static_term_cache: dict[tuple[int, float], tuple[np.ndarray, np.ndarray]] = {}
@@ -42,8 +47,8 @@ class CosOptionPricer(OptionPricer):
 
     @classmethod
     def _get_static_terms(cls, n_cos: int, effective_width: float) -> tuple[np.ndarray, np.ndarray]:
-        if n_cos <= 1 or effective_width <= 0.0:
-            raise ValueError("n_cos must be > 1 and effective_width must be positive")
+        if n_cos <= 0 or effective_width <= 0.0:
+            raise ValueError("n_cos and effective_width must be positive")
         key = (int(n_cos), float(effective_width))
         cached = cls._static_term_cache.get(key)
         if cached is not None:
@@ -59,24 +64,6 @@ class CosOptionPricer(OptionPricer):
         cls._static_term_cache[key] = (u, terms)
         return u, terms
 
-    @staticmethod
-    def variance_scaled_effective_width(
-        variance,
-        maturity_grid,
-        config: VarianceScaledCosConfig,
-    ) -> float:
-        """Legacy/reference-only variance-scaled effective width."""
-
-        config.validate()
-        variance_arr = np.asarray(variance, dtype=float)
-        maturities = np.asarray(maturity_grid, dtype=float)
-        if variance_arr.size == 0 or maturities.size == 0:
-            raise ValueError("variance and maturity_grid must be non-empty")
-        if np.any(variance_arr < 0.0) or np.any(maturities < 0.0):
-            raise ValueError("variance and maturity_grid must be non-negative")
-        scale = math.sqrt(max(float(np.max(variance_arr)), 1e-12) * max(float(np.max(maturities)), 1e-12))
-        return max(0.5, config.width_multiplier * scale)
-
     def prepare_fixed_basis(
         self,
         *,
@@ -85,20 +72,12 @@ class CosOptionPricer(OptionPricer):
         n_cos: int,
         model_params: HestonRiskNeutralParameters,
     ) -> PreparedFixedCosBasis:
-        """Prepare the grid, payoff expansion, and affine A/B once.
-
-        The returned affine ``B`` remains available so a later implementation
-        can evaluate price and initial-variance sensitivity together. That
-        semi-analytical derivative is valid because this effective basis is
-        fixed; it must not be used with a variance-dependent truncation rule.
-        """
-
-        from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
+        """Build a fixed COS basis for repeated pricing calls."""
 
         if maturity <= 0.0:
             raise ValueError("maturity must be strictly positive")
         u_grid, payoff_terms = self._get_static_terms(n_cos, effective_width)
-        coefficients = HestonAnalyticCcfSolver().solve_coefficients(
+        coefficients = HestonCcf().coefficients(
             u_grid,
             np.array([maturity], dtype=float),
             model_params=model_params,
@@ -204,72 +183,6 @@ class CosOptionPricer(OptionPricer):
             price_clipped=price_clipped,
         )
 
-    def price_matrix_variance_scaled_reference(
-        self,
-        *,
-        log_s,
-        variance,
-        strike_grid,
-        maturity_grid,
-        rate_grid,
-        model_params: HestonRiskNeutralParameters,
-        config: VarianceScaledCosConfig,
-        dividend_yield_grid=None,
-        option_type="call",
-    ):
-        """Explicit legacy/reference path whose grid scales with variance."""
-
-        from OptionPricing.heston_ccf_solver import HestonAnalyticCcfSolver
-
-        width = self.variance_scaled_effective_width(variance, maturity_grid, config)
-        u_grid, _ = self._get_static_terms(config.n_cos, width)
-        coefficients = HestonAnalyticCcfSolver().solve_coefficients(
-            u_grid,
-            np.asarray(maturity_grid, dtype=float),
-            model_params=model_params,
-        )
-        return self._price_matrix_with_effective_width(
-            log_s=log_s,
-            variance=variance,
-            strike_grid=strike_grid,
-            maturity_grid=maturity_grid,
-            rate_grid=rate_grid,
-            dividend_yield_grid=dividend_yield_grid,
-            coefficients=coefficients,
-            n_cos=config.n_cos,
-            effective_width=width,
-            option_type=option_type,
-        )
-
-    def price_matrix_with_explicit_effective_width(
-        self,
-        *,
-        log_s,
-        variance,
-        strike_grid,
-        maturity_grid,
-        rate_grid,
-        coefficients: CoefficientTensor,
-        n_cos: int,
-        effective_width: float,
-        dividend_yield_grid=None,
-        option_type="call",
-    ):
-        """Price a supplied coefficient tensor on one explicit fixed grid."""
-
-        return self._price_matrix_with_effective_width(
-            log_s=log_s,
-            variance=variance,
-            strike_grid=strike_grid,
-            maturity_grid=maturity_grid,
-            rate_grid=rate_grid,
-            dividend_yield_grid=dividend_yield_grid,
-            coefficients=coefficients,
-            n_cos=n_cos,
-            effective_width=effective_width,
-            option_type=option_type,
-        )
-
     def _price_matrix_with_effective_width(
         self,
         *,
@@ -350,29 +263,3 @@ class CosOptionPricer(OptionPricer):
         forward = s0[:, None, None] * np.exp((rates - dividend_yields)[None, None, :] * maturities[None, None, :])
         puts = np.maximum(prices_call - np.exp(-rates[None, None, :] * maturities[None, None, :]) * (forward - strike_tensor), 0.0)
         return np.where(lower_types == "call", prices_call, puts)
-
-    def price_one_variance_scaled_reference(
-        self,
-        *,
-        S: float,
-        V: float,
-        tau: float,
-        K: float,
-        option_type: str,
-        model_params: HestonRiskNeutralParameters,
-        config: VarianceScaledCosConfig,
-    ) -> float:
-        if S <= 0.0 or K <= 0.0:
-            raise ValueError("S and K must be strictly positive")
-        output = self.price_matrix_variance_scaled_reference(
-            log_s=np.array([math.log(S)]),
-            variance=np.array([V]),
-            strike_grid=np.array([K]),
-            maturity_grid=np.array([tau]),
-            rate_grid=np.array([model_params.r]),
-            dividend_yield_grid=np.array([model_params.q]),
-            model_params=model_params,
-            config=config,
-            option_type=option_type,
-        )
-        return float(output[0, 0, 0])

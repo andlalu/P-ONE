@@ -9,9 +9,9 @@ from typing import Any
 import numpy as np
 
 from Estimation.ISCGMM.cgmm_criterion import CgmmFirstStepCriterion
-from Estimation.ISCGMM.config import CgmmConfig, OptimizerConfig
+from Estimation.ISCGMM.config import CgmmConfig, PowellConfig
 from Estimation.ISCGMM.parameter_transform import free_parameter_bounds, from_free, to_free
-from Estimation.ISCGMM.results import FirstStepEstimate, OptimizerStageResult
+from Estimation.ISCGMM.results import FirstStepEstimate, PowellPassResult
 from Models.Heston.parameters import HestonParameters
 from OptionData.panel import OptionPanel
 
@@ -39,7 +39,7 @@ def _theta_from_natural(values: np.ndarray, *, r: float, q: float) -> HestonPara
     return theta
 
 
-def _candidate_starts(config: OptimizerConfig, *, r: float, q: float) -> tuple[HestonParameters, ...]:
+def _candidate_starts(config: PowellConfig, *, r: float, q: float) -> tuple[HestonParameters, ...]:
     base = config.base_start.with_rates(r=r, q=q)
     natural = _natural_coordinates(base)
     lower = np.array([pair[0] for pair in config.natural_bounds], dtype=float)
@@ -59,14 +59,14 @@ def estimate_first_step(
     panel: OptionPanel,
     *,
     criterion_config: CgmmConfig,
-    optimizer_config: OptimizerConfig,
+    powell_config: PowellConfig,
 ) -> FirstStepEstimate:
-    """Estimate first-step IS-CGMM with deterministic screening and bounded Powell."""
+    """Estimate first-step IS-CGMM with coarse and refinement Powell passes."""
 
     from scipy.optimize import Bounds, minimize  # type: ignore[import-not-found]
 
     criterion_config.validate()
-    optimizer_config.validate()
+    powell_config.validate()
     started = time.perf_counter()
     LOGGER.info("estimation job started")
     LOGGER.info(
@@ -80,7 +80,7 @@ def estimate_first_step(
     try:
         criterion = CgmmFirstStepCriterion(panel, criterion_config)
         rate, dividend_yield = panel.first_rate_pair()
-        free_bounds = free_parameter_bounds(optimizer_config.natural_bounds)
+        free_bounds = free_parameter_bounds(powell_config.natural_bounds)
         lower = np.array([pair[0] for pair in free_bounds])
         upper = np.array([pair[1] for pair in free_bounds])
         evaluation_count = 0
@@ -96,9 +96,9 @@ def estimate_first_step(
                     raise FloatingPointError("non-finite C-GMM criterion")
             except EXPECTED_NUMERICAL_FAILURES:
                 penalty_count += 1
-                value = float(optimizer_config.penalty_value)
+                value = float(powell_config.penalty_value)
             best_value = min(best_value, value)
-            if evaluation_count % optimizer_config.progress_every == 0:
+            if evaluation_count % powell_config.progress_every == 0:
                 LOGGER.info(
                     "Powell progress evaluations=%d best=%.8g elapsed=%.1fs penalties=%d",
                     evaluation_count,
@@ -108,7 +108,7 @@ def estimate_first_step(
                 )
             return value
 
-        starts = _candidate_starts(optimizer_config, r=rate, q=dividend_yield)
+        starts = _candidate_starts(powell_config, r=rate, q=dividend_yield)
         screened: list[dict[str, Any]] = []
         for index, theta in enumerate(starts):
             value = objective(to_free(theta))
@@ -122,12 +122,16 @@ def estimate_first_step(
             selected_index,
         )
 
-        stage_results: list[OptimizerStageResult] = []
+        # These are two searches over the same first-step criterion.
+        powell_passes: list[PowellPassResult] = []
         current = to_free(selected)
         scipy_bounds = Bounds(lower, upper)
         scipy_result = None
-        for stage_number, stage_config in ((1, optimizer_config.stage1), (2, optimizer_config.stage2)):
-            LOGGER.info("Powell Stage %d started", stage_number)
+        for pass_name, pass_config in (
+            ("coarse", powell_config.coarse_pass),
+            ("refinement", powell_config.refinement_pass),
+        ):
+            LOGGER.info("Powell %s pass started", pass_name)
             before = evaluation_count
             scipy_result = minimize(
                 objective,
@@ -135,15 +139,15 @@ def estimate_first_step(
                 method="Powell",
                 bounds=scipy_bounds,
                 options={
-                    "maxfev": stage_config.max_evaluations,
-                    "xtol": stage_config.xtol,
-                    "ftol": stage_config.ftol,
+                    "maxfev": pass_config.max_evaluations,
+                    "xtol": pass_config.xtol,
+                    "ftol": pass_config.ftol,
                     "disp": False,
                 },
             )
             current = np.asarray(scipy_result.x, dtype=float)
-            stage = OptimizerStageResult(
-                stage=stage_number,
+            pass_result = PowellPassResult(
+                pass_name=pass_name,
                 success=bool(scipy_result.success),
                 status=int(scipy_result.status),
                 message=str(scipy_result.message),
@@ -152,15 +156,19 @@ def estimate_first_step(
                 iterations=int(scipy_result.nit),
                 function_evaluations=evaluation_count - before,
             )
-            stage_results.append(stage)
+            powell_passes.append(pass_result)
             LOGGER.info(
-                "Powell Stage %d completed success=%s criterion=%.8g evaluations=%d",
-                stage_number,
-                stage.success,
-                stage.criterion,
-                stage.function_evaluations,
+                "Powell %s pass completed success=%s criterion=%.8g evaluations=%d",
+                pass_name,
+                pass_result.success,
+                pass_result.criterion,
+                pass_result.function_evaluations,
             )
-            LOGGER.debug("Powell Stage %d best free parameters=%s", stage_number, current.tolist())
+            LOGGER.debug(
+                "Powell %s pass best free parameters=%s",
+                pass_name,
+                current.tolist(),
+            )
 
         assert scipy_result is not None
         estimated = from_free(current, r=rate, q=dividend_yield)
@@ -183,10 +191,10 @@ def estimate_first_step(
             success=bool(scipy_result.success),
             status=int(scipy_result.status),
             message=str(scipy_result.message),
-            iterations=sum(stage.iterations for stage in stage_results),
+            iterations=sum(result.iterations for result in powell_passes),
             function_evaluations=evaluation_count,
             penalty_evaluations=penalty_count,
-            stage_results=tuple(stage_results),
+            powell_passes=tuple(powell_passes),
             total_runtime=time.perf_counter() - started,
             final_diagnostics=final_diagnostics,
             metadata=dict(final_diagnostics.metadata),

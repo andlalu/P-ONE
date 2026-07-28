@@ -6,11 +6,12 @@ import json
 import math
 from pathlib import Path
 
-from OptionPricing.noisy_panel import NOISE_SCENARIOS, _price_bounds, read_table
+from OptionData.io import read_records
+from OptionData.noise_common import NOISE_SCENARIOS, price_bounds
 
 REQUIRED_COLUMNS = {
     "noise_scenario",
-    "raw_contaminated_iv",
+    "raw_noisy_iv",
     "raw_price_before_rounding",
     "price_after_rounding",
     "observed_price",
@@ -59,14 +60,14 @@ def validate_noisy_panels(*, run_root: str | Path) -> None:
 
     for clean_file in clean_files:
         sample_name = clean_file.name
-        clean_rows = read_table(clean_file)
+        clean_rows = read_records(clean_file)
         for scenario in _enabled_scenarios(noise_config):
             observed_file = root / "panels_observed" / scenario / sample_name
             if not observed_file.exists() and observed_file.suffix == ".parquet":
                 observed_file = observed_file.with_suffix(".csv")
             if not observed_file.exists():
                 raise AssertionError(f"missing observed panel {observed_file}")
-            rows = read_table(observed_file)
+            rows = read_records(observed_file)
             if len(rows) != len(clean_rows):
                 raise AssertionError(f"{observed_file} row count differs from {clean_file}")
             missing = REQUIRED_COLUMNS - set(rows[0])
@@ -79,7 +80,7 @@ def validate_noisy_panels(*, run_root: str | Path) -> None:
                     raise AssertionError(f"{observed_file} has non-finite observed_price")
                 if not math.isfinite(observed_iv) or observed_iv < sigma_min:
                     raise AssertionError(f"{observed_file} has invalid observed_iv")
-                lower, upper = _price_bounds(
+                lower, upper = price_bounds(
                     float(row["S"]),
                     float(row["strike"]),
                     float(row["maturity_years"]),

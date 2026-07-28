@@ -6,11 +6,10 @@ from dataclasses import dataclass
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
-from DGPSimulation.types import HestonSimConfig
+from DGPSimulation.config import HestonSimConfig
 from DGPSimulation.variance_drawers import AndersenQeVarianceDrawer
 from Models.Heston.parameters import HestonPhysicalParameters, HestonRiskNeutralParameters
 from OptionPricing.cos_pricer import CosOptionPricer
-from OptionPricing.types import VarianceScaledCosConfig
 
 
 @dataclass(frozen=True)
@@ -18,6 +17,14 @@ class MonteCarloEstimate:
     mean: float
     standard_error: float
     n_paths: int
+
+
+@dataclass(frozen=True)
+class ReferenceCosConfig:
+    """Test-only settings for the historical variance-scaled COS reference."""
+
+    n_cos: int = 256
+    width_multiplier: float = 10.0
 
 
 def cos_heston_price(
@@ -28,18 +35,26 @@ def cos_heston_price(
     strike: float,
     option_type: str,
     params: HestonRiskNeutralParameters,
-    config: VarianceScaledCosConfig,
+    config: ReferenceCosConfig,
 ) -> float:
     pricer = CosOptionPricer()
-    prices = pricer.price_matrix_variance_scaled_reference(
+    width = max(
+        0.5,
+        config.width_multiplier * math.sqrt(max(variance, 1e-12) * max(tau, 1e-12)),
+    )
+    basis = pricer.prepare_fixed_basis(
+        maturity=tau,
+        effective_width=width,
+        n_cos=config.n_cos,
+        model_params=params,
+    )
+    prices = pricer.price_matrix_fixed_basis(
         log_s=np.array([math.log(spot)]),
         variance=np.array([variance]),
         strike_grid=np.array([strike]),
-        maturity_grid=np.array([tau]),
-        rate_grid=np.array([params.r]),
-        dividend_yield_grid=np.array([params.q]),
-        model_params=params,
-        config=config,
+        rate=params.r,
+        dividend_yield=params.q,
+        basis=basis,
         option_type=option_type,
     )
     return float(prices[0, 0, 0])
