@@ -4,6 +4,28 @@
 simulation, clean option panels, noise scenarios and first-step IS-CGMM
 estimation.
 
+## Production runner
+
+One process owns one complete sample locally and on AWS:
+
+```bash
+python Python/Scripts/run_heston_sample.py \
+  --config Python/Scripts/configs/heston_experiment_run_001.json \
+  --sample-id 0 \
+  --output-root outputs/run_001
+```
+
+The run root contains one authoritative `run.json`. Each `sample_NNN`
+directory contains only `path.npz`, `panels.parquet`, `record.json` and
+`sample.log`. The Parquet file stores `clean`, `low_iid`, `spatial_corr` and
+`persistent_factor` rows together; `record.json` stores embedded validation
+and all four first-step estimates.
+
+Use `--resume` to verify recorded hashes and continue the first incomplete
+stage. Use `--overwrite` to replace only the requested sample directory.
+AWS wrappers should keep S3 transfer outside the Python runner and use the
+array index as `--sample-id`.
+
 ## Top-level sections
 
 - `run` sets the run identifier, sample count, base seed, output directory,
