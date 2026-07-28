@@ -3,7 +3,7 @@
     "run_id": "run_001",
     "n_samples": 100,
     "base_seed": 1234500,
-    "output_root": "../../../outputs/generation/run_001_production",
+    "output_root": "../../../outputs/run_001",
     "panel_format": "parquet",
     "workers": null
   },

@@ -9,15 +9,9 @@ from typing import Any, Callable
 import numpy as np
 import pandas as pd
 
-from OptionData.io import clean_panel_file, noisy_panel_file
 from OptionData.noise_common import NOISE_SCENARIOS, NoiseSettings
-from Scripts.generation import (
-    generate_noisy_panel_file,
-    generate_one_sample,
-    load_config,
-    set_thread_env,
-    with_overrides,
-)
+from Scripts.experiment_config import load_experiment_config
+from Scripts.sample_run import run_sample, set_thread_env
 
 
 SCENARIO_LABELS = {
@@ -248,14 +242,6 @@ def _read_frame(path: Path) -> pd.DataFrame:
     raise ValueError(f"unsupported table format: {path}")
 
 
-def _find_panel(base_without_suffix: Path) -> Path | None:
-    for suffix in (".parquet", ".csv"):
-        candidate = base_without_suffix.with_suffix(suffix)
-        if candidate.exists():
-            return candidate
-    return None
-
-
 def _required_column(frame: pd.DataFrame, candidates: tuple[str, ...], label: str) -> str:
     for name in candidates:
         if name in frame.columns:
@@ -263,67 +249,36 @@ def _required_column(frame: pd.DataFrame, candidates: tuple[str, ...], label: st
     raise ValueError(f"missing {label} column; tried {', '.join(candidates)}")
 
 
-def _panel_file_for_scenario(run_root: Path, scenario: str, sample_id: int) -> Path | None:
-    return _find_panel(run_root / "panels_observed" / scenario / f"sample_{sample_id:03d}")
-
-
 def _ensure_panels(
     *,
     config_path: Path,
     sample_id: int,
     generate_if_missing: bool,
-) -> tuple[Path, dict[str, Path], Path | None, list[str], NoiseSettings]:
-    config = load_config(config_path)
+) -> tuple[Path, list[str], NoiseSettings]:
+    config = load_experiment_config(config_path)
     if config.noise is None:
         raise ValueError("configuration does not contain noise scenarios")
     run_root = Path(config.output_root)
+    sample_dir = run_root / f"sample_{sample_id:03d}"
+    panel_path = sample_dir / "panels.parquet"
     generated: list[str] = []
-
-    try:
-        clean_path = clean_panel_file(run_root, sample_id)
-    except FileNotFoundError:
+    if not panel_path.exists():
         if not generate_if_missing:
-            raise
-        sample_config = with_overrides(
-            config,
-            n_samples=max(config.n_samples, sample_id + 1),
-            workers=1,
-            skip_existing=False,
+            raise FileNotFoundError(f"missing combined panel {panel_path}")
+        run_sample(
+            config=config,
+            sample_id=sample_id,
+            output_root=run_root,
+            resume=sample_dir.exists() and any(sample_dir.iterdir()),
+            generation_only=True,
         )
-        result = generate_one_sample(sample_id, sample_config)
-        if result.status == "error":
-            raise RuntimeError(result.error)
-        clean_path = Path(result.panel_file)
-        generated.append("clean")
-        generated.extend(config.noise.scenario_names())
-
-    scenario_paths: dict[str, Path] = {}
-    for scenario in NOISE_SCENARIOS:
-        if scenario not in config.noise.scenario_names():
-            continue
-        existing = _panel_file_for_scenario(run_root, scenario, sample_id)
-        factor_file = run_root / "noise_factors" / scenario / f"sample_{sample_id:03d}.csv"
-        needs_factor = scenario == "persistent_factor" and not factor_file.exists()
-        if existing is None or needs_factor:
-            if not generate_if_missing:
-                raise FileNotFoundError(f"missing observed panel for {scenario} sample {sample_id:03d}")
-            result = generate_noisy_panel_file(
-                clean_panel_path=clean_path,
-                run_root=run_root,
-                sample_id=sample_id,
-                scenario=scenario,
-                config=config.noise,
-                panel_format=config.panel_format,
-                skip_existing=False,
-            )
-            if result.status == "error":
-                raise RuntimeError(result.error_message)
-            existing = Path(result.output_noisy_panel)
-            generated.append(scenario)
-        scenario_paths[scenario] = existing
-
-    factor_path = run_root / "noise_factors" / "persistent_factor" / f"sample_{sample_id:03d}.csv"
-    return clean_path, scenario_paths, factor_path if factor_path.exists() else None, generated, config.noise
+        generated.extend(("clean", *config.noise.scenario_names()))
+    frame = _read_frame(panel_path)
+    present = tuple(frame["scenario"].drop_duplicates().astype(str))
+    expected = ("clean", *NOISE_SCENARIOS)
+    if present != expected:
+        raise ValueError(f"combined panel scenario order is {present}, expected {expected}")
+    return panel_path, generated, config.noise
 
 
 def _date_noise_quality(observed: dict[str, pd.DataFrame], week_index: int) -> tuple[int, float]:
@@ -905,7 +860,7 @@ def _make_persistent_factor_figure(
     output: Path,
     *,
     observed: pd.DataFrame,
-    factor_file: Path | None,
+    factors: pd.DataFrame | None,
     window_start: int = TIME_WINDOW_START,
     window_length: int = TIME_WINDOW_LENGTH,
 ) -> None:
@@ -915,14 +870,13 @@ def _make_persistent_factor_figure(
     top_rect = (55.0, 214.0, 420.0, 95.0)
     bottom_rect = (55.0, 58.0, 420.0, 105.0)
 
-    if factor_file is not None:
-        factors = pd.read_csv(factor_file)
+    if factors is not None:
         factors = factors[(factors["week_index"].astype(int) >= start) & (factors["week_index"].astype(int) <= end)]
         x = factors["week_index"].astype(float).to_numpy()
         series = [
-            ("f0 level", factors["factor_0"].astype(float).to_numpy() * 10000.0),
-            ("f1 slope m", factors["factor_1"].astype(float).to_numpy() * 10000.0),
-            ("f2 slope \\tau", factors["factor_2"].astype(float).to_numpy() * 10000.0),
+            ("f0 level", factors["persistent_factor_level"].astype(float).to_numpy() * 10000.0),
+            ("f1 slope m", factors["persistent_factor_moneyness"].astype(float).to_numpy() * 10000.0),
+            ("f2 slope \\tau", factors["persistent_factor_maturity"].astype(float).to_numpy() * 10000.0),
         ]
         all_y = np.concatenate([item[1] for item in series])
         pad = max(1.0, 0.08 * (float(all_y.max()) - float(all_y.min())))
@@ -978,9 +932,7 @@ def _write_manifest(
     sample_id: int,
     requested_date_index: int,
     selected_date_index: int,
-    clean_path: Path,
-    scenario_paths: dict[str, Path],
-    factor_file: Path | None,
+    panel_path: Path,
     figures: list[Path],
     generated: list[str],
     time_window: tuple[int, int],
@@ -994,11 +946,8 @@ def _write_manifest(
             "end_week_index": time_window[1],
             "length": time_window[1] - time_window[0] + 1,
         },
-        "scenario_files": {
-            "clean": str(clean_path),
-            **{scenario: str(scenario_paths[scenario]) for scenario in sorted(scenario_paths)},
-        },
-        "factor_file": str(factor_file) if factor_file is not None else None,
+        "combined_panel": str(panel_path),
+        "factor_source": "embedded persistent-factor panel columns",
         "figures": [str(item) for item in figures],
         "generated_or_regenerated": generated,
         "created_by": "Python/Scripts/make_noise_visualisations.py",
@@ -1017,13 +966,17 @@ def main() -> int:
     args = parser.parse_args()
 
     set_thread_env()
-    clean_path, scenario_paths, factor_file, generated, noise_config = _ensure_panels(
+    panel_path, generated, noise_config = _ensure_panels(
         config_path=Path(args.config),
         sample_id=args.sample_id,
         generate_if_missing=args.generate_if_missing,
     )
-    clean = _read_frame(clean_path)
-    observed = {scenario: _read_frame(path) for scenario, path in scenario_paths.items()}
+    combined = _read_frame(panel_path)
+    clean = combined[combined["scenario"] == "clean"].reset_index(drop=True)
+    observed = {
+        scenario: combined[combined["scenario"] == scenario].reset_index(drop=True)
+        for scenario in NOISE_SCENARIOS
+    }
     selected_date = _select_representative_date(clean, observed, args.date_index)
     if selected_date != args.date_index:
         available_weeks = set(int(x) for x in clean["week_index"].drop_duplicates())
@@ -1059,15 +1012,29 @@ def main() -> int:
     _make_difference_figure(figures[1], observed_dates=observed_dates)
     _make_structure_figure(figures[2], clean=clean, noise_config=noise_config)
     _make_low_iid_timeseries_figure(figures[3], observed=observed["low_iid"])
-    _make_persistent_factor_figure(figures[4], observed=observed["persistent_factor"], factor_file=factor_file)
+    factors = (
+        observed["persistent_factor"][
+            [
+                "week_index",
+                "persistent_factor_level",
+                "persistent_factor_moneyness",
+                "persistent_factor_maturity",
+            ]
+        ]
+        .drop_duplicates("week_index")
+        .reset_index(drop=True)
+    )
+    _make_persistent_factor_figure(
+        figures[4],
+        observed=observed["persistent_factor"],
+        factors=factors,
+    )
     _write_manifest(
         output_dir / "noise_visualisation_manifest.json",
         sample_id=args.sample_id,
         requested_date_index=args.date_index,
         selected_date_index=selected_date,
-        clean_path=clean_path,
-        scenario_paths=scenario_paths,
-        factor_file=factor_file,
+        panel_path=panel_path,
         figures=figures,
         generated=generated,
         time_window=time_window,
@@ -1075,10 +1042,8 @@ def main() -> int:
 
     print(f"sample-id {args.sample_id}")
     print(f"time window: week-index {time_window[0]} to {time_window[1]}")
-    print(f"clean panel: {clean_path}")
-    for scenario in NOISE_SCENARIOS:
-        print(f"{scenario} panel: {scenario_paths[scenario]}")
-    print(f"factor file: {factor_file if factor_file is not None else 'not available'}")
+    print(f"combined panel: {panel_path}")
+    print("persistent factors: embedded in persistent_factor rows")
     for figure in figures:
         print(f"wrote {figure}")
     print(f"manifest: {output_dir / 'noise_visualisation_manifest.json'}")
