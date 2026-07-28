@@ -16,6 +16,7 @@ def test_frozen_production_experiment_values():
     assert experiment.run_id == "run_001"
     assert experiment.n_samples == 100
     assert experiment.base_seed == 1234500
+    assert Path(experiment.output_root) == Path(__file__).resolve().parents[3] / "outputs" / "run_001"
     assert experiment.panel_format == "parquet"
     assert experiment.workers is None
     assert asdict(experiment.dgp) == {

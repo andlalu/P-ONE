@@ -1,7 +1,4 @@
-import csv
-import json
 import math
-from dataclasses import asdict
 
 import numpy as np
 import pytest
@@ -9,7 +6,6 @@ import pytest
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price, black76_vega
 from OptionData.add_noise import generate_noisy_panel_rows
-from OptionData.io import panel_metadata_path, read_records, write_records
 from OptionData.noise_common import NoiseSettings, apply_price_mechanics, marginal_scale
 from OptionData.noise_persistent_factor import (
     compute_q_diag_from_stationary_std,
@@ -17,10 +13,6 @@ from OptionData.noise_persistent_factor import (
     persistent_factor_residual_scale,
     validate_persistent_factor_settings,
 )
-from OptionPricing.config import FixedCosBasisConfig
-from OptionPricing.cos_basis import cos_specification_metadata
-from Scripts.generation import generate_noisy_panel_file
-from Scripts.validate_noisy_panels import validate_noisy_panels
 
 
 def _noise_settings() -> NoiseSettings:
@@ -120,16 +112,6 @@ def _clean_rows(sample_id=0):
     return rows
 
 
-def _panel_metadata():
-    return {
-        "sample_id": 0,
-        "scenario": "clean",
-        "cos_basis": cos_specification_metadata(
-            FixedCosBasisConfig((0.25, 0.5), (1.5, 2.0), 64, 32)
-        ),
-    }
-
-
 def test_low_iid_noise_is_deterministic():
     config = _noise_settings()
     rows = _clean_rows()
@@ -146,38 +128,6 @@ def test_spatial_corr_noise_has_contract_level_draws():
     draws = np.array([row["noise_draw"] for row in rows])
     assert np.std(draws) > 0.0
     assert all(row["noise_scenario"] == "spatial_corr" for row in rows)
-
-
-def test_persistent_factor_writes_factor_file_and_validation_passes(tmp_path):
-    config = _noise_settings()
-    run_root = tmp_path / "run"
-    clean_path = write_records(
-        _clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata(), panel_format="csv"
-    )
-    results = []
-    for scenario in config.scenario_names():
-        results.append(
-            generate_noisy_panel_file(
-                clean_panel_path=clean_path,
-                run_root=run_root,
-                sample_id=0,
-                scenario=scenario,
-                config=config,
-                panel_format="csv",
-            )
-        )
-    assert {result.status for result in results} == {"ok"}
-    with panel_metadata_path(results[0].output_noisy_panel).open() as fh:
-        observed_metadata = json.load(fh)
-    assert observed_metadata["cos_basis"] == _panel_metadata()["cos_basis"]
-    factor_file = run_root / "noise_factors" / "persistent_factor" / "sample_000.csv"
-    assert factor_file.exists()
-    with factor_file.open(newline="") as fh:
-        assert len(list(csv.DictReader(fh))) == 2
-    config_directory = run_root / "config"
-    config_directory.mkdir(parents=True)
-    (config_directory / "experiment_config.json").write_text(json.dumps({"noise": asdict(config)}))
-    validate_noisy_panels(run_root=run_root)
 
 
 def test_persistent_factor_q_diag_is_computed_from_stationary_std():
@@ -279,31 +229,3 @@ def test_tick_rounding_and_capping_are_recorded():
     )
     assert was_capped
     assert cap_direction == "upper"
-
-
-def test_skip_existing_avoids_recomputation(tmp_path):
-    config = _noise_settings()
-    run_root = tmp_path / "run"
-    clean_path = write_records(
-        _clean_rows(), run_root / "panels_clean" / "sample_000", metadata=_panel_metadata(), panel_format="csv"
-    )
-    first = generate_noisy_panel_file(
-        clean_panel_path=clean_path,
-        run_root=run_root,
-        sample_id=0,
-        scenario="low_iid",
-        config=config,
-        panel_format="csv",
-    )
-    second = generate_noisy_panel_file(
-        clean_panel_path=clean_path,
-        run_root=run_root,
-        sample_id=0,
-        scenario="low_iid",
-        config=config,
-        panel_format="csv",
-        skip_existing=True,
-    )
-    assert first.status == "ok"
-    assert second.status == "skipped"
-    assert len(read_records(first.output_noisy_panel)) == len(_clean_rows())

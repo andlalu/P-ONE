@@ -16,15 +16,19 @@ export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
 export NUMEXPR_NUM_THREADS="${NUMEXPR_NUM_THREADS:-1}"
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
-CONFIG="${CONFIG:-Python/Scripts/configs/clean_generation_run_001.json}"
-OUTPUT_ROOT="${OUTPUT_ROOT:-outputs/generation/run_001}"
-WORKERS="${WORKERS:-}"
+CONFIG="${CONFIG:-Python/Scripts/configs/heston_experiment_run_001.json}"
+OUTPUT_ROOT="${OUTPUT_ROOT:-/work/run_001}"
+SAMPLE_ID="${SAMPLE_ID:-${AWS_BATCH_JOB_ARRAY_INDEX:-}}"
 
-mkdir -p "$OUTPUT_ROOT/logs"
-PYTHON_BIN="$PYTHON_BIN" bash scripts/build_lets_be_rational.sh 2>&1 | tee "$OUTPUT_ROOT/logs/build_lets_be_rational.log"
-
-cmd=("$PYTHON_BIN" -m Scripts.generation_ec2 --config "$CONFIG" --output-root "$OUTPUT_ROOT")
-if [ -n "$WORKERS" ]; then
-  cmd+=(--workers "$WORKERS")
+if [ -z "$SAMPLE_ID" ]; then
+  echo "SAMPLE_ID or AWS_BATCH_JOB_ARRAY_INDEX is required" >&2
+  exit 2
 fi
-"${cmd[@]}" "$@" 2>&1 | tee "$OUTPUT_ROOT/logs/generation_ec2.log"
+
+PYTHON_BIN="$PYTHON_BIN" bash scripts/build_lets_be_rational.sh
+"$PYTHON_BIN" Python/Scripts/run_heston_sample.py \
+  --config "$CONFIG" \
+  --sample-id "$SAMPLE_ID" \
+  --output-root "$OUTPUT_ROOT" \
+  --resume \
+  "$@"

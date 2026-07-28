@@ -40,16 +40,38 @@ def read_records(file_path: str | Path) -> list[dict[str, Any]]:
 
 
 def read_panel_metadata(file_path: str | Path) -> dict[str, Any]:
-    """Read a panel sidecar, or return an empty dictionary."""
+    """Read embedded Parquet metadata or a legacy panel sidecar."""
 
-    sidecar = panel_metadata_path(file_path)
+    path = Path(file_path)
+    metadata: dict[str, Any] = {}
+    if path.suffix == ".parquet" and path.exists():
+        try:
+            import pyarrow.parquet as pq  # type: ignore[import-not-found]
+
+            raw_metadata = pq.read_schema(path).metadata or {}
+            for raw_key, raw_value in raw_metadata.items():
+                key = raw_key.decode("utf-8")
+                if not key.startswith("p_one."):
+                    continue
+                name = key.removeprefix("p_one.")
+                value = raw_value.decode("utf-8")
+                if name in {"format_version", "sample_id"}:
+                    metadata[name] = int(value)
+                elif name in {"scenario_order", "cos_basis"}:
+                    metadata[name] = json.loads(value)
+                else:
+                    metadata[name] = value
+        except (ImportError, OSError, ValueError):
+            pass
+    sidecar = panel_metadata_path(path)
     if not sidecar.exists():
-        return {}
+        return metadata
     with sidecar.open() as fh:
         value = json.load(fh)
     if not isinstance(value, dict):
         raise ValueError(f"panel metadata sidecar {sidecar} must contain a JSON object")
-    return value
+    metadata.update(value)
+    return metadata
 
 
 def write_panel_metadata(file_path: str | Path, metadata: dict[str, Any]) -> Path:
@@ -129,62 +151,6 @@ def write_panel(
     )
 
 
-def clean_panel_file(run_root: str | Path, sample_id: int) -> Path:
-    """Find one generated clean panel."""
-
-    root = Path(run_root)
-    stem = f"sample_{sample_id:03d}"
-    for suffix in (".parquet", ".csv"):
-        candidate = root / "panels_clean" / f"{stem}{suffix}"
-        if candidate.exists():
-            return candidate
-    raise FileNotFoundError(
-        f"missing clean panel for sample {sample_id:03d} under {root / 'panels_clean'}"
-    )
-
-
-def noisy_panel_file(
-    run_root: str | Path,
-    scenario: str,
-    sample_id: int,
-    panel_format: str,
-) -> Path:
-    """Build the file name for one noisy panel."""
-
-    if panel_format not in {"parquet", "csv"}:
-        raise ValueError("panel_format must be 'parquet' or 'csv'")
-    return (
-        Path(run_root)
-        / "panels_observed"
-        / scenario
-        / f"sample_{sample_id:03d}.{panel_format}"
-    )
-
-
-def write_persistent_factor_records(
-    factors: list[dict[str, Any]],
-    run_root: str | Path,
-    scenario: str,
-    sample_id: int,
-) -> Path:
-    """Write the persistent factors for one noisy panel."""
-
-    target = Path(run_root) / "noise_factors" / scenario / f"sample_{sample_id:03d}.csv"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    temporary = target.with_name(target.stem + ".tmp.csv")
-    with temporary.open("w", newline="") as file_handle:
-        writer = csv.DictWriter(
-            file_handle,
-            fieldnames=["week_index", "factor_0", "factor_1", "factor_2"],
-        )
-        writer.writeheader()
-        writer.writerows(factors)
-        file_handle.flush()
-        os.fsync(file_handle.fileno())
-    os.replace(temporary, target)
-    return target
-
-
 def _choose_column(rows: list[dict[str, Any]], preferred: str | None, fallback: tuple[str, ...], label: str) -> str:
     keys = set(rows[0])
     if preferred is not None:
@@ -209,6 +175,7 @@ def _optional_float(row: dict[str, Any], name: str) -> float | None:
 def load_option_panel(
     file_path: str | Path,
     *,
+    scenario: str | None = None,
     iv_column: str | None = None,
     price_column: str | None = None,
     max_dates: int | None = None,
@@ -218,6 +185,51 @@ def load_option_panel(
     rows = read_records(file_path)
     if not rows:
         raise ValueError(f"{file_path} contains no rows")
+    combined_scenarios = ("clean", "low_iid", "spatial_corr", "persistent_factor")
+    has_scenario = "scenario" in rows[0]
+    if scenario is not None:
+        if scenario not in combined_scenarios:
+            raise ValueError(f"unknown panel scenario: {scenario!r}")
+        if not has_scenario:
+            raise ValueError("scenario selection requires a combined panel with a scenario column")
+        present = tuple(dict.fromkeys(str(row["scenario"]) for row in rows))
+        if present != combined_scenarios:
+            raise ValueError(
+                "combined panel must contain exactly the deterministic scenario order "
+                f"{combined_scenarios}, found {present}"
+            )
+        scenario_rank = {name: index for index, name in enumerate(combined_scenarios)}
+        combined_order = [
+            (
+                scenario_rank[str(row["scenario"])],
+                int(row["week_index"]),
+                float(row["maturity_years"]),
+                float(row["log_moneyness"]),
+            )
+            for row in rows
+        ]
+        if combined_order != sorted(combined_order):
+            raise ValueError("combined panel rows are not in deterministic scenario and contract order")
+        rows = [row for row in rows if str(row["scenario"]) == scenario]
+        if not rows:
+            raise ValueError(f"combined panel contains no rows for scenario {scenario!r}")
+        sample_ids = {int(row["sample_id"]) for row in rows}
+        if len(sample_ids) != 1:
+            raise ValueError("one scenario panel must contain exactly one sample")
+        order_keys = [
+            (
+                int(row["week_index"]),
+                float(row["maturity_years"]),
+                float(row["log_moneyness"]),
+            )
+            for row in rows
+        ]
+        if order_keys != sorted(order_keys):
+            raise ValueError(f"scenario {scenario!r} rows are not in deterministic panel order")
+        iv_column = "estimation_iv"
+        price_column = "estimation_price"
+    elif has_scenario and len({str(row["scenario"]) for row in rows}) > 1:
+        raise ValueError("a scenario must be selected when loading a combined panel")
     required = {"week_index", "t", "S", "logS", "maturity_years", "strike", "option_type", "r", "q"}
     missing = required - set(rows[0])
     if missing:
@@ -269,5 +281,17 @@ def load_option_panel(
         )
 
     metadata = read_panel_metadata(file_path)
-    metadata.update({"source": str(file_path), "iv_column": iv_name, "price_column": price_name})
+    metadata.update(
+        {
+            "source": str(file_path),
+            "scenario": scenario if scenario is not None else metadata.get("scenario"),
+            "sample_id": (
+                int(rows[0]["sample_id"])
+                if scenario is not None
+                else metadata.get("sample_id")
+            ),
+            "iv_column": iv_name,
+            "price_column": price_name,
+        }
+    )
     return OptionPanel(dates=tuple(dates), metadata=metadata).truncate_dates(max_dates)
