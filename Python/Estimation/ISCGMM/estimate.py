@@ -195,11 +195,15 @@ def estimate_first_step(
             function_evaluations=evaluation_count,
             penalty_evaluations=penalty_count,
             powell_passes=tuple(powell_passes),
-            total_runtime=time.perf_counter() - started,
+            total_runtime_seconds=time.perf_counter() - started,
             final_diagnostics=final_diagnostics,
             metadata=dict(final_diagnostics.metadata),
         )
-        LOGGER.info("job completed success=%s runtime=%.1fs", estimate.success, estimate.total_runtime)
+        LOGGER.info(
+            "job completed success=%s runtime=%.1fs",
+            estimate.success,
+            estimate.total_runtime_seconds,
+        )
         return estimate
     except Exception:
         LOGGER.exception("estimation job failed")

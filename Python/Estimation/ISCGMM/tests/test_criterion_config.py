@@ -54,3 +54,38 @@ def test_gauss_hermite_quadrature_shape_determinism_and_normalisation():
     np.testing.assert_array_equal(nodes_a, nodes_b)
     np.testing.assert_array_equal(weights_a, weights_b)
     assert np.sum(weights_a) == pytest.approx(1.0)
+
+
+def test_default_quadrature_is_even_and_uses_production_coordinate_scales():
+    config = CcfQuadratureConfig()
+    nodes, weights = make_cgmm_quadrature(config)
+
+    assert (config.dimension, config.order, config.scale) == (2, 4, (1.0, 4.0))
+    assert nodes.shape == (16, 2)
+    assert not np.any(np.all(nodes == 0.0, axis=1))
+    assert np.sum(weights) == pytest.approx(1.0)
+
+
+def test_anisotropic_gauss_hermite_scales_each_coordinate():
+    nodes, weights = make_cgmm_quadrature(
+        CcfQuadratureConfig(dimension=2, order=2, scale=(1.0, 5.0))
+    )
+
+    np.testing.assert_allclose(
+        nodes,
+        np.array(
+            [
+                [-1.0, -5.0],
+                [-1.0, 5.0],
+                [1.0, -5.0],
+                [1.0, 5.0],
+            ]
+        ),
+    )
+    np.testing.assert_allclose(weights, np.full(4, 0.25))
+
+
+@pytest.mark.parametrize("scale", [(1.0,), (1.0, 0.0), (1.0, np.inf)])
+def test_invalid_anisotropic_quadrature_scale_is_rejected(scale):
+    with pytest.raises(ValueError, match="quadrature scale"):
+        CcfQuadratureConfig(dimension=2, order=3, scale=scale).validate()

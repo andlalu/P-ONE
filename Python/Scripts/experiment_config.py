@@ -181,6 +181,7 @@ def load_experiment_config(config_path: str | Path) -> ExperimentConfig:
     optimizer = estimation["optimizer"]
     coarse_pass = optimizer["coarse_pass"]
     refinement_pass = optimizer["refinement_pass"]
+    quadrature_scale = quadrature["scale"]
 
     cos_basis = FixedCosBasisConfig(
         maturities=tuple(float(value) for value in cos["maturities_years"]),
@@ -208,7 +209,11 @@ def load_experiment_config(config_path: str | Path) -> ExperimentConfig:
         quadrature=CcfQuadratureConfig(
             dimension=int(quadrature["dimension"]),
             order=int(quadrature["order"]),
-            scale=float(quadrature["scale"]),
+            scale=(
+                tuple(float(value) for value in quadrature_scale)
+                if isinstance(quadrature_scale, list)
+                else float(quadrature_scale)
+            ),
         ),
         instrument_precision=tuple(float(value) for value in cgmm["instrument_precision"]),
         transition_rk_steps=int(cgmm["transition_rk_steps"]),

@@ -18,6 +18,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
+THREAD_ENV_KEYS = (
+    "OMP_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+    "NUMEXPR_NUM_THREADS",
+)
+
+
+def set_thread_env() -> None:
+    for key in THREAD_ENV_KEYS:
+        os.environ.setdefault(key, "1")
+
+
+set_thread_env()
+
 import numpy as np
 
 from DGPSimulation.heston_simulator import HestonPathSimulator
@@ -37,12 +52,6 @@ LOGGER = logging.getLogger(__name__)
 
 FORMAT_VERSION = 1
 SCENARIO_ORDER = ("clean",) + NOISE_SCENARIOS
-THREAD_ENV_KEYS = (
-    "OMP_NUM_THREADS",
-    "MKL_NUM_THREADS",
-    "OPENBLAS_NUM_THREADS",
-    "NUMEXPR_NUM_THREADS",
-)
 NOISE_COLUMNS = (
     "noise_draw",
     "raw_noisy_iv",
@@ -114,11 +123,6 @@ def sha256_file(path: str | Path) -> str:
         for block in iter(lambda: file_handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
-
-
-def set_thread_env() -> None:
-    for key in THREAD_ENV_KEYS:
-        os.environ.setdefault(key, "1")
 
 
 def sample_directory(output_root: str | Path, sample_id: int) -> Path:
@@ -839,12 +843,63 @@ def _record_matches_execution(
 
 
 def _estimate_is_complete(result: Any) -> bool:
+    if not isinstance(result, dict) or not isinstance(result.get("success"), bool):
+        return False
+
+    required = (
+        "final_criterion",
+        "estimated_parameters",
+        "free_parameters",
+        "function_evaluations",
+        "penalty_evaluations",
+        "final_diagnostics",
+        "total_runtime_seconds",
+    )
+    if any(name not in result for name in required):
+        return False
+    try:
+        if not np.isfinite(float(result["final_criterion"])):
+            return False
+        free_parameters = np.asarray(result["free_parameters"], dtype=float)
+        if free_parameters.shape != (6,) or not np.all(np.isfinite(free_parameters)):
+            return False
+        required_parameters = {
+            "eta",
+            "kappa",
+            "vbar",
+            "sigma_v",
+            "rho",
+            "eta_v",
+            "r",
+            "q",
+        }
+        if set(result["estimated_parameters"]) != required_parameters:
+            return False
+        if not all(
+            np.isfinite(float(value))
+            for value in result["estimated_parameters"].values()
+        ):
+            return False
+        if int(result["function_evaluations"]) < 0:
+            return False
+        if int(result["penalty_evaluations"]) < 0:
+            return False
+        if (
+            not np.isfinite(float(result["total_runtime_seconds"]))
+            or float(result["total_runtime_seconds"]) < 0.0
+        ):
+            return False
+    except (AttributeError, TypeError, ValueError):
+        return False
+    if not isinstance(result["final_diagnostics"], dict) or not result["final_diagnostics"]:
+        return False
+
+    passes = result.get("powell_passes")
     return (
-        isinstance(result, dict)
-        and isinstance(result.get("success"), bool)
-        and isinstance(result.get("powell_passes"), list)
-        and [item.get("pass_name") for item in result["powell_passes"]]
-        == ["coarse", "refinement"]
+        isinstance(passes, list)
+        and len(passes) == 2
+        and all(isinstance(item, dict) for item in passes)
+        and [item.get("pass_name") for item in passes] == ["coarse", "refinement"]
     )
 
 
@@ -1051,6 +1106,9 @@ def run_sample(
             if generation_only:
                 LOGGER.info("generation-only run stopped after successful validation")
                 record["timings_seconds"]["total"] += time.perf_counter() - started
+                record["status"] = "generated"
+                record["current_stage"] = "validated"
+                _LOG_STAGE.set("validated")
                 _publish_record(record_path, record)
                 return record
 

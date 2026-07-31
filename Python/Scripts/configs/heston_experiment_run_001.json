@@ -97,8 +97,8 @@
     },
     "quadrature": {
       "dimension": 2,
-      "order": 3,
-      "scale": 1.0
+      "order": 4,
+      "scale": [1.0, 4.0]
     },
     "cgmm": {
       "instrument_precision": [10.0, 50.0],

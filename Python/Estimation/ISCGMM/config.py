@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 
 from Models.Heston.parameters import HestonParameters
@@ -61,17 +62,25 @@ class ImpliedStateConfig:
 
 @dataclass(frozen=True)
 class CcfQuadratureConfig:
-    """Shape and scale of the Gauss-Hermite rule."""
+    """Shape and coordinate scales of the Gauss-Hermite rule."""
 
     dimension: int = 2
-    order: int = 3
-    scale: float = 1.0
+    order: int = 4
+    scale: float | tuple[float, ...] = (1.0, 4.0)
+
+    def coordinate_scales(self) -> tuple[float, ...]:
+        if isinstance(self.scale, (int, float)):
+            return (float(self.scale),) * self.dimension
+        return tuple(float(value) for value in self.scale)
 
     def validate(self) -> None:
         if self.dimension <= 0 or self.order <= 0:
             raise ValueError("quadrature dimension and order must be positive")
-        if self.scale <= 0.0:
-            raise ValueError("quadrature scale must be strictly positive")
+        scales = self.coordinate_scales()
+        if len(scales) != self.dimension:
+            raise ValueError("quadrature scale must be scalar or contain one entry per dimension")
+        if any(not math.isfinite(value) or value <= 0.0 for value in scales):
+            raise ValueError("quadrature scales must be finite and strictly positive")
 
 
 @dataclass(frozen=True)

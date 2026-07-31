@@ -35,13 +35,19 @@ def make_cgmm_quadrature(config: CcfQuadratureConfig | None = None) -> tuple[np.
     cfg = CcfQuadratureConfig() if config is None else config
     cfg.validate()
     one_d_nodes, one_d_weights = np.polynomial.hermite.hermgauss(cfg.order)
-    one_d_nodes = math.sqrt(2.0) * cfg.scale * one_d_nodes
+    one_d_nodes = math.sqrt(2.0) * one_d_nodes
     one_d_weights = one_d_weights / math.sqrt(math.pi)
+    coordinate_scales = cfg.coordinate_scales()
 
     nodes: list[tuple[float, ...]] = []
     weights: list[float] = []
     for multi_index in itertools.product(range(cfg.order), repeat=cfg.dimension):
-        nodes.append(tuple(float(one_d_nodes[idx]) for idx in multi_index))
+        nodes.append(
+            tuple(
+                float(coordinate_scales[axis] * one_d_nodes[idx])
+                for axis, idx in enumerate(multi_index)
+            )
+        )
         weight = 1.0
         for idx in multi_index:
             weight *= float(one_d_weights[idx])

@@ -95,7 +95,7 @@ class FirstStepEstimate:
     function_evaluations: int
     penalty_evaluations: int
     powell_passes: tuple[PowellPassResult, ...]
-    total_runtime: float
+    total_runtime_seconds: float
     final_diagnostics: CriterionDiagnostics
     metadata: dict[str, Any]
 

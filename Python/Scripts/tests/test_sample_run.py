@@ -20,6 +20,7 @@ from Scripts.experiment_config import load_experiment_config
 from Scripts.sample_run import (
     COMBINED_PANEL_COLUMNS,
     SCENARIO_ORDER,
+    _estimate_is_complete,
     atomic_json,
     initialise_or_verify_run,
     run_sample,
@@ -70,10 +71,26 @@ def _fake_estimate(_panel_file, scenario, _config, *, max_dates):
         "scenario": scenario,
         "max_dates": max_dates,
         "success": True,
+        "final_criterion": 0.25,
+        "estimated_parameters": {
+            "eta": 4.8,
+            "kappa": 6.8,
+            "vbar": 0.024,
+            "sigma_v": 0.42,
+            "rho": -0.52,
+            "eta_v": 4.8,
+            "r": 0.02,
+            "q": 0.0,
+        },
+        "free_parameters": [4.8, 1.9, -3.7, -0.87, -0.57, 0.69],
+        "function_evaluations": 12,
+        "penalty_evaluations": 0,
         "powell_passes": [
             {"pass_name": "coarse"},
             {"pass_name": "refinement"},
         ],
+        "final_diagnostics": {"criterion_value": 0.25},
+        "total_runtime_seconds": 1.0,
     }
 
 
@@ -124,7 +141,8 @@ def test_generation_combines_scenarios_validates_and_resumes(tmp_path):
         "record.json",
         "sample.log",
     }
-    assert record["status"] == "validating"
+    assert record["status"] == "generated"
+    assert record["current_stage"] == "validated"
     assert record["validation"]["passed"]
     assert set(record["validation"]["panels"]["scenarios"]) == set(SCENARIO_ORDER)
     assert record["artifacts"]["panels"]["rows"] == 60
@@ -145,6 +163,30 @@ def test_generation_combines_scenarios_validates_and_resumes(tmp_path):
     )
     assert resumed["artifacts"]["path"]["sha256"] == path_hash
     assert resumed["artifacts"]["panels"]["sha256"] == panel_hash
+    assert resumed["status"] == "generated"
+
+
+def test_estimate_completion_requires_a_complete_result_not_optimizer_success():
+    complete = _fake_estimate(None, "clean", None, max_dates=None)
+    complete["success"] = False
+    assert _estimate_is_complete(complete)
+
+    for missing in (
+        "final_criterion",
+        "estimated_parameters",
+        "free_parameters",
+        "function_evaluations",
+        "penalty_evaluations",
+        "final_diagnostics",
+        "total_runtime_seconds",
+    ):
+        incomplete = dict(complete)
+        incomplete.pop(missing)
+        assert not _estimate_is_complete(incomplete)
+
+    incomplete = dict(complete)
+    incomplete["powell_passes"] = [{"pass_name": "coarse"}]
+    assert not _estimate_is_complete(incomplete)
 
 
 def test_combined_panel_schema_values_factors_and_scenario_loading(tmp_path):

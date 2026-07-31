@@ -115,6 +115,7 @@ def test_powell_reproducibility_bounds_start_limit_logging_and_serialisation(mon
         "refinement",
     ]
     assert len(payload["powell_passes"]) == 2
+    assert payload["total_runtime_seconds"] >= 0.0
     assert any("Powell coarse pass started" in record.message for record in caplog.records)
     assert any("Powell refinement pass started" in record.message for record in caplog.records)
 

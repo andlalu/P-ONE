@@ -45,6 +45,12 @@ def test_frozen_production_experiment_values():
     assert state.state_solver == "bounded_brent"
     assert state.fallback_solver == "golden_section"
     assert (state.v_min, state.v_max, state.tol, state.max_iter) == (1e-6, 0.15, 1e-7, 100)
+    quadrature = experiment.criterion_config.quadrature
+    assert (quadrature.dimension, quadrature.order, quadrature.scale) == (
+        2,
+        4,
+        (1.0, 4.0),
+    )
 
     powell = experiment.powell_config
     assert asdict(powell.base_start) == {
@@ -80,3 +86,16 @@ def test_mismatched_cos_maturities_and_widths_are_rejected(tmp_path):
 
     with pytest.raises(ValueError, match="one-to-one"):
         load_experiment_config(config_path)
+
+
+def test_anisotropic_quadrature_scale_loads_from_json(tmp_path):
+    payload = json.loads(PRODUCTION_CONFIG.read_text())
+    payload["estimation"]["quadrature"]["order"] = 4
+    payload["estimation"]["quadrature"]["scale"] = [1.0, 5.0]
+    config_path = tmp_path / "anisotropic_experiment.json"
+    config_path.write_text(json.dumps(payload))
+
+    experiment = load_experiment_config(config_path)
+
+    assert experiment.criterion_config.quadrature.order == 4
+    assert experiment.criterion_config.quadrature.scale == (1.0, 5.0)

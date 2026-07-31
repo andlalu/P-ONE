@@ -4,9 +4,9 @@
 simulation, clean option panels, noise scenarios and first-step IS-CGMM
 estimation.
 
-## Production runner
+## Production runners
 
-One process owns one complete sample locally and on AWS:
+The single-sample runner remains the numerical entry point for local debugging:
 
 ```bash
 python Python/Scripts/run_heston_sample.py \
@@ -14,6 +14,28 @@ python Python/Scripts/run_heston_sample.py \
   --sample-id 0 \
   --output-root outputs/run_001
 ```
+
+The range runner is a thin orchestration layer around the same `run_sample(...)`
+implementation:
+
+```bash
+python Python/Scripts/run_heston_samples.py \
+  --config Python/Scripts/configs/heston_experiment_run_001.json \
+  --output-root /data/p-one/outputs/run_001 \
+  --sample-start 0 \
+  --sample-end 8 \
+  --sample-workers 8 \
+  --scenario clean \
+  --resume \
+  --s3-uri s3://<bucket>/p-one/run_001
+```
+
+`sample-start` is inclusive and `sample-end` is exclusive, so `[0, 8)` owns
+samples `000` through `007`. Processes run in parallel across samples only;
+each process owns one complete sample directory, while scenarios remain
+sequential within that sample. `--generation-only` still creates and validates
+all four panel variants. `--scenario clean` reuses or creates those shared
+panels and estimates only the clean scenario.
 
 The run root contains one authoritative `run.json`. Each `sample_NNN`
 directory contains only `path.npz`, `panels.parquet`, `record.json` and
@@ -23,8 +45,40 @@ and all four first-step estimates.
 
 Use `--resume` to verify recorded hashes and continue the first incomplete
 stage. Use `--overwrite` to replace only the requested sample directory.
-AWS wrappers should keep S3 transfer outside the Python runner and use the
-array index as `--sample-id`.
+
+On EC2, persistent EBS is the active filesystem and S3 is an optional durable
+replica. The parent range process uploads `run.json` and synchronises each
+sample only after its worker returns. It never mounts S3, archives directories
+or uses `aws s3 sync --delete`. `--restore-from-s3` requires `--resume` and
+restores `run.json` plus only the requested sample range before workers launch.
+Use an EBS volume configured with `DeleteOnTermination=false`.
+
+The EC2 wrapper builds `lets_be_rational` once and then invokes the range
+runner. For the first eight-sample clean pilot:
+
+```bash
+SAMPLE_START=0 \
+SAMPLE_END=8 \
+SAMPLE_WORKERS=8 \
+SCENARIO=clean \
+S3_URI=s3://<bucket>/p-one/run_001 \
+bash scripts/run_heston_samples_ec2.sh
+```
+
+Set `GENERATION_ONLY=1` for generation and validation, or
+`RESTORE_FROM_S3=1` to restore the requested range before resuming. The
+instance IAM role supplies AWS credentials.
+
+The full sample-000 production integration test is deliberately excluded from
+the ordinary fast suite. Run it explicitly with:
+
+```bash
+PYTHONPATH=Python python -m pytest \
+  Python/Scripts/tests/test_sample_000_clean_production.py \
+  -m production_integration \
+  -s \
+  -vv
+```
 
 ## Top-level sections
 
@@ -50,9 +104,15 @@ and iteration limit, boundary flag, warm-start window, primary solver and
 fallback, finite-difference steps and minimum Black vega. Production uses
 `bounded_brent` with `golden_section` fallback.
 
-`quadrature` gives the Gauss-Hermite dimension, order and node scale. `cgmm`
-sets instrument frequency scales, transition-CF method and RK4 resolution,
-optional fixed spacing, and the equal-spacing tolerance.
+The fixed production COS widths remain `(0.75, 1.25, 2.0)`, with 576 terms
+for both generation and estimation.
+
+`quadrature` gives the Gauss-Hermite dimension, order and node scale. The
+scale may be one positive number for every coordinate or one positive number
+per coordinate, ordered as return then variance. Production uses the even
+order-four rule, which has no `(0, 0)` tensor node, with coordinate scales
+`(1.0, 4.0)`. `cgmm` sets instrument frequency scales, transition-CF method
+and RK4 resolution, optional fixed spacing, and the equal-spacing tolerance.
 
 `optimizer` screens the central Heston start and at most two relative
 perturbations within the natural parameter bounds. It then runs:
