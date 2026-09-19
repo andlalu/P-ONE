@@ -5,6 +5,7 @@ New/vcpkg/
 New/pone/cmake-build-debug/
 New/pone/cmake-build-release/
 **/.idea/
+**/.venv/**
 Python/.idea/**
 /Python/.idea
 Python/.idea/inspectionProfiles/Project_Default.xml
@@ -22,4 +23,9 @@ Python/ImpliedVolatility/native/*.dll
 # generated simulation, option-panel, and estimation artifacts
 outputs/generation/
 outputs/estimation/
+outputs/run_*/
+outputs/calibration/**
+
+# local estimation trial configurations
+Python/Scripts/configs/*_trial.json
 Python/Estimation/ISCGMM/tests/fixtures/generated/

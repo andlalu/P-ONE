@@ -1,0 +1,209 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 518.4 244.8] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> >> /Contents 7 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Symbol >>
+endobj
+7 0 obj
+<< /Length 1964 >>
+stream
+q
+0 g
+BT /F2 10 Tf 159.2 226.8 Td (Implied-variance RMSE across 100 samples) Tj ET
+Q
+q
+0 G 0.5 w
+82 62 404 135 re
+S
+Q
+q
+0 G 0.4 w
+[] 0 d
+79 96.8158 m 82 96.8158 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 67.25 94.6158 Td (0.2) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+82 96.8158 m 486 96.8158 l S
+Q
+q
+0 G 0.4 w
+[] 0 d
+79 150.5114 m 82 150.5114 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 67.25 148.3114 Td (0.4) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+82 150.5114 m 486 150.5114 l S
+Q
+q
+0 g
+BT /F2 8.5 Tf 284 206 Td () Tj ET
+Q
+q
+0 g
+BT /F1 7.2 Tf 21.6 129.5 Td (variance x 100) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+132.5 68.1364 m 132.5 135.5337 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+122.5 68.1364 m 142.5 68.1364 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+122.5 135.5337 m 142.5 135.5337 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+117.5 74.9249 30 35.074 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+117.5 86.8847 m 147.5 86.8847 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 124 48 Td (Clean) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+233.5 99.4495 m 233.5 190.7521 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+223.5 99.4495 m 243.5 99.4495 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+223.5 190.7521 m 243.5 190.7521 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+218.5 115.7061 30 54.0617 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+218.5 141.8095 m 248.5 141.8095 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 219.9 48 Td (Design A) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+334.5 100.3437 m 334.5 190.8636 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+324.5 100.3437 m 344.5 100.3437 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+324.5 190.8636 m 344.5 190.8636 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+319.5 115.4914 30 53.2063 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+319.5 143.7917 m 349.5 143.7917 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 320.9 48 Td (Design B) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+435.5 102.0884 m 435.5 187.0792 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+425.5 102.0884 m 445.5 102.0884 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+425.5 187.0792 m 445.5 187.0792 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+420.5 113.4118 30 52.5433 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+420.5 139.8677 m 450.5 139.8677 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 421.9 48 Td (Design C) Tj ET
+Q
+q
+0 g
+BT /F1 6.8 Tf 228.4 16 Td (Boxes show the interquartile range; whiskers show the 10th and 90th percentiles.) Tj ET
+Q
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000271 00000 n 
+0000000341 00000 n 
+0000000416 00000 n 
+0000000483 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+2498
+%%EOF

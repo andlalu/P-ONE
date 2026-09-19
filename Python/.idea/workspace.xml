@@ -5,9 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b3c7ffc8-92b8-4e96-8c62-e9f2997abcbe" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/Python.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Python.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.aux" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.aux" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.log" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.pdf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.synctex.gz" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.synctex.gz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.tex" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.tex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/calibration_domain.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/calibration_selected.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/calibration_summary.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/jacobian_validation.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/jacobian_validation_summary.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/reference_crosscheck.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/state_solver_benchmark.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/state_solver_benchmark_summary.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,6 +59,69 @@
       </list>
     </option>
   </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0" />
+      <entry key="M2" value="1.0" />
+      <entry key="M5" value="1.0" />
+      <entry key="M10" value="1.0" />
+      <entry key="M15" value="1.0" />
+      <entry key="M30" value="1.0" />
+      <entry key="H1" value="1.0000000000066729" />
+      <entry key="H2" value="1.0000025832053236" />
+      <entry key="H4" value="1.0016072353044099" />
+      <entry key="D1" value="1.3593918827805507" />
+      <entry key="W1" value="5.182796631284441" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="0.0" />
+      <entry key="M30" value="0.0" />
+      <entry key="H1" value="0.0" />
+      <entry key="H2" value="0.0" />
+      <entry key="H4" value="0.0" />
+      <entry key="D1" value="0.0" />
+      <entry key="W1" value="0.0" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.8293195458144417" />
+      <entry key="MS500" value="0.963261894020148" />
+      <entry key="S2" value="0.9906861581012825" />
+      <entry key="S5" value="0.9962640014981925" />
+      <entry key="S10" value="0.9981302527717475" />
+      <entry key="S30" value="0.9993763620805105" />
+      <entry key="S60" value="0.9996881324095582" />
+      <entry key="M2" value="0.9998440540452087" />
+      <entry key="M5" value="0.9999376186995439" />
+      <entry key="M10" value="0.9999688088633284" />
+      <entry key="M15" value="0.9999792058007856" />
+      <entry key="M30" value="0.9999896028463424" />
+      <entry key="H1" value="0.9999948014163313" />
+      <entry key="H2" value="0.9999999839045366" />
+      <entry key="H4" value="1.0016059349580095" />
+      <entry key="D1" value="1.3593911247738621" />
+      <entry key="W1" value="5.182782473818954" />
+    </decayedShown>
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -61,105 +140,158 @@
     <panes />
   </component>
   <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python tests.Python tests for DGPSimulation.tests.test_correlation_sanity.test_daily_dy_dv_correlation_tracks_rho_sign_and_monotonicity.executor": "Debug",
+    "Python tests.Python tests for DGPSimulation.tests.test_determinism.test_determinism_euler_drawer.executor": "Run",
+    "Python tests.Python tests for DGPSimulation.tests.test_determinism.test_determinism_qe_drawer.executor": "Run",
+    "Python tests.Python tests for DGPSimulation.tests.test_positivity.test_variance_nonnegative_euler_stress_cases.executor": "Run",
+    "Python tests.Python tests for DGPSimulation.tests.test_positivity.test_variance_nonnegative_qe_stress_cases.executor": "Run",
+    "Python tests.Python tests for DGPSimulation.tests.test_qe_moments.test_qe_stepper_matches_conditional_moments.executor": "Run",
+    "Python tests.Python tests for Estimation.ISCGMM.tests.test_criterion_config.test_gauss_hermite_quadrature_shape_determinism_and_normalisation.executor": "Debug",
+    "Python tests.Python tests for Estimation.ISCGMM.tests.test_estimate_powell.test_powell_reproducibility_bounds_start_limit_logging_and_serialisation.executor": "Debug",
+    "Python tests.Python tests for Estimation.ISCGMM.tests.test_implied_state_and_criterion.test_implied_state_recovers_clean_variance_and_reports_warm_starts.executor": "Debug",
+    "Python tests.Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_matches_small_monte_carlo_check.executor": "Debug",
+    "Python tests.Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_zero_and_conjugacy.executor": "Debug",
+    "Python tests.Python tests for ImpliedVolatility.tests.test_black_iv.test_implied_vol_recovers_clean_black_price.executor": "Debug",
+    "Python tests.Python tests for OptionPricing.tests.test_cos_pricer_numerics.test_cos_matches_q_measure_monte_carlo_for_otm_options.executor": "Debug",
+    "Python tests.Python tests for OptionPricing.tests.test_cos_pricer_numerics.test_cos_monte_carlo_stress_cases_are_plausible.executor": "Debug",
+    "Python tests.Python tests for OptionPricing.tests.test_noisy_panel.test_low_iid_noise_is_deterministic.executor": "Debug",
+    "Python tests.Python tests in test_black_iv.py.executor": "Debug",
+    "Python tests.Python tests in test_cos_pricer_numerics.py.executor": "Debug",
+    "Python.test_io_roundtrip.executor": "Debug",
+    "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "master",
     "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "/Users/andrei/Library/Mobile Documents/com~apple~CloudDocs/Dropbox iCloud/P-ONE/Python",
-    "settings.editor.selected.configurable": "ml.llm.LLMTrustedDomainsConfigurableProvider",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.jshint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.jshint": "",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "actions.on.save",
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.heston_ccf_tests">
-    <configuration name="OptionPricingTests" type="PythonConfigurationType" factoryName="Python" temporary="true">
+  <component name="RunManager" selected="Python tests.Python tests for Estimation.ISCGMM.tests.test_criterion_config.test_gauss_hermite_quadrature_shape_determinism_and_normalisation">
+    <configuration name="Python tests for Estimation.ISCGMM.tests.test_criterion_config.test_gauss_hermite_quadrature_shape_determinism_and_normalisation" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="Python" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Tests" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\Andrei\Dropbox\2015_PONE\Python\Tests\option_pricing_tests.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;Estimation.ISCGMM.tests.test_criterion_config.test_gauss_hermite_quadrature_shape_determinism_and_normalisation&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="cos_transform_pricer" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="Python tests for Estimation.ISCGMM.tests.test_estimate_powell.test_powell_reproducibility_bounds_start_limit_logging_and_serialisation" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="Python" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/OptionPricing" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/OptionPricing/cos_transform_pricer.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;Estimation.ISCGMM.tests.test_estimate_powell.test_powell_reproducibility_bounds_start_limit_logging_and_serialisation&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="heston_ccf_tests" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="Python tests for Estimation.ISCGMM.tests.test_implied_state_and_criterion.test_implied_state_recovers_clean_variance_and_reports_warm_starts" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="Python" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Tests" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Tests/heston_ccf_tests.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;Estimation.ISCGMM.tests.test_implied_state_and_criterion.test_implied_state_recovers_clean_variance_and_reports_warm_starts&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_matches_small_monte_carlo_check" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="Python" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_matches_small_monte_carlo_check&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_zero_and_conjugacy" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="Python" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="true" />
+      <option name="RUN_TOOL" value="" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_zero_and_conjugacy&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.OptionPricingTests" />
-      <item itemvalue="Python.cos_transform_pricer" />
-      <item itemvalue="Python.heston_ccf_tests" />
+      <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_criterion_config.test_gauss_hermite_quadrature_shape_determinism_and_normalisation" />
+      <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_estimate_powell.test_powell_reproducibility_bounds_start_limit_logging_and_serialisation" />
+      <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_implied_state_and_criterion.test_implied_state_recovers_clean_variance_and_reports_warm_starts" />
+      <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_matches_small_monte_carlo_check" />
+      <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_zero_and_conjugacy" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.heston_ccf_tests" />
-        <item itemvalue="Python.OptionPricingTests" />
-        <item itemvalue="Python.cos_transform_pricer" />
+        <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_criterion_config.test_gauss_hermite_quadrature_shape_determinism_and_normalisation" />
+        <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_estimate_powell.test_powell_reproducibility_bounds_start_limit_logging_and_serialisation" />
+        <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_implied_state_and_criterion.test_implied_state_recovers_clean_variance_and_reports_warm_starts" />
+        <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_matches_small_monte_carlo_check" />
+        <item itemvalue="Python tests.Python tests for Estimation.ISCGMM.tests.test_transition_cf.test_heston_transition_cf_zero_and_conjugacy" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-07523f343e4f-968fe969f28a-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.28539.27" />
+        <option value="bundled-python-sdk-c6d794e1806d-5bd6d13a2a75-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-262.8665.309" />
       </set>
     </attachedChunks>
   </component>
@@ -240,6 +372,9 @@
       <window_info anchor="bottom" id="Python Console" order="7" weight="0.32884097" />
     </layout-to-restore>
   </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
   <component name="VcsManagerConfiguration">
     <ignored-roots>
       <path value="$PROJECT_DIR$" />
@@ -255,6 +390,46 @@
           <url>file://$PROJECT_DIR$/ModelCharacteristicFunctions/ccf.py</url>
           <line>25</line>
           <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/DGPSimulation/tests/test_io_roundtrip.py</url>
+          <line>13</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/OptionPricing/tests/pricing_test_helpers.py</url>
+          <line>111</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/ImpliedVolatility/tests/test_black_iv.py</url>
+          <line>10</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Estimation/ISCGMM/tests/test_implied_state_and_criterion.py</url>
+          <line>91</line>
+          <option name="timeStamp" value="21" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Estimation/ISCGMM/tests/test_transition_cf.py</url>
+          <line>105</line>
+          <option name="timeStamp" value="23" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Estimation/ISCGMM/tests/test_transition_cf.py</url>
+          <line>107</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Estimation/ISCGMM/tests/test_estimate_powell.py</url>
+          <line>86</line>
+          <option name="timeStamp" value="28" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Estimation/ISCGMM/tests/test_criterion_config.py</url>
+          <line>48</line>
+          <option name="timeStamp" value="29" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

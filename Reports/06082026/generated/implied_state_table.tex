@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+Design & Mean error & MAE & RMSE & Median abs. & 95\% quantile \\
+\midrule
+Clean & -0.052 & 0.173 & 0.193 & 0.165 & 0.306 \\
+Design A & -0.264 & 0.323 & 0.376 & 0.306 & 0.668 \\
+Design B & -0.267 & 0.323 & 0.376 & 0.304 & 0.674 \\
+Design C & -0.263 & 0.321 & 0.374 & 0.305 & 0.669 \\
+\bottomrule
+\end{tabular}
+\caption{Accuracy of the final implied variance sequence. The error measures are first calculated within each sample using 526 matched dates and are then averaged across the 100 samples. The 95\% quantile is calculated from the absolute errors. Variance errors are multiplied by 100.}
+\label{tab:mc_state_accuracy}
+\end{table}

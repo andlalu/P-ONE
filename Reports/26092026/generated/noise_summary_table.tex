@@ -1,0 +1,17 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+Design & Mean & MAE & RMSE & Median abs. & 95\% quantile & Maximum abs. \\
+\midrule
+Clean & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+Design A & -100.52 & 116.63 & 377.08 & 14.74 & 1232.96 & 1907.80 \\
+Design B & -100.63 & 116.69 & 377.31 & 14.70 & 1233.55 & 1926.17 \\
+Design C & -100.64 & 116.67 & 377.21 & 14.72 & 1233.20 & 1907.94 \\
+\bottomrule
+\end{tabular}
+\caption{Implied-volatility observation errors across the 100 samples, measured in implied-volatility basis points. Signed error is observed minus model implied volatility, and the 95\% quantile is calculated from the absolute errors. For each design, the statistics combine the errors from all 100 samples, 526 dates and 15 contracts, giving 789,000 observations. The clean benchmark is zero by construction.}
+\label{tab:mc_noise_summary}
+\end{table}

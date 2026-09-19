@@ -1,0 +1,344 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 518.4 273.6] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> >> /Contents 7 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Symbol >>
+endobj
+7 0 obj
+<< /Length 3638 >>
+stream
+q
+0 g
+BT /F2 10 Tf 141.7 255.6 Td (Observation-error dependence across 100 samples) Tj ET
+Q
+q
+0 G 0.5 w
+58 68 215 150 re
+S
+Q
+q
+0 G 0.4 w
+[] 0 d
+55 76.1315 m 58 76.1315 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 49.75 73.9315 Td (0) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+58 76.1315 m 273 76.1315 l S
+Q
+q
+0 G 0.4 w
+[] 0 d
+55 136.76 m 58 136.76 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 43.25 134.56 Td (0.1) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+58 136.76 m 273 136.76 l S
+Q
+q
+0 G 0.4 w
+[] 0 d
+55 197.3886 m 58 197.3886 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 43.25 195.1886 Td (0.2) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+58 197.3886 m 273 197.3886 l S
+Q
+q
+0 g
+BT /F2 8.5 Tf 86.875 227 Td (Pairwise correlation across contracts) Tj ET
+Q
+q
+0 g
+BT /F1 7.2 Tf 8.4 143 Td (correlation) Tj ET
+Q
+q
+0.55 G 0.4 w
+[2 2] 0 d
+58 76.1315 m 273 76.1315 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+93.8333 74.8182 m 93.8333 82.7535 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+83.8333 74.8182 m 103.8333 74.8182 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+83.8333 82.7535 m 103.8333 82.7535 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+78.8333 76.6139 30 3.7288 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+78.8333 78.2903 m 108.8333 78.2903 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 80.2333 54 Td (Design A) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+165.5 189.8361 m 165.5 211.1818 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+155.5 189.8361 m 175.5 189.8361 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+155.5 211.1818 m 175.5 211.1818 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+150.5 193.0155 30 10.8473 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+150.5 198.5446 m 180.5 198.5446 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 151.9 54 Td (Design B) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+237.1667 126.0352 m 237.1667 149.5337 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+227.1667 126.0352 m 247.1667 126.0352 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+227.1667 149.5337 m 247.1667 149.5337 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+222.1667 130.7342 30 14.2984 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+222.1667 137.2668 m 252.1667 137.2668 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 223.5667 54 Td (Design C) Tj ET
+Q
+q
+0 G 0.5 w
+303 68 215 150 re
+S
+Q
+q
+0 G 0.4 w
+[] 0 d
+300 103.9987 m 303 103.9987 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 294.75 101.7987 Td (0) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+303 103.9987 m 518 103.9987 l S
+Q
+q
+0 G 0.4 w
+[] 0 d
+300 152.8658 m 303 152.8658 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 288.25 150.6658 Td (0.1) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+303 152.8658 m 518 152.8658 l S
+Q
+q
+0 G 0.4 w
+[] 0 d
+300 201.7329 m 303 201.7329 l S
+Q
+q
+0 g
+BT /F1 6.5 Tf 288.25 199.5329 Td (0.2) Tj ET
+Q
+q
+0.88 G 0.25 w
+[] 0 d
+303 201.7329 m 518 201.7329 l S
+Q
+q
+0 g
+BT /F2 8.5 Tf 353.125 227 Td (First-order autocorrelation) Tj ET
+Q
+q
+0.55 G 0.4 w
+[2 2] 0 d
+303 103.9987 m 518 103.9987 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+338.8333 80.5925 m 338.8333 130.161 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+328.8333 80.5925 m 348.8333 80.5925 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+328.8333 130.161 m 348.8333 130.161 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+323.8333 95.1754 30 25.1733 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+323.8333 108.7141 m 353.8333 108.7141 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 325.2333 54 Td (Design A) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+410.5 74.8182 m 410.5 131.6812 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+400.5 74.8182 m 420.5 74.8182 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+400.5 131.6812 m 420.5 131.6812 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+395.5 82.781 30 33.9204 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+395.5 103.1274 m 425.5 103.1274 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 396.9 54 Td (Design B) Tj ET
+Q
+q
+0 G 0.7 w
+[] 0 d
+482.1667 144.0826 m 482.1667 211.1818 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+472.1667 144.0826 m 492.1667 144.0826 l S
+Q
+q
+0 G 0.7 w
+[] 0 d
+472.1667 211.1818 m 492.1667 211.1818 l S
+Q
+q
+0.84 g
+0 G 0.6 w
+467.1667 163.0559 30 34.2975 re
+B
+Q
+q
+0 G 1.1 w
+[] 0 d
+467.1667 179.5772 m 497.1667 179.5772 l S
+Q
+q
+0 g
+BT /F1 6.8 Tf 468.5667 54 Td (Design C) Tj ET
+Q
+q
+0 g
+BT /F1 6.8 Tf 197.8 16 Td (Temporal measure: m=0 and maturity=3 months. Whiskers show the 10th and 90th percentiles.) Tj ET
+Q
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000271 00000 n 
+0000000341 00000 n 
+0000000416 00000 n 
+0000000483 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+4172
+%%EOF

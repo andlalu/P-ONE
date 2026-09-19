@@ -67,7 +67,7 @@
 \author{ %name under title %email in footnote \thanks{a.lalu@tinbergen.nl} 
 	    }
 \title{\vspace*{-55pt} Risk Premium Inference from (Noisy) Option Price Panels \vspace*{-35pt}}
-\date{\item First version: June 16, 2018 \item Previous Version : May 20, 2026 \item This version: \today}
+\date{\item First version: June 16, 2018 \item Previous Version: July 21, 2026 \item This version: August 6, 2026}
 %start file content
 \begin{document}
 \maketitle
@@ -98,18 +98,18 @@ Compare the finite sample performance of implied state vs. particle filtering wh
 
 \newpage
  
-\section{Assumed Data Generating Proces And Option Pricing}
+\section{Assumed Data Generating Process And Option Pricing}
 We consider a filtered probability space $\left(\Omega, \mathcal{F}, \lbrace\mathcal{F}\rbrace_{t\geq0}, \mathbb{P} \right)$ satisfying the usual conditions\footnote{See e.g., \citet{protterstochastic}, p. 3.}. Under the historical probability measure, $\mathbb{P}$, the dynamics of the log-price process $\log(S_t)$ and of the stochastic volatility process $V_t$, which make up the state vector $X_t = [\log(S_t), V_t]$, are assumed to be described by the pair of s.d.e.:
 \begin{align}
 	\dif{\log(S_t)} &= \left((r_t-q_t)+ \left(\eta-1/2\right) V_t \right)\dif t + \sqrt{V_t} \dif W_{t,1}^\mathbb{P}; \label{PHestonS}\\
-	\dif{V_t} &= k(\bar{V}-V_t)\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{P} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{P}\right). \label{PHestonV}
+	\dif{V_t} &= \kappa(\bar{V}-V_t)\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{P} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{P}\right). \label{PHestonV}
 \end{align}
 $\left(\dif W_{t,1}^\mathbb{P}, \dif W_{t,2}^\mathbb{P}\right)$ are $\mathcal{F}_t$-adapted Brownian motion processes. $\lbrace r \rbrace_{t\geq 0}$  and  $\lbrace q \rbrace_{t\geq 0}$ are $\mathcal{F}_t$-adapted processes (e.g., deterministic) which describe the risk-free rate of interest and the continuous dividend yield respectively. $\eta$ is a parameter which governs the size of the equity risk premium. The local stochastic volatility process mean reverts at a mean reversion rate $\kappa$ to the long run mean level $\bar{V}$. $\sigma_v$ governs the volatility of volatility and $\rho$ represents the instantaneous correlation between returns and volatility.
 
 Under the risk neutral probability measure, $\mathbb{Q}$, the model dynamics are assumed to be: 
 \begin{align}
 	\dif{\log(S_t)} &= \left( (r_t-q_t) - 1/2 V_t\right) \dif t + \sqrt{V_t} \dif W_{t,1}^\mathbb{Q};\label{QHestonS}\\
-	\dif{V_t} &= k(\bar{V}-V_t)\dif t + \eta_{V}V_t\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{Q} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{Q}\right).\label{QHestonV}
+	\dif{V_t} &= \kappa(\bar{V}-V_t)\dif t + \eta_{V}V_t\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{Q} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{Q}\right).\label{QHestonV}
 \end{align}
 $\left(\dif W_{t,1}^\mathbb{Q}, \dif W_{t,2}^\mathbb{Q}\right)$ are Brownian motions under the (equivalent) martingale pricing measure $\mathbb{Q}$.
 
@@ -224,7 +224,7 @@ This specification captures the possibility that nearby strikes and maturities s
 The cross-sectionally correlated design creates locally coherent distortions across nearby moneyness and maturity points. Appendix~B reports the corresponding noisy option panels, signed perturbations and cross-sectional correlation structure.
 
 \paragraph{Design C: Temporally persistent noise}
-The third observation error design allows for a persistent common component in the observation error, affecting the level, moneyness slo1pe and maturity slope of the noisy implied volatility panel. This is consistent with the practical treatment of option panels as surfaces and with the broader evidence that option price noise can be quantitatively relevant for inference on risk premia as in \cite{duarte2024very}.
+The third observation error design allows for a persistent common component in the observation error, affecting the level, moneyness slope and maturity slope of the noisy implied volatility panel. This is consistent with the practical treatment of option panels as surfaces and with the broader evidence that option price noise can be quantitatively relevant for inference on risk premia as in \cite{duarte2024very}.
 
 Let
 $f_i=(f_{0,i},f_{1,i},f_{2,i})^\top$ evolve according to
@@ -337,6 +337,8 @@ denote the model-implied Black-Scholes volatility of contract \(j\) obtained fro
 \label{eq:is_implied_state}
 \end{equation}
 where \(\mathcal V\) is the admissible domain for the variance state. In the absence of observation error, and evaluated at the true parameter vector, this inversion recovers the latent variance sequence up to numerical approximation error. In noisy option panels, \(\widehat V_i^{\theta_{\mathbb Q}}\) is instead a parameter-dependent transformation of the noisy option cross-section. This is the main channel through which option observation errors affect the implied-state estimator.
+
+The option pricing step uses a maturity-specific fixed effective COS interval. The same interval is used when generating the option panels and when reconstructing the implied variance states, while the number of COS terms may differ between these two steps if this is supported by the numerical validation. The calibration of the fixed intervals and the numerical implementation of the state inversion are reported in Appendix~\ref{app:is_cgmm_implementation}.
 
 Define the observed log-return increment
 \[
@@ -452,7 +454,7 @@ Estimation contexts which make use of option prices (that are nonlinear, often s
 
 Two other hurdles are typically encountered when working with continuous time models. Firstly, even the simple continuous time stochastic model specifications (like the base-case model used in this paper) do not have known densities readily usable to evaluate the likelihood function. Secondly, one often has to resort to using discretisation schemes to simulate state vector (i.e., particle) paths. However, despite this second hurdle, approximating transition densities using discrete distributions consisting of particle support points provides a tractable workaround which can easily be adapted for most of the typical model specifications considered. The filtering distributions provide estimators for the latent states and their possible distributions. The Monte Carlo procedures involved in the simulation of particles can be tailored to accommodate models with jumps and with more complex state dynamics than featured in the Heston model specification. 
 
-In the context of the base model specification previously introduced, we outline the following optimal filtering procedure in the spirit of \citet{johannes2009optimal}, \citet{christoffersen2010volatility} and ***[Hurn et al]*** and introduce the necessary implementation details for the Monte Carlo estimation exercise. First, let us denote the  log-likelihood function of the model under the physical probability measure by
+In the context of the base model specification previously introduced, we outline the following optimal filtering procedure in the spirit of \citet{johannes2009optimal}, \citet{christoffersen2010volatility} and \citet{hurn2015pf} and introduce the necessary implementation details for the Monte Carlo estimation exercise. First, let us denote the log-likelihood function of the model under the physical probability measure by
 \begin{equation}
 \log \mathcal{L}_T = \log f(X_0) + \sum_{i=0}^T \log f(X_{i+1}|X_{i};\theta^{\mathbb{P},\mathbb{P}\cap\mathbb{Q}}).
 \end{equation}
@@ -471,10 +473,50 @@ f(X_{i+1}|\mathcal{O}_{i};\theta) &=\int_{\mathcal{D}_{V}}  f(S_{i+1}|{V}_{i+1},
 f(V_{i+1}|\mathcal{O}_{i+1}; \theta) &= \frac{f(X_{i+1},V_{i+1}|\mathcal{O}_{i+1}; \theta)}{f(X_{i+1}|\mathcal{O}_{i+1}; \theta)} \label{SamplingDensityTheo}
 \end{align}
 %
-%To evaluate \ref{LikelihoodContribTheo} and \ref{SamplingDensityTheo} numerically a combination of Monte Carlo path draws and Monte Carlo integrations is used. Starting with an initial cloud of particles (i.e., a set of likely values for ${V_i}$ pre-sampled from $\mathcal{D}_{V}$) the state vector $X_{i} = \left[S_i, V_i\right]$ is advanced using a discretisation approach (e.g., an Euler scheme). The next step requires calculating $•$
-
 \paragraph{Current computational implementation.}
-At the current stage, the Heston simulation engine and the option-panel generation routines have been implemented in Python. The first-stage implied-state C-GMM code is also in place. It constructs scalar date-by-date implied-variance states from option-implied volatilities, evaluates a Heston $\mathbb{P}$-transition characteristic-function criterion, and forms a first-step C-GMM objective with analytically integrated Gaussian instruments. The transition characteristic function can be evaluated using either the analytic Heston Riccati solution or a Runge--Kutta reference solver. The results reported here do not include Monte Carlo estimation output; the present update concerns the simulation design, panel construction and visualisation of the observation-error mechanisms.
+At the current stage, the Heston simulation engine, the option-panel generation routines and the first-step implied-state C-GMM estimator have been implemented in Python. The estimator constructs scalar date-by-date implied-variance states from option-implied volatilities, evaluates the analytic Heston $\mathbb{P}$-transition characteristic function and forms a first-step C-GMM objective with analytically integrated Gaussian instruments. A 32-step Runge--Kutta implementation is used as a numerical check. For each of the 100 samples, the Monte Carlo exercise uses at most three deterministic starting values and a bounded derivative-free two-pass search under the clean panel and the three observation-error designs. The resulting parameter, implied-state and risk-premium accuracy results are reported in the next section.
+
+\section{Monte Carlo Results for the Implied-State Estimator}
+\label{sec:is_cgmm_results}
+
+\subsection{Monte Carlo design and reporting conventions}
+
+The Monte Carlo exercise consists of 100 independent samples and four option-panel designs: the clean benchmark, low i.i.d. observation error, spatially correlated observation error and persistent-factor observation error. Each sample contains 526 weekly state observations and 15 option contracts per date. After constructing the estimation state, the 525 physical return intervals provide 524 conditional residual transitions for the first-step C-GMM criterion. Within each sample, the same simulated path is used for all four designs.
+
+A sample-design estimate is included when its record, simulated path and option panel are complete, the stored files agree with their recorded checksums and all required parameter, implied-state and criterion values are finite. On this basis, all 100 replications are included for each design. The accuracy statistics are first computed within each replication and are then summarised across replications. Throughout the reported accuracy tables, MAE denotes mean absolute error. The parameter table follows the summaries used by \citet{boswijk2024estimating} and also reports bias and RMSE. The results concern the accuracy of the point estimates; standard errors and confidence intervals are not considered.
+
+\subsection{Structural-parameter estimates}
+
+\input{generated/structural_parameter_table.tex}
+
+For the clean panel, the estimates of $\kappa$ and $\bar V$ are close to their true values on average, while the estimates of $\eta$ show more variation. Relative to the clean benchmark, the three observation-error designs also move the mean estimate of $\bar V$ below its true value and increase the RMSE of $\sigma_v$.
+
+\subsection{Accuracy of implied variance states}
+
+For each replication, the final implied variance sequence is matched by date to the simulated variance sequence. Table~\ref{tab:mc_state_accuracy} reports the average across replications of the five accuracy statistics first calculated within each sample. Figure~\ref{fig:mc_state_rmse} shows the distribution of the corresponding RMSE values across samples.
+
+\input{generated/implied_state_table.tex}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth]{generated/implied_state_rmse_boxplot.pdf}
+    \caption{Distribution of implied variance RMSE across the 100 samples. The boxes show the interquartile range, the centre lines show the medians and the whiskers show the 10th and 90th percentiles. Variance errors are multiplied by 100.}
+    \label{fig:mc_state_rmse}
+\end{figure}
+
+The clean benchmark has the smallest average RMSE. Observation error reduces the accuracy of the implied variance states, but the average errors are similar for the three observation-error designs.
+
+\subsection{Accuracy of risk-premium estimates}
+
+For each replication, the one-month equity and variance risk-premium paths are computed using the definitions in Appendix~\ref{app:risk_premia}. The transformations are applied separately to the parameter estimates and implied variance path from that replication. The corresponding true path is computed using the simulated variance and the true parameters. An error is defined as the estimated value minus the true value. The variance risk premium follows the physical-minus-risk-neutral convention in \citet{boswijk2015asset}.
+
+\input{generated/risk_premium_table.tex}
+
+The average ERP errors are small relative to their variation across replications, although the ERP RMSE remains sizeable. The average VRP error is negative for the clean benchmark and positive for each of the three observation-error designs.
+
+\subsection{Summary of results}
+
+For the clean benchmark, the implied-state estimator recovers the weekly variance path closely. Under the three observation-error designs, observation error approximately doubles the average RMSE of the implied states and somewhat reduces the accuracy of the parameter and risk-premium estimates.
 
 \newpage
 %========================================================
@@ -514,25 +556,34 @@ The option type is selected using an out-of-the-money convention. Put options ar
 \subsection{State simulation under $\mathbb{P}$}
 Let $y_t:=\log(S_t)$ and write $y_i:=y_{t_i}$ and $V_i:=V_{t_i}$. Under $\mathbb{P}$,
 the dynamics are given by \eqref{PHestonS}--\eqref{PHestonV}.
-We simulate $V_{i+1}$ using the exact transition of the square-root process and then update $y_{i+1}$
-using a discretisation that preserves the leverage channel implied by $\rho$.
+We simulate $V_{i+1}$ using the quadratic-exponential scheme of \citet{andersen2008simple} and then update $y_{i+1}$ using a discretisation that preserves the leverage channel implied by $\rho$.
 
-\subsubsection{Exact transition for $V_{i+1}\mid V_i$}
-Conditional on $V_i$, the square-root process in \eqref{PHestonV} admits an exact transition
-representation in terms of a scaled noncentral chi-square random variable:
+\subsubsection{Quadratic-exponential draw for $V_{i+1}\mid V_i$}
+Let $e_i=\exp(-\kappa\Delta)$. Conditional on $V_i$, the first two moments of the square-root variance transition are
 \begin{align}
-V_{i+1} \;\overset{d}{=}\; c\,\chi'^2_{\nu}(\lambda),
-\label{eq:CIR_exact}
+m_i &= \bar V+(V_i-\bar V)e_i, \\
+s_i^2 &= \frac{V_i\sigma_v^2e_i(1-e_i)}{\kappa}
++\frac{\bar V\sigma_v^2(1-e_i)^2}{2\kappa},
+\qquad
+\psi_i=\frac{s_i^2}{m_i^2}.
+\label{eq:qe_moments}
 \end{align}
-where
+The production implementation uses the branch threshold $\psi_c=1.5$. When $\psi_i\leq\psi_c$, define
 \begin{align}
-c &= \frac{\sigma_v^2\left(1-e^{-\kappa \Delta}\right)}{4\kappa}, &
-\nu &= \frac{4\kappa \bar{V}}{\sigma_v^2}, &
-\lambda &= \frac{4\kappa e^{-\kappa \Delta}}{\sigma_v^2\left(1-e^{-\kappa \Delta}\right)}V_i.
-\label{eq:CIR_exact_params}
+b_i^2&=\frac{2}{\psi_i}-1+\sqrt{\frac{2}{\psi_i}}\sqrt{\frac{2}{\psi_i}-1},
+&a_i&=\frac{m_i}{1+b_i^2},
 \end{align}
-This step guarantees $V_{i+1}\geq 0$ and removes Euler-type discretization bias in the variance
-marginal transition.
+and draw $V_{i+1}=a_i(\sqrt{b_i^2}+Z_i)^2$ with $Z_i\sim\mathcal N(0,1)$. When $\psi_i>\psi_c$, set
+\begin{align}
+p_i=\frac{\psi_i-1}{\psi_i+1},
+\qquad
+\beta_i=\frac{1-p_i}{m_i}.
+\end{align}
+For $U_i\sim\mathcal U(0,1)$, the draw is zero if $U_i\leq p_i$ and is
+\begin{align}
+V_{i+1}=-\frac{1}{\beta_i}\log\left(\frac{U_i-p_i}{1-p_i}\right)
+\end{align}
+otherwise. Both branches preserve non-negativity and match the conditional moments used by the scheme.
 
 \subsubsection{Integrated variance proxy}
 Define the integrated variance over $[t_i,t_{i+1}]$ by
@@ -554,8 +605,8 @@ the log-price increment is simulated as
 &:= y_{i+1}-y_i \nonumber\\
 &= (r_{t_i}-q_{t_i})\Delta
 + \left(\eta-\frac{1}{2}\right)\widehat{I}_i
-+ \frac{\rho}{\sigma_v}\left[\left(V_{i+1}-V_i\right)-\kappa\left(\bar{V}\Delta-\widehat{I}_i\right)\right]
-+ \sqrt{1-\rho^2}\sqrt{\widehat{I}_i}\,Z_{i+1}.
++ \frac{\rho}{\sigma_v}\left[\left(V_{i+1}-V_i\right)-\kappa\left(\bar{V}\Delta-\widehat{I}_i\right)\right] \nonumber\\
+&\quad + \sqrt{1-\rho^2}\sqrt{\widehat{I}_i}\,Z_{i+1}.
 \label{eq:logS_update}
 \end{align}
 Finally, set $y_{i+1}=y_i+\Delta y_i$ and $S_{i+1}=\exp(y_{i+1})$.
@@ -622,14 +673,14 @@ Given the notation in \eqref{QHestonV}, this implies
 \qquad
 \bar V_{\mathbb Q}=\frac{\kappa\bar V}{\kappa-\eta_V}=0.07875.
 \]
-Clean option prices are computed using the COS method. The corresponding Black-Scholes implied volatilities are computed using the same implied-volatility inversion routine used for noisy panels, see \citep{jaeckel2015lets}.
+Clean option prices are computed using the COS method. The corresponding Black-Scholes implied volatilities are computed using the same implied-volatility inversion routine used for noisy panels; see \citep{jaeckel2015lets}.
 
 \section{Option Panel Observation Error Specifications}
 \label{app:option_noise_specs}
 
 This appendix details the functional forms used to generate noisy option panels from the clean model-implied option panel. The purpose is to introduce observation error structures which are simple enough to be implemented in a large-scale Monte Carlo design, but sufficiently close to observed option-market features to provide a meaningful stress-test of PF and IS estimation.
 
-Noisy option panels are constructed from the clean model-implied panels generated in Appendix~\ref{app:sim_heston} using the observation error designs introduced in the main text. The clean panel at date \(t_i\) consists of model prices \(p_i^0\), Black-Scholes implied volatilities \(\sigma_i^0\), contract characteristics and Black-Scholes vegas. The corresponding raw noisy price is then obtained from the Black-Scholes pricing formula after the noise functional is applied to the implied volatility value based from the clean panels. Tick rounding, no-arbitrage projection and implied-volatility inversion (to recover a noisy price and apply price bounds on it) are applied afterwards using the same procedure for all three designs.
+Noisy option panels are constructed from the clean model-implied panels generated in Appendix~\ref{app:sim_heston} using the observation error designs introduced in the main text. The clean panel at date \(t_i\) consists of model prices \(p_i^0\), Black-Scholes implied volatilities \(\sigma_i^0\), contract characteristics and Black-Scholes vegas. The observation-error functional is applied to the clean implied-volatility value before the corresponding raw noisy price is obtained from the Black-Scholes pricing formula. Tick rounding and no-arbitrage projection are then applied to the price, followed by implied-volatility inversion to recover the observed noisy implied volatility, using the same procedure for all three designs.
 
 
 \subsection{Tick rounding, price validity and implied-volatility inversion}
@@ -666,7 +717,7 @@ L_i^{(j)}+\epsilon_p,
 \right\}.
 \label{eq:app_price_projection}
 \end{align}
-The projection in \eqref{eq:app_price_projection} is used instead of (theoretically possible) re-sampling of the random quantities in the s. This keeps the distributional
+The projection in \eqref{eq:app_price_projection} is used instead of the theoretically possible alternative of re-sampling the random quantities in the observation-error mechanism. This keeps the distributional
 draws reproducible and preserves information about the frequency with which the noise mechanism generates boundary
 prices. The implementation therefore records whether capping is applied at the lower or upper bound.
 
@@ -678,9 +729,13 @@ approach of \citet{jaeckel2015lets}, which is designed for fast and robust impli
 
 \subsection{Implementation of noisy option panels}
 The implementation records, for each contract, the clean model price, the clean Black-Scholes implied volatility,
-the raw noisy price before validity enforcement, the rounded and capped observed price, the observed implied volatility, the noise scenario and indicators for whether lower- or upper-bound capping was applied. 
+the raw noisy price before validity enforcement, the rounded and capped observed price, the observed implied
+volatility, the noise scenario and indicators for whether lower- or upper-bound capping was applied.
 
-The same implied-volatility inversion routine is used for clean and noisy panels. This is important because the subsequent IS and PF estimation exercises may use observed implied volatilities, price-space errors, or vega-scaled price errors. A single stand-alone implied-volatility solver therefore prevents the construction of different data sets from depending on different numerical inversion conventions.
+The same implied-volatility inversion routine is used for clean and noisy panels. This is important because
+the subsequent IS and PF estimation exercises may use observed implied volatilities, price-space errors, or
+vega-scaled price errors. A single stand-alone implied-volatility solver therefore prevents the construction of
+different data sets from depending on different numerical inversion conventions.
 
 \subsection{Parameter Choices for the Observation Error Specifications}
 For Design A, the scale parameters are set to
@@ -757,44 +812,55 @@ Thus, the common component introduces temporal dependence and common variation a
 \subsection{Illustration of the Observation Error Specifications}
 \label{app:noise_visualisations}
 
-This subsection reports visual diagnostics for the three noisy panel designs used in the simulation exercise. The figures are based on one representative simulated sample and are intended to illustrate the cross-sectional and time-series structure induced by the observation-error mechanisms. They are not estimation results.
+This subsection reports results based on all 100 samples. Signed implied-volatility error is defined as observed minus model implied volatility. The surface results retain the common moneyness and maturity points. The two dependence measures in Figure~\ref{fig:app_noise_dependence} are calculated separately within each sample, so the boxes show how they vary across the 100 samples.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{figures/noise/noise_surface_comparison_sample000_date129.pdf}
-    \caption{Clean and noisy implied-volatility panels for sample 000 at week index 129. The clean panel is generated exactly from the Heston pricing model. Designs A--C introduce increasingly structured quote distortions in implied-volatility space before prices are reconstructed and projected into admissible price intervals.}
-    \label{fig:app_noise_surface_comparison}
+    \includegraphics[width=0.90\textwidth]{generated/noise_mechanics_diagnostics.pdf}
+    \caption{Noise size and price-rounding effects across the 100 samples. The left panel reports the 95\% quantile of the absolute raw implied-volatility error before price rounding, in implied-volatility basis points. The right panel reports the percentage of prices adjusted to the lower price bound after rounding. The results are pooled across Designs A--C, which have matched marginal observation-error scales. Each maturity and moneyness point contains 157,800 observations.}
+    \label{fig:app_noise_mechanics}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/noise/noise_difference_comparison_sample000_date129.pdf}
-    \caption{Signed implied-volatility perturbations relative to the clean model-implied panel for Designs A--C at week index 129. The plots show observed minus clean implied volatility across log-forward moneyness and maturity.}
-    \label{fig:app_noise_difference_comparison}
-    TODO: Re-point plot data to average sample perturbations instead of a given sample
+    \includegraphics[width=0.82\textwidth]{generated/noise_dependence.pdf}
+    \caption{Dependence in the observation errors across the 100 samples. For each sample, the left panel averages the pairwise correlations between the error series for the 15 contracts. The right panel reports the first-order autocorrelation of the error series for the at-the-money three-month contract. Each box summarises the resulting sample-level values; the centre line is the median and the whiskers show the 10th and 90th percentiles.}
+    \label{fig:app_noise_dependence}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figures/noise/noise_design_cross_section_structure.pdf}
-    \caption{Cross-sectional structure of the observation-error designs. The left panel shows the marginal implied-volatility error scale. The right panel shows the spatial correlation matrix used in Design B after ordering contracts by maturity and log-forward moneyness.}
-    \label{fig:app_noise_cross_section_structure}
-\end{figure}
+\input{generated/noise_summary_table.tex}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{figures/noise/noise_low_iid_timeseries_sample000.pdf}
-    \caption{Realised perturbations for selected contracts under Design A over weeks 100--299. The series are independent across contracts conditional on the clean panel, so the plot contains no persistent common observation-error factor.}
-    \label{fig:app_noise_low_iid_timeseries}
-\end{figure}
+\section{Risk-Premium Definitions}
+\label{app:risk_premia}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{figures/noise/noise_persistent_factor_timeseries_sample000.pdf}
-    \caption{Temporal dependence in Design C over weeks 100--299. The upper panel shows the realised level, moneyness-slope and maturity-slope observation-error factors. The lower panel shows the resulting serially persistent implied-volatility perturbations for selected representative contracts.}
-    \label{fig:app_noise_persistent_factor}
-\end{figure}
-
+This appendix gives the definitions of the one-month equity and variance risk premia used in Section~\ref{sec:is_cgmm_results}. They follow the pure-diffusion component in \citet{boswijk2015asset}. For a horizon $h=T-t$, write the expected average variance under $\mathbb P$, conditional on $V_t=v$, as
+\begin{align}
+\operatorname{AV}^{\mathbb P}(v,h)
+&=
+\frac{1}{h}\mathbb E_{\mathbb P}\left[\left.\int_t^T V_s\,\dif s\,\right|V_t=v\right]
+=\bar V+(v-\bar V)\frac{1-\exp(-\kappa h)}{\kappa h}.
+\label{eq:app_average_variance_p}
+\end{align}
+Under $\mathbb Q$, define
+\begin{align}
+\kappa_{\mathbb Q}=\kappa-\eta_V,
+\qquad
+\bar V_{\mathbb Q}=\frac{\kappa\bar V}{\kappa_{\mathbb Q}}.
+\end{align}
+The corresponding conditional expected average variance is
+\begin{align}
+\operatorname{AV}^{\mathbb Q}(v,h)
+=\bar V_{\mathbb Q}+(v-\bar V_{\mathbb Q})
+\frac{1-\exp(-\kappa_{\mathbb Q}h)}{\kappa_{\mathbb Q}h}.
+\label{eq:app_average_variance_q}
+\end{align}
+For the Heston specification in Section~1, the horizon-$h$ equity risk premium and the physical-minus-risk-neutral variance risk premium are therefore
+\begin{align}
+\operatorname{ERP}_t(h)&=\eta\operatorname{AV}^{\mathbb P}(V_t,h),\\
+\operatorname{VRP}_t(h)&=\operatorname{AV}^{\mathbb P}(V_t,h)-\operatorname{AV}^{\mathbb Q}(V_t,h).
+\label{eq:app_risk_premia}
+\end{align}
+The reported horizon is $h=1/12$. ERP is annualised and multiplied by 100 to obtain percentage points. VRP is annualised variance and is also multiplied by 100. For each replication, the estimated paths are calculated from its parameter estimate and final implied state sequence, while the true paths are calculated from its simulated variance sequence and the true parameter vector. The transformations in \eqref{eq:app_average_variance_p}--\eqref{eq:app_risk_premia} are therefore carried out before the results are summarised across replications.
 
 \section{Implementation of the IS C-GMM Estimator}
 \label{app:is_cgmm_implementation}
@@ -809,6 +875,34 @@ The minimisation is one dimensional because the Heston design contains a single 
 
 The same procedure is applied to clean and noisy option panels. Hence, differences between the implied states recovered from the different observation error designs are driven by the observation error mechanisms themselves and not by changes in the pricing or implied-volatility inversion convention.
 
+\subsection{Fixed COS basis}
+
+For an option maturity \(\mathcal T\), the COS frequencies are fixed as
+\begin{equation}
+u_k(\mathcal T)
+=
+\frac{k\pi}{2L_{\mathcal T}},
+\qquad k=0,\ldots,N-1,
+\label{eq:app_fixed_cos_grid}
+\end{equation}
+where \([-L_{\mathcal T},L_{\mathcal T}]\) is the effective interval for log-forward moneyness. The interval does not depend on the candidate variance value. The payoff expansion and the affine coefficients \(A_k(\mathcal T)\) and \(B_k(\mathcal T)\) are therefore prepared once for each maturity and risk-neutral parameter vector and reused across strikes and dates.
+
+The variance domain is \(V\in[10^{-6},0.15]\). The parameter ranges are \(\kappa_{\mathbb Q}\in[1.5,4.0]\), \(\bar V_{\mathbb Q}\in[0.012,0.24]\), \(\sigma_v\in[0.20,0.65]\) and \(\rho\in[-0.80,-0.20]\). The calibration uses a seeded Latin-hypercube design together with the true DGP, the initial parameter value and two moderate perturbations. A Carr--Madan Fourier inversion is used to validate an 8192-term COS reference. Table~\ref{tab:app_fixed_cos_calibration} reports the selected specification. Prices with Black-Scholes vega below \(5\times10^{-6}\) are reported separately because numerical price differences close to \(10^{-10}\) produce unstable implied-volatility differences. There are no invalid prices or implied-volatility inversions in the calibration design.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+\(\mathcal T\) & \(L_{\mathcal T}\) & \(N\) & Max. IV error & Max. IV error, vega screen \\
+\midrule
+\(1/12\) & 0.75 & 576 & \(2.23\times10^{-4}\) & \(1.81\times10^{-6}\) \\
+\(1/4\)  & 1.25 & 576 & \(2.82\times10^{-7}\) & \(2.82\times10^{-7}\) \\
+\(1/2\)  & 2.00 & 576 & \(2.77\times10^{-8}\) & \(2.77\times10^{-8}\) \\
+\bottomrule
+\end{tabular}
+\caption{Selected fixed COS basis. The generation and estimation term counts are both 576. The selection uses the lowest term count and then the narrowest interval satisfying the zero-failure error conditions.}
+\label{tab:app_fixed_cos_calibration}
+\end{table}
 \subsection{Heston transition characteristic function under \(\mathbb P\)}
 
 The C-GMM moment conditions require the conditional characteristic function of the next estimation state
@@ -880,7 +974,7 @@ X_j^{\theta_{\mathbb Q}}
 \right)
 \pi_u(u)\,\dif u ,
 \]
-which reduce to a Gaussian kernel in the distance between the two implied-state observations. This leaves a finite dimensional numerical integration over the \(s\)-argument of the conditional characteristic function. The implementation uses deterministic quadrature nodes for this remaining integral.
+which reduce to a Gaussian kernel in the distance between the two implied-state observations. This leaves a finite dimensional numerical integration over the \(s\)-argument of the conditional characteristic function. The production implementation uses two-dimensional Gauss--Hermite quadrature of order 4 with scale vector $(1.0,4.0)$ for this remaining integral. Integration over the instrument component remains analytic.
 
 This construction follows the same principle as in the continuum-GMM implementation of \citet{boswijk2015asset}: the criterion uses the conditional characteristic function to generate a continuum of moment restrictions, while numerical integration and analytic simplifications are used to keep the criterion evaluation computationally feasible.
 
@@ -903,9 +997,13 @@ where
 \qquad
 \eta_V=\kappa-\kappa_{\mathbb Q}.
 \]
-This parameterisation enforces positivity of the mean-reversion, long-run variance, vol-of-vol and risk-neutral mean-reversion parameters, while keeping \(\rho\) inside \((-1,1)\). The criterion is deterministic for a fixed simulated panel, but it is expensive because each function evaluation requires a full reconstruction of the implied variance sequence. The implementation therefore uses derivative-free minimisation with a small number of deterministic starting points and records objective values, implied-state diagnostics and timing information.
+This parameterisation enforces positivity of the mean-reversion, long-run variance, vol-of-vol and risk-neutral mean-reversion parameters, while keeping \(\rho\) inside \((-1,1)\). The criterion is deterministic for a fixed simulated panel, but it is expensive because each function evaluation requires a full reconstruction of the implied variance sequence. The implementation uses at most three deterministic starts. It then applies two bounded derivative-free passes and records objective values, implied-state diagnostics and timing information.
 
 At the present stage the Monte Carlo design uses the first-step C-GMM criterion. Efficient second-step weighting is conceptually standard in the continuum-GMM setting, but is deferred in the current implementation in order to keep the comparison with the particle-filter estimator focused on the finite-sample consequences of the state recovery step and the option-panel observation error.
+
+\subsection{Production computing arrangement}
+
+The completed Monte Carlo exercise consists of 100 independent samples, four panel designs and 400 estimation tasks. It was carried out on an Amazon EC2 \texttt{c7i.8xlarge} instance with 32 vCPUs and 64 GiB of memory. Twenty-eight samples were processed in parallel. Each process handled one sample at a time, while each numerical library was restricted to one thread. The calculation could be resumed separately by sample and scenario. Persistent EBS storage was used during the calculation and completed results were copied to private S3 storage. These computing arrangements do not affect the numerical specification, which is the same for every task included in the results.
 
 
 %========================================================

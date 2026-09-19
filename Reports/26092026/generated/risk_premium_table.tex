@@ -1,0 +1,24 @@
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lrrrrr}
+\toprule
+Design & Truth & Estimate & Mean error & MAE & RMSE \\
+\midrule
+\multicolumn{6}{l}{\textit{Panel A: ERP: annualised percentage points}} \\
+Clean & 11.0895 & 10.9129 & -0.1765 & 3.1138 & 3.5002 \\
+Design A & 11.0895 & 10.7033 & -0.3861 & 3.3412 & 3.9496 \\
+Design B & 11.0895 & 10.6397 & -0.4497 & 3.2898 & 3.8910 \\
+Design C & 11.0895 & 10.6221 & -0.4673 & 3.3065 & 3.9011 \\
+\addlinespace
+\multicolumn{6}{l}{\textit{Panel B: VRP: annualised variance multiplied by 100}} \\
+Clean & -0.4368 & -0.4589 & -0.0221 & 0.0696 & 0.0827 \\
+Design A & -0.4368 & -0.3950 & 0.0418 & 0.0764 & 0.0932 \\
+Design B & -0.4368 & -0.3949 & 0.0420 & 0.0795 & 0.0965 \\
+Design C & -0.4368 & -0.3951 & 0.0417 & 0.0758 & 0.0921 \\
+\bottomrule
+\end{tabular}
+\caption{Accuracy of the one-month equity and variance risk premia. Each measure is first calculated from the matched estimated and true paths within a sample and is then averaged across the 100 samples. The variance risk premium is defined as physical minus risk-neutral expected average variance.}
+\label{tab:mc_risk_premium_accuracy}
+\end{table}

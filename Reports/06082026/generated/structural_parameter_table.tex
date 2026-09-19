@@ -1,0 +1,51 @@
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+Statistic & $\eta$ & $\kappa$ & $\bar V$ & $\sigma_v$ & $\rho$ & $\kappa_{\mathbb Q}$ \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel A: Clean ($n=100$)}} \\
+True value & 5.000 & 7.000 & 0.0225 & 0.400 & -0.500 & 2.000 \\
+Mean & 5.142 & 7.024 & 0.0218 & 0.337 & -0.536 & 1.582 \\
+Median & 4.964 & 7.032 & 0.0215 & 0.352 & -0.550 & 1.500 \\
+Bias & 0.142 & 0.024 & -0.0007 & -0.063 & -0.036 & -0.418 \\
+Empirical SD & 1.725 & 1.242 & 0.0025 & 0.060 & 0.137 & 0.139 \\
+RMSE & 1.722 & 1.236 & 0.0026 & 0.087 & 0.141 & 0.440 \\
+10\% quantile & 2.937 & 5.330 & 0.0192 & 0.232 & -0.741 & 1.500 \\
+90\% quantile & 7.444 & 8.978 & 0.0254 & 0.398 & -0.353 & 1.796 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{Panel B: Design A: low i.i.d. ($n=100$)}} \\
+True value & 5.000 & 7.000 & 0.0225 & 0.400 & -0.500 & 2.000 \\
+Mean & 5.534 & 6.703 & 0.0201 & 0.384 & -0.531 & 1.576 \\
+Median & 5.319 & 6.597 & 0.0198 & 0.416 & -0.524 & 1.506 \\
+Bias & 0.534 & -0.297 & -0.0024 & -0.016 & -0.031 & -0.424 \\
+Empirical SD & 1.776 & 1.121 & 0.0018 & 0.103 & 0.139 & 0.148 \\
+RMSE & 1.846 & 1.154 & 0.0030 & 0.104 & 0.141 & 0.449 \\
+10\% quantile & 3.341 & 5.235 & 0.0182 & 0.230 & -0.757 & 1.500 \\
+90\% quantile & 8.000 & 8.150 & 0.0227 & 0.502 & -0.359 & 1.682 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{Panel C: Design B: spatial correlation ($n=100$)}} \\
+True value & 5.000 & 7.000 & 0.0225 & 0.400 & -0.500 & 2.000 \\
+Mean & 5.513 & 6.711 & 0.0200 & 0.387 & -0.510 & 1.584 \\
+Median & 5.294 & 6.367 & 0.0197 & 0.414 & -0.505 & 1.506 \\
+Bias & 0.513 & -0.289 & -0.0025 & -0.013 & -0.010 & -0.416 \\
+Empirical SD & 1.768 & 1.154 & 0.0018 & 0.109 & 0.141 & 0.151 \\
+RMSE & 1.832 & 1.184 & 0.0031 & 0.109 & 0.141 & 0.442 \\
+10\% quantile & 3.351 & 5.389 & 0.0180 & 0.235 & -0.726 & 1.500 \\
+90\% quantile & 8.000 & 8.426 & 0.0228 & 0.528 & -0.315 & 1.813 \\
+\addlinespace
+\multicolumn{7}{l}{\textit{Panel D: Design C: persistent factor ($n=100$)}} \\
+True value & 5.000 & 7.000 & 0.0225 & 0.400 & -0.500 & 2.000 \\
+Mean & 5.495 & 6.709 & 0.0200 & 0.386 & -0.527 & 1.576 \\
+Median & 5.323 & 6.581 & 0.0197 & 0.417 & -0.527 & 1.523 \\
+Bias & 0.495 & -0.291 & -0.0025 & -0.014 & -0.027 & -0.424 \\
+Empirical SD & 1.773 & 1.114 & 0.0019 & 0.103 & 0.137 & 0.129 \\
+RMSE & 1.832 & 1.146 & 0.0031 & 0.103 & 0.139 & 0.443 \\
+10\% quantile & 3.403 & 5.348 & 0.0179 & 0.239 & -0.733 & 1.500 \\
+90\% quantile & 8.000 & 8.386 & 0.0226 & 0.497 & -0.336 & 1.682 \\
+\bottomrule
+\end{tabular}
+\caption{Distribution of the first-step IS-CGMM parameter estimates across the 100 samples. The risk-neutral parameter is $\kappa_{\mathbb Q}=\kappa-\eta_V$. Bias, empirical standard deviation and RMSE are calculated separately for each design.}
+\label{tab:mc_structural_parameters}
+\end{table}

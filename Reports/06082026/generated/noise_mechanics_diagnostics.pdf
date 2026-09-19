@@ -1,0 +1,428 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 518.4 241.2] /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> >> /Contents 7 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Symbol >>
+endobj
+7 0 obj
+<< /Length 4541 >>
+stream
+q
+0 g
+BT /F2 10 Tf 119.2 223.2 Td (Noise size and price-rounding effects across 100 samples) Tj ET
+Q
+q
+0 g
+BT /F2 8.5 Tf 88.475 193.2 Td (95% quantile of absolute raw IV error) Tj ET
+Q
+q
+0.22 g
+0.18 G 0.25 w
+66 140.1333 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 80.02 159.4667 Td (43.6) Tj ET
+Q
+q
+0.2965 g
+0.18 G 0.25 w
+106.44 140.1333 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 120.46 159.4667 Td (38.9) Tj ET
+Q
+q
+0.3709 g
+0.18 G 0.25 w
+146.88 140.1333 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 160.9 159.4667 Td (34.4) Tj ET
+Q
+q
+0.2996 g
+0.18 G 0.25 w
+187.32 140.1333 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 201.34 159.4667 Td (38.8) Tj ET
+Q
+q
+0.2244 g
+0.18 G 0.25 w
+227.76 140.1333 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 241.78 159.4667 Td (43.3) Tj ET
+Q
+q
+0.2616 g
+0.18 G 0.25 w
+66 97.0667 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 80.02 116.4 Td (41.1) Tj ET
+Q
+q
+0.3343 g
+0.18 G 0.25 w
+106.44 97.0667 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 120.46 116.4 Td (36.7) Tj ET
+Q
+q
+0.405 g
+0.18 G 0.25 w
+146.88 97.0667 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 160.9 116.4 Td (32.4) Tj ET
+Q
+q
+0.3354 g
+0.18 G 0.25 w
+187.32 97.0667 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 201.34 116.4 Td (36.6) Tj ET
+Q
+q
+0.2602 g
+0.18 G 0.25 w
+227.76 97.0667 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 241.78 116.4 Td (41.1) Tj ET
+Q
+q
+0.2744 g
+0.18 G 0.25 w
+66 54 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 80.02 73.3333 Td (40.3) Tj ET
+Q
+q
+0.3485 g
+0.18 G 0.25 w
+106.44 54 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 120.46 73.3333 Td (35.8) Tj ET
+Q
+q
+0.4185 g
+0.18 G 0.25 w
+146.88 54 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 160.9 73.3333 Td (31.6) Tj ET
+Q
+q
+0.3488 g
+0.18 G 0.25 w
+187.32 54 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 201.34 73.3333 Td (35.8) Tj ET
+Q
+q
+0.2751 g
+0.18 G 0.25 w
+227.76 54 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 241.78 73.3333 Td (40.2) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 78.095 43 Td (-0.15) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 116.91 43 Td (-0.075) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 165.475 43 Td (0) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 199.415 43 Td (0.075) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 241.48 43 Td (0.15) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 38.25 159.4667 Td (1 month) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 35 116.4 Td (3 months) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 35 73.3333 Td (6 months) Tj ET
+Q
+q
+0 g
+BT /F1 7.2 Tf 129.3 30 Td (log-forward moneyness) Tj ET
+Q
+q
+0 g
+BT /F2 8.5 Tf 331.3 193.2 Td (Lower-bound adjustment share \(%\)) Tj ET
+Q
+q
+0.7171 g
+0.18 G 0.25 w
+298.2 140.1333 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 312.22 159.4667 Td (25.1) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+338.64 140.1333 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 354.21 159.4667 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+379.08 140.1333 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 394.65 159.4667 Td (0.0) Tj ET
+Q
+q
+0.8842 g
+0.18 G 0.25 w
+419.52 140.1333 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 435.09 159.4667 Td (6.3) Tj ET
+Q
+q
+0.22 g
+0.18 G 0.25 w
+459.96 140.1333 40.44 43.0667 re
+B
+Q
+q
+1 g
+BT /F1 6.2 Tf 473.98 159.4667 Td (81.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+298.2 97.0667 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 313.77 116.4 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+338.64 97.0667 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 354.21 116.4 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+379.08 97.0667 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 394.65 116.4 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+419.52 97.0667 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 435.09 116.4 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+459.96 97.0667 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 475.53 116.4 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+298.2 54 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 313.77 73.3333 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+338.64 54 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 354.21 73.3333 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+379.08 54 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 394.65 73.3333 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+419.52 54 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 435.09 73.3333 Td (0.0) Tj ET
+Q
+q
+0.94 g
+0.18 G 0.25 w
+459.96 54 40.44 43.0667 re
+B
+Q
+q
+0 g
+BT /F1 6.2 Tf 475.53 73.3333 Td (0.0) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 310.295 43 Td (-0.15) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 349.11 43 Td (-0.075) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 397.675 43 Td (0) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 431.615 43 Td (0.075) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 473.68 43 Td (0.15) Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 293.2 159.4667 Td () Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 293.2 116.4 Td () Tj ET
+Q
+q
+0 g
+BT /F1 6.5 Tf 293.2 73.3333 Td () Tj ET
+Q
+q
+0 g
+BT /F1 7.2 Tf 361.5 30 Td (log-forward moneyness) Tj ET
+Q
+q
+0 g
+BT /F2 6.5 Tf 35 193.2 Td (Maturity) Tj ET
+Q
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000271 00000 n 
+0000000341 00000 n 
+0000000416 00000 n 
+0000000483 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+5075
+%%EOF
