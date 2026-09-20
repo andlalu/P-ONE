@@ -10,6 +10,7 @@ from typing import Any
 
 import numpy as np
 
+from OptionData.noise_common import NOISE_SCENARIOS
 from OptionData.panel import OptionPanel, OptionPanelDate
 
 
@@ -185,7 +186,7 @@ def load_option_panel(
     rows = read_records(file_path)
     if not rows:
         raise ValueError(f"{file_path} contains no rows")
-    combined_scenarios = ("clean", "low_iid", "spatial_corr", "persistent_factor")
+    combined_scenarios = ("clean",) + NOISE_SCENARIOS
     has_scenario = "scenario" in rows[0]
     if scenario is not None:
         if scenario not in combined_scenarios:

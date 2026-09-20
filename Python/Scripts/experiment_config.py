@@ -96,12 +96,12 @@ def _normalise_noise_settings(raw_noise: dict[str, Any] | None) -> NoiseSettings
                 correlation_jitter=float(raw_scenario["correlation_jitter"]),
                 max_correlation_jitter=float(raw_scenario["max_correlation_jitter"]),
             )
-        elif name == "persistent_factor":
+        elif name in {"persistent_factor", "variance_linked_factor"}:
             a_diag = np.asarray(raw_scenario["a_diag"], dtype=float)
             stationary_std_raw = raw_scenario.get("stationary_factor_std")
             q_diag_raw = raw_scenario.get("q_diag")
             if stationary_std_raw is None and q_diag_raw is None:
-                raise ValueError("persistent_factor requires stationary_factor_std or q_diag")
+                raise ValueError(f"{name} requires stationary_factor_std or q_diag")
             stationary_std = (
                 compute_stationary_std_from_q_diag(a_diag, q_diag_raw)
                 if stationary_std_raw is None
@@ -121,12 +121,15 @@ def _normalise_noise_settings(raw_noise: dict[str, Any] | None) -> NoiseSettings
             )
             if raw_scenario.get("residual_scale_multiplier") is not None:
                 scenario["residual_scale_multiplier"] = float(raw_scenario["residual_scale_multiplier"])
+            if name == "variance_linked_factor":
+                scenario["latent_variance_share"] = float(
+                    raw_scenario["latent_variance_share"]
+                )
         scenarios[str(name)] = scenario
     settings = NoiseSettings(
         base_seed=int(raw_noise["base_seed"]),
         sigma_min=float(raw_noise["sigma_min"]),
         price_epsilon=float(raw_noise["price_epsilon"]),
-        tick_size=float(raw_noise["tick_size"]),
         scenarios=scenarios,
     )
     validate_noise_settings(settings)

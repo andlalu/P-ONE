@@ -7,11 +7,12 @@ import pytest
 from Scripts.experiment_config import load_experiment_config
 
 CONFIG_DIRECTORY = Path(__file__).resolve().parents[1] / "configs"
-PRODUCTION_CONFIG = CONFIG_DIRECTORY / "heston_experiment_run_001.json"
+HISTORICAL_CONFIG = CONFIG_DIRECTORY / "heston_experiment_run_001.json"
+PRODUCTION_CONFIG = CONFIG_DIRECTORY / "heston_experiment_run_002.json"
 
 
 def test_frozen_production_experiment_values():
-    experiment = load_experiment_config(PRODUCTION_CONFIG)
+    experiment = load_experiment_config(HISTORICAL_CONFIG)
 
     assert experiment.run_id == "run_001"
     assert experiment.n_samples == 100
@@ -78,8 +79,35 @@ def test_frozen_production_experiment_values():
     assert powell.progress_every == 10
 
 
+def test_run_002_extends_the_production_configuration_with_design_d():
+    experiment = load_experiment_config(PRODUCTION_CONFIG)
+
+    assert experiment.run_id == "run_002"
+    assert experiment.n_samples == 500
+    assert experiment.base_seed == 1234500
+    assert Path(experiment.output_root) == (
+        Path(__file__).resolve().parents[3] / "outputs" / "run_002"
+    )
+    assert experiment.panel_format == "parquet"
+    assert experiment.noise is not None
+    assert experiment.noise.base_seed == 9900000
+    assert experiment.noise.scenario_names() == (
+        "low_iid",
+        "spatial_corr",
+        "persistent_factor",
+        "variance_linked_factor",
+    )
+    assert (
+        experiment.noise.scenarios["variance_linked_factor"][
+            "latent_variance_share"
+        ]
+        == 0.5
+    )
+    assert "tick_size" not in experiment.raw_config["noise"]
+
+
 def test_mismatched_cos_maturities_and_widths_are_rejected(tmp_path):
-    payload = json.loads(PRODUCTION_CONFIG.read_text())
+    payload = json.loads(HISTORICAL_CONFIG.read_text())
     payload["cos"]["effective_widths"] = [0.75, 1.25]
     config_path = tmp_path / "invalid_experiment.json"
     config_path.write_text(json.dumps(payload))
@@ -89,7 +117,7 @@ def test_mismatched_cos_maturities_and_widths_are_rejected(tmp_path):
 
 
 def test_anisotropic_quadrature_scale_loads_from_json(tmp_path):
-    payload = json.loads(PRODUCTION_CONFIG.read_text())
+    payload = json.loads(HISTORICAL_CONFIG.read_text())
     payload["estimation"]["quadrature"]["order"] = 4
     payload["estimation"]["quadrature"]["scale"] = [1.0, 5.0]
     config_path = tmp_path / "anisotropic_experiment.json"

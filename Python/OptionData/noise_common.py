@@ -9,12 +9,16 @@ import numpy as np
 from ImpliedVolatility.black_iv import implied_vol_black76
 from ImpliedVolatility.black_price import black76_price
 
-NOISE_SCENARIOS = ("low_iid", "spatial_corr", "persistent_factor")
+NOISE_SCENARIOS = (
+    "low_iid",
+    "spatial_corr",
+    "persistent_factor",
+    "variance_linked_factor",
+)
 NOISY_PANEL_EXTRA_COLUMNS = [
     "noise_scenario",
     "raw_noisy_iv",
-    "raw_price_before_rounding",
-    "price_after_rounding",
+    "raw_noisy_price",
     "observed_price",
     "observed_iv",
     "was_price_capped",
@@ -26,12 +30,11 @@ NOISY_PANEL_EXTRA_COLUMNS = [
 
 @dataclass(frozen=True)
 class NoiseSettings:
-    """Shared controls and settings for the three noise scenarios."""
+    """Shared controls and settings for the noise scenarios."""
 
     base_seed: int
     sigma_min: float
     price_epsilon: float
-    tick_size: float
     scenarios: dict[str, dict[str, Any]]
 
     def scenario_names(self) -> tuple[str, ...]:
@@ -39,7 +42,12 @@ class NoiseSettings:
 
 
 def scenario_seed(base_seed: int, sample_id: int, scenario: str) -> int:
-    offsets = {"low_iid": 101, "spatial_corr": 202, "persistent_factor": 303}
+    offsets = {
+        "low_iid": 101,
+        "spatial_corr": 202,
+        "persistent_factor": 303,
+        "variance_linked_factor": 404,
+    }
     if scenario not in offsets:
         raise ValueError(f"unknown noise scenario: {scenario}")
     return int(base_seed + 1000 * sample_id + offsets[scenario])
@@ -78,7 +86,7 @@ def price_bounds(
     raise ValueError("option_type must be 'call' or 'put'")
 
 
-def apply_price_mechanics(
+def apply_price_projection(
     *,
     raw_price: float,
     spot: float,
@@ -87,12 +95,10 @@ def apply_price_mechanics(
     rate: float,
     dividend_yield: float,
     option_type: str,
-    tick_size: float,
     price_epsilon: float,
-) -> tuple[float, float, bool, str]:
-    """Round to a tick, then keep the price inside its bounds."""
+) -> tuple[float, bool, str]:
+    """Keep a raw noisy price strictly inside its no-arbitrage bounds."""
 
-    rounded = tick_size * round(raw_price / tick_size)
     lower, upper = price_bounds(
         spot,
         strike,
@@ -105,13 +111,13 @@ def apply_price_mechanics(
     upper_cap = upper - price_epsilon
     if lower_cap >= upper_cap:
         midpoint = 0.5 * (lower + upper)
-        return rounded, midpoint, True, "lower" if rounded <= midpoint else "upper"
-    observed = min(upper_cap, max(lower_cap, rounded))
-    if observed <= lower_cap and rounded < lower_cap:
-        return rounded, observed, True, "lower"
-    if observed >= upper_cap and rounded > upper_cap:
-        return rounded, observed, True, "upper"
-    return rounded, observed, False, "none"
+        return midpoint, True, "lower" if raw_price <= midpoint else "upper"
+    observed = min(upper_cap, max(lower_cap, raw_price))
+    if observed <= lower_cap and raw_price < lower_cap:
+        return observed, True, "lower"
+    if observed >= upper_cap and raw_price > upper_cap:
+        return observed, True, "upper"
+    return observed, False, "none"
 
 
 def apply_noise_to_rows(
@@ -123,7 +129,7 @@ def apply_noise_to_rows(
     noise_draw: np.ndarray,
     config: NoiseSettings,
 ) -> list[dict[str, Any]]:
-    """Turn noisy IVs into rounded, bounded observed prices and IVs."""
+    """Turn noisy IVs into bounded observed prices and IVs."""
 
     output: list[dict[str, Any]] = []
     for index, row in enumerate(rows):
@@ -145,7 +151,7 @@ def apply_noise_to_rows(
             discount_factor=discount,
             option_type=option_type,
         )
-        rounded, observed_price, was_capped, cap_direction = apply_price_mechanics(
+        observed_price, was_capped, cap_direction = apply_price_projection(
             raw_price=raw_price,
             spot=spot,
             strike=strike,
@@ -153,7 +159,6 @@ def apply_noise_to_rows(
             rate=rate,
             dividend_yield=dividend_yield,
             option_type=option_type,
-            tick_size=config.tick_size,
             price_epsilon=config.price_epsilon,
         )
         observed_iv = implied_vol_black76(
@@ -170,8 +175,7 @@ def apply_noise_to_rows(
             {
                 "noise_scenario": scenario,
                 "raw_noisy_iv": float(raw_noisy_iv[index]),
-                "raw_price_before_rounding": float(raw_price),
-                "price_after_rounding": float(rounded),
+                "raw_noisy_price": float(raw_price),
                 "observed_price": float(observed_price),
                 "observed_iv": max(float(observed_iv), config.sigma_min),
                 "was_price_capped": bool(was_capped),

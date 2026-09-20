@@ -27,7 +27,7 @@ from Scripts.sample_run import (
     sha256_file,
 )
 
-PRODUCTION_CONFIG = Path(__file__).resolve().parents[1] / "configs" / "heston_experiment_run_001.json"
+PRODUCTION_CONFIG = Path(__file__).resolve().parents[1] / "configs" / "heston_experiment_run_002.json"
 
 
 def _mini_config(tmp_path: Path, *, n_samples: int = 2):
@@ -145,7 +145,7 @@ def test_generation_combines_scenarios_validates_and_resumes(tmp_path):
     assert record["current_stage"] == "validated"
     assert record["validation"]["passed"]
     assert set(record["validation"]["panels"]["scenarios"]) == set(SCENARIO_ORDER)
-    assert record["artifacts"]["panels"]["rows"] == 60
+    assert record["artifacts"]["panels"]["rows"] == 75
     assert record["artifacts"]["panels"]["rows_by_scenario"] == {
         name: 15 for name in SCENARIO_ORDER
     }
@@ -203,6 +203,9 @@ def test_combined_panel_schema_values_factors_and_scenario_loading(tmp_path):
     target = root / "sample_000" / "panels.parquet"
     frame = pd.read_parquet(target)
     assert tuple(frame.columns) == COMBINED_PANEL_COLUMNS
+    assert "raw_noisy_price" in frame.columns
+    assert "raw_price_before_rounding" not in frame.columns
+    assert "price_after_rounding" not in frame.columns
     assert tuple(frame["scenario"].drop_duplicates()) == SCENARIO_ORDER
     clean = frame[frame["scenario"] == "clean"]
     assert np.array_equal(clean["estimation_price"], clean["model_price"])
@@ -219,8 +222,20 @@ def test_combined_panel_schema_values_factors_and_scenario_loading(tmp_path):
         "persistent_factor_maturity",
     ]
     assert persistent[factor_columns].notna().all().all()
+    assert persistent["variance_linked_factor"].isna().all()
     assert (
         persistent.groupby("week_index")[factor_columns].nunique().to_numpy() == 1
+    ).all()
+    variance_linked = frame[frame["scenario"] == "variance_linked_factor"]
+    assert variance_linked[factor_columns].notna().all().all()
+    assert variance_linked["variance_linked_factor"].notna().all()
+    assert (
+        variance_linked.groupby("week_index")[
+            [*factor_columns, "variance_linked_factor"]
+        ]
+        .nunique()
+        .to_numpy()
+        == 1
     ).all()
     for scenario in SCENARIO_ORDER:
         panel = load_option_panel(target, scenario=scenario)
@@ -316,7 +331,13 @@ def test_complete_sample_skip_and_partial_estimation_resume(tmp_path, monkeypatc
         log_level="ERROR",
     )
     assert complete["status"] == "complete"
-    assert calls == ["clean", "low_iid", "spatial_corr", "persistent_factor"]
+    assert calls == [
+        "clean",
+        "low_iid",
+        "spatial_corr",
+        "persistent_factor",
+        "variance_linked_factor",
+    ]
     assert tuple(complete["estimation"]) == SCENARIO_ORDER
     assert complete["estimation"]["clean"]["success"] is False
     assert complete["errors"] == []
@@ -411,6 +432,7 @@ def _reference_rows(config, sample_id):
             scenario=scenario,
             seed=scenario_seed(config.noise.base_seed, sample_id, scenario),
             config=config.noise,
+            params_p=config.dgp,
         )
         scenarios[scenario] = rows
         factors[scenario] = factor_rows
@@ -450,8 +472,7 @@ def test_short_profile_path_panels_factors_and_estimates_are_numerically_equival
     noise_numeric = [
         "noise_draw",
         "raw_noisy_iv",
-        "raw_price_before_rounding",
-        "price_after_rounding",
+        "raw_noisy_price",
         "observed_price",
         "observed_iv",
     ]

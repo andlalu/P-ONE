@@ -4,6 +4,7 @@ import math
 import pytest
 
 from OptionData.io import load_option_panel, write_panel_metadata
+from OptionData.noise_common import NOISE_SCENARIOS
 from OptionPricing.config import FixedCosBasisConfig
 from OptionPricing.cos_basis import cos_specification_metadata
 
@@ -60,3 +61,29 @@ def test_canonical_panel_loading_from_parquet(tmp_path):
     write_panel_metadata(target, _metadata())
     panel = load_option_panel(target, max_dates=2)
     assert panel.n_dates == 2
+
+
+def test_combined_panel_loading_supports_variance_linked_factor(tmp_path):
+    target = tmp_path / "combined.csv"
+    rows = []
+    for scenario in ("clean",) + NOISE_SCENARIOS:
+        row = dict(_rows()[0])
+        row.update(
+            sample_id=0,
+            scenario=scenario,
+            log_moneyness=0.0,
+            estimation_iv=0.21,
+            estimation_price=4.1,
+        )
+        rows.append(row)
+    with target.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    panel = load_option_panel(target, scenario="variance_linked_factor")
+
+    assert panel.n_dates == 1
+    assert panel.n_contracts == 1
+    assert panel.metadata["scenario"] == "variance_linked_factor"
+    assert panel.dates[0].observed_iv[0] == pytest.approx(0.21)

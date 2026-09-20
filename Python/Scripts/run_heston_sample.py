@@ -25,7 +25,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Run one complete Heston Monte Carlo sample: generation, validation "
-            "and four first-step IS-CGMM estimates."
+            "and five first-step IS-CGMM estimates."
         )
     )
     parser.add_argument("--config", required=True)

@@ -1,8 +1,9 @@
 # Experiment configuration
 
-`heston_experiment_run_001.json` is the production configuration for path
-simulation, clean option panels, noise scenarios and first-step IS-CGMM
-estimation.
+`heston_experiment_run_002.json` is the 500-sample production configuration for
+path simulation, clean option panels, four noise scenarios and first-step
+IS-CGMM estimation. `heston_experiment_run_001.json` remains the frozen
+historical 100-sample configuration.
 
 ## Production runners
 
@@ -10,9 +11,9 @@ The single-sample runner remains the numerical entry point for local debugging:
 
 ```bash
 python Python/Scripts/run_heston_sample.py \
-  --config Python/Scripts/configs/heston_experiment_run_001.json \
+  --config Python/Scripts/configs/heston_experiment_run_002.json \
   --sample-id 0 \
-  --output-root outputs/run_001
+  --output-root outputs/run_002
 ```
 
 The range runner is a thin orchestration layer around the same `run_sample(...)`
@@ -20,28 +21,28 @@ implementation:
 
 ```bash
 python Python/Scripts/run_heston_samples.py \
-  --config Python/Scripts/configs/heston_experiment_run_001.json \
-  --output-root /data/p-one/outputs/run_001 \
+  --config Python/Scripts/configs/heston_experiment_run_002.json \
+  --output-root /data/p-one/outputs/run_002 \
   --sample-start 0 \
   --sample-end 8 \
   --sample-workers 8 \
   --scenario clean \
   --resume \
-  --s3-uri s3://<bucket>/p-one/run_001
+  --s3-uri s3://<bucket>/p-one/run_002
 ```
 
 `sample-start` is inclusive and `sample-end` is exclusive, so `[0, 8)` owns
 samples `000` through `007`. Processes run in parallel across samples only;
 each process owns one complete sample directory, while scenarios remain
 sequential within that sample. `--generation-only` still creates and validates
-all four panel variants. `--scenario clean` reuses or creates those shared
+all five panel variants. `--scenario clean` reuses or creates those shared
 panels and estimates only the clean scenario.
 
 The run root contains one authoritative `run.json`. Each `sample_NNN`
 directory contains only `path.npz`, `panels.parquet`, `record.json` and
-`sample.log`. The Parquet file stores `clean`, `low_iid`, `spatial_corr` and
-`persistent_factor` rows together; `record.json` stores embedded validation
-and all four first-step estimates.
+`sample.log`. The Parquet file stores `clean`, `low_iid`, `spatial_corr`,
+`persistent_factor` and `variance_linked_factor` rows together; `record.json`
+stores embedded validation and all five first-step estimates.
 
 Use `--resume` to verify recorded hashes and continue the first incomplete
 stage. Use `--overwrite` to replace only the requested sample directory.
@@ -61,7 +62,9 @@ SAMPLE_START=0 \
 SAMPLE_END=8 \
 SAMPLE_WORKERS=8 \
 SCENARIO=clean \
-S3_URI=s3://<bucket>/p-one/run_001 \
+CONFIG=Python/Scripts/configs/heston_experiment_run_002.json \
+OUTPUT_ROOT=/data/p-one/outputs/run_002 \
+S3_URI=s3://<bucket>/p-one/run_002 \
 bash scripts/run_heston_samples_ec2.sh
 ```
 
@@ -94,7 +97,8 @@ PYTHONPATH=Python python -m pytest \
 - `cos` fixes the maturity grid, calibrated effective widths and term counts.
   `generation_n_cos` prices generated panels; `estimation_n_cos` prices inside
   state inversion and may legitimately differ.
-- `noise` contains common rounding/bound controls and the three scenarios.
+- `noise` contains common IV-floor/price-bound controls and the four noisy
+  scenarios.
 - `estimation` contains implied-state, quadrature, C-GMM and Powell settings.
 
 ## Estimation settings
@@ -136,6 +140,9 @@ marginal scale.
 - `persistent_factor` uses three persistent factor coefficients, stationary
   factor standard deviations and the equivalent innovation variances. Its
   residual policy preserves the configured total marginal scale.
+- `variance_linked_factor` is Design C plus a common factor linked to the
+  standardised latent variance state; `latent_variance_share` sets its target
+  variance share.
 
-`base_seed` fixes scenario seeds. `sigma_min`, `price_epsilon` and `tick_size`
-control the final noisy-IV floor, strict price bounds and price rounding.
+`base_seed` fixes scenario seeds. `sigma_min` and `price_epsilon` control the
+final noisy-IV floor and strict no-arbitrage price bounds.

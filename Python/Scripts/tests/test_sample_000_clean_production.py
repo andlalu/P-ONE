@@ -23,6 +23,7 @@ from Scripts.experiment_config import load_experiment_config
 from Scripts.sample_run import (
     PERSISTENT_FACTOR_COLUMNS,
     SCENARIO_ORDER,
+    VARIANCE_LINKED_FACTOR_COLUMN,
     run_sample,
     sha256_file,
 )
@@ -30,7 +31,7 @@ from Scripts.sample_run import (
 PRODUCTION_CONFIG = (
     Path(__file__).resolve().parents[1]
     / "configs"
-    / "heston_experiment_run_001.json"
+    / "heston_experiment_run_002.json"
 )
 
 
@@ -38,7 +39,7 @@ PRODUCTION_CONFIG = (
 @pytest.mark.slow
 def test_sample_000_clean_production(tmp_path):
     config = load_experiment_config(PRODUCTION_CONFIG)
-    output_root = tmp_path / "run_001"
+    output_root = tmp_path / "run_002"
 
     generation_started = time.perf_counter()
     generation_record = run_sample(
@@ -95,7 +96,7 @@ def test_sample_000_clean_production(tmp_path):
     ]
 
     run_payload = json.loads((output_root / "run.json").read_text())
-    assert run_payload["run_id"] == "run_001"
+    assert run_payload["run_id"] == "run_002"
     assert run_payload["configuration_hash"] == config.experiment_config_hash
     assert run_payload["configuration"] == config.raw_config
     assert run_payload["git_sha"]
@@ -130,7 +131,7 @@ def test_sample_000_clean_production(tmp_path):
 
     frame = pd.read_parquet(panel_file)
     assert tuple(frame["scenario"].drop_duplicates()) == SCENARIO_ORDER
-    assert len(frame) == 31_560
+    assert len(frame) == 39_450
     assert frame.groupby("scenario", sort=False).size().to_dict() == {
         scenario: 7_890 for scenario in SCENARIO_ORDER
     }
@@ -161,6 +162,7 @@ def test_sample_000_clean_production(tmp_path):
         "low_iid": 9_900_101,
         "spatial_corr": 9_900_202,
         "persistent_factor": 9_900_303,
+        "variance_linked_factor": 9_900_404,
     }
     assert generation_record["seeds"] == expected_seeds
     for scenario in SCENARIO_ORDER[1:]:
@@ -177,6 +179,7 @@ def test_sample_000_clean_production(tmp_path):
 
     persistent = frame[frame["scenario"] == "persistent_factor"]
     assert persistent[list(PERSISTENT_FACTOR_COLUMNS)].notna().all().all()
+    assert persistent[VARIANCE_LINKED_FACTOR_COLUMN].isna().all()
     assert persistent["week_index"].nunique() == 526
     assert (
         persistent.groupby("week_index")[list(PERSISTENT_FACTOR_COLUMNS)]
@@ -191,9 +194,21 @@ def test_sample_000_clean_production(tmp_path):
             .to_numpy()
         )
     )
-    for scenario in SCENARIO_ORDER[:-1]:
+    variance_linked = frame[frame["scenario"] == "variance_linked_factor"]
+    assert variance_linked[list(PERSISTENT_FACTOR_COLUMNS)].notna().all().all()
+    assert variance_linked[VARIANCE_LINKED_FACTOR_COLUMN].notna().all()
+    assert (
+        variance_linked.groupby("week_index")[
+            [*PERSISTENT_FACTOR_COLUMNS, VARIANCE_LINKED_FACTOR_COLUMN]
+        ]
+        .nunique()
+        .to_numpy()
+        == 1
+    ).all()
+    for scenario in ("clean", "low_iid", "spatial_corr"):
         selected = frame[frame["scenario"] == scenario]
         assert selected[list(PERSISTENT_FACTOR_COLUMNS)].isna().all().all()
+        assert selected[VARIANCE_LINKED_FACTOR_COLUMN].isna().all()
 
     assert generation_record["status"] == "generated"
     assert generation_record["current_stage"] == "validated"

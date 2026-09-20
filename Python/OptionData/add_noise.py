@@ -15,17 +15,15 @@ from OptionData.noise_persistent_factor import (
     validate_persistent_factor_settings,
 )
 from OptionData.noise_spatial import spatial_noise
+from OptionData.noise_variance_linked import (
+    validate_variance_linked_settings,
+    variance_linked_factor_noise,
+)
 
 
 def validate_noise_settings(config: NoiseSettings) -> None:
-    if (
-        config.sigma_min <= 0.0
-        or config.price_epsilon <= 0.0
-        or config.tick_size <= 0.0
-    ):
-        raise ValueError(
-            "noise sigma_min, price_epsilon and tick_size must be positive"
-        )
+    if config.sigma_min <= 0.0 or config.price_epsilon <= 0.0:
+        raise ValueError("noise sigma_min and price_epsilon must be positive")
     invalid = set(config.scenarios) - set(NOISE_SCENARIOS)
     if invalid:
         raise ValueError(f"unsupported noise scenarios: {', '.join(sorted(invalid))}")
@@ -41,6 +39,10 @@ def validate_noise_settings(config: NoiseSettings) -> None:
         validate_persistent_factor_settings(
             config.scenarios["persistent_factor"]
         )
+    if "variance_linked_factor" in config.scenarios:
+        validate_variance_linked_settings(
+            config.scenarios["variance_linked_factor"]
+        )
 
 
 def generate_noisy_panel_rows(
@@ -49,8 +51,9 @@ def generate_noisy_panel_rows(
     scenario: str,
     seed: int,
     config: NoiseSettings,
+    params_p: Any | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Apply one of the three noise scenarios."""
+    """Apply one configured noise scenario."""
 
     if scenario not in NOISE_SCENARIOS:
         raise ValueError(f"unsupported noise scenario: {scenario}")
@@ -69,8 +72,17 @@ def generate_noisy_panel_rows(
         raw_noisy_iv, noise, factors = low_iid_noise(rows, rng, config)
     elif scenario == "spatial_corr":
         raw_noisy_iv, noise, factors = spatial_noise(rows, rng, config)
-    else:
+    elif scenario == "persistent_factor":
         raw_noisy_iv, noise, factors = persistent_factor_noise(rows, rng, config)
+    else:
+        if params_p is None:
+            raise ValueError("variance_linked_factor requires physical Heston parameters")
+        raw_noisy_iv, noise, factors = variance_linked_factor_noise(
+            rows,
+            rng,
+            config,
+            params_p,
+        )
     return (
         apply_noise_to_rows(
             rows,

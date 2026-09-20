@@ -44,19 +44,19 @@ from OptionData.add_noise import generate_noisy_panel_rows
 from OptionData.clean_panel import generate_clean_option_panel_rows, option_type_for_log_moneyness
 from OptionData.io import load_option_panel, parquet_available
 from OptionData.noise_common import NOISE_SCENARIOS, price_bounds, scenario_seed
+from OptionData.noise_variance_linked import variance_linked_gamma
 from OptionPricing.cos_basis import cos_specification_metadata
 from OptionPricing.cos_pricer import CosOptionPricer
 from Scripts.experiment_config import ExperimentConfig
 
 LOGGER = logging.getLogger(__name__)
 
-FORMAT_VERSION = 1
+FORMAT_VERSION = 2
 SCENARIO_ORDER = ("clean",) + NOISE_SCENARIOS
 NOISE_COLUMNS = (
     "noise_draw",
     "raw_noisy_iv",
-    "raw_price_before_rounding",
-    "price_after_rounding",
+    "raw_noisy_price",
     "observed_price",
     "observed_iv",
     "was_price_capped",
@@ -68,6 +68,7 @@ PERSISTENT_FACTOR_COLUMNS = (
     "persistent_factor_moneyness",
     "persistent_factor_maturity",
 )
+VARIANCE_LINKED_FACTOR_COLUMN = "variance_linked_factor"
 COMBINED_PANEL_COLUMNS = (
     "run_id",
     "sample_id",
@@ -95,6 +96,7 @@ COMBINED_PANEL_COLUMNS = (
     "estimation_iv",
     *NOISE_COLUMNS,
     *PERSISTENT_FACTOR_COLUMNS,
+    VARIANCE_LINKED_FACTOR_COLUMN,
 )
 
 _LOG_STAGE = contextvars.ContextVar("sample_run_stage", default="initialising")
@@ -295,6 +297,7 @@ def _initial_record(
             "estimation_low_iid": 0.0,
             "estimation_spatial_corr": 0.0,
             "estimation_persistent_factor": 0.0,
+            "estimation_variance_linked_factor": 0.0,
             "total": 0.0,
         },
         "errors": [],
@@ -408,8 +411,7 @@ def _combined_clean_row(row: dict[str, Any]) -> dict[str, Any]:
             "estimation_iv": float(row["model_iv"]),
             "noise_draw": None,
             "raw_noisy_iv": None,
-            "raw_price_before_rounding": None,
-            "price_after_rounding": None,
+            "raw_noisy_price": None,
             "observed_price": None,
             "observed_iv": None,
             "was_price_capped": False,
@@ -418,6 +420,7 @@ def _combined_clean_row(row: dict[str, Any]) -> dict[str, Any]:
             "persistent_factor_level": None,
             "persistent_factor_moneyness": None,
             "persistent_factor_maturity": None,
+            "variance_linked_factor": None,
         }
     )
     return item
@@ -438,6 +441,11 @@ def _combined_noisy_row(
             "persistent_factor_level": None if factor is None else float(factor["factor_0"]),
             "persistent_factor_moneyness": None if factor is None else float(factor["factor_1"]),
             "persistent_factor_maturity": None if factor is None else float(factor["factor_2"]),
+            "variance_linked_factor": (
+                None
+                if factor is None or factor.get("variance_linked_factor") is None
+                else float(factor["variance_linked_factor"])
+            ),
         }
     )
     return item
@@ -497,7 +505,7 @@ def build_combined_panel(
     target: Path,
 ) -> dict[str, Any]:
     if config.noise is None or config.noise.scenario_names() != NOISE_SCENARIOS:
-        raise ValueError("the sample runner requires all three production noise scenarios")
+        raise ValueError("the sample runner requires all four production noise scenarios")
     clean_rows = generate_clean_option_panel_rows(
         run_id=config.run_id,
         sample_id=sample_id,
@@ -523,13 +531,18 @@ def build_combined_panel(
             scenario=scenario,
             seed=seed,
             config=config.noise,
+            params_p=parameters,
         )
         factor_by_week = {int(item["week_index"]): item for item in factors}
         combined.extend(
             _combined_noisy_row(
                 row,
                 scenario,
-                factor_by_week.get(int(row["week_index"])) if scenario == "persistent_factor" else None,
+                (
+                    factor_by_week.get(int(row["week_index"]))
+                    if scenario in {"persistent_factor", "variance_linked_factor"}
+                    else None
+                ),
             )
             for row in noisy_rows
         )
@@ -668,8 +681,7 @@ def _scenario_validation(frame: Any, config: ExperimentConfig, sample_id: int, s
         required = [
             "noise_draw",
             "raw_noisy_iv",
-            "raw_price_before_rounding",
-            "price_after_rounding",
+            "raw_noisy_price",
             "observed_price",
             "observed_iv",
             "was_price_capped",
@@ -682,15 +694,10 @@ def _scenario_validation(frame: Any, config: ExperimentConfig, sample_id: int, s
         capped = frame["was_price_capped"].astype(bool).to_numpy()
         directions = frame["cap_direction"].astype(str).to_numpy()
         checks["cap_flag_consistency"] = bool(np.all(capped == (directions != "none")))
-        assert config.noise is not None
-        rounded_units = frame["price_after_rounding"].astype(float).to_numpy() / config.noise.tick_size
-        checks["rounding_consistency"] = bool(
-            np.allclose(rounded_units, np.round(rounded_units), rtol=0.0, atol=1e-9)
-        )
         checks["n_capped_lower"] = int(np.count_nonzero(directions == "lower"))
         checks["n_capped_upper"] = int(np.count_nonzero(directions == "upper"))
         checks["n_capped_total"] = int(np.count_nonzero(capped))
-    if scenario == "persistent_factor":
+    if scenario in {"persistent_factor", "variance_linked_factor"}:
         factor_frame = frame[["week_index", *PERSISTENT_FACTOR_COLUMNS]]
         checks["factor_rows_cover_all_dates"] = (
             factor_frame["week_index"].nunique() == config.simulation.t_week + 1
@@ -713,6 +720,49 @@ def _scenario_validation(frame: Any, config: ExperimentConfig, sample_id: int, s
     else:
         checks["persistent_factor_values_nullable_valid"] = bool(
             all(frame[name].isna().all() for name in PERSISTENT_FACTOR_COLUMNS)
+        )
+    if scenario == "variance_linked_factor":
+        variance_factor = frame[["week_index", VARIANCE_LINKED_FACTOR_COLUMN]]
+        checks["variance_factor_rows_cover_all_dates"] = (
+            variance_factor["week_index"].nunique() == config.simulation.t_week + 1
+        )
+        checks["variance_factor_values_constant_within_date"] = bool(
+            (
+                variance_factor.groupby("week_index", sort=True)[
+                    VARIANCE_LINKED_FACTOR_COLUMN
+                ]
+                .nunique(dropna=False)
+                .to_numpy()
+                == 1
+            ).all()
+        )
+        checks["variance_factor_values_finite"] = _finite(
+            variance_factor,
+            VARIANCE_LINKED_FACTOR_COLUMN,
+        )
+        assert config.noise is not None
+        factor_config = config.noise.scenarios[scenario]
+        gamma_v = variance_linked_gamma(
+            frame["log_moneyness"].astype(float).to_numpy(),
+            frame["maturity_years"].astype(float).to_numpy(),
+            factor_config,
+        )
+        variance_state_std = np.sqrt(
+            config.dgp.vbar
+            * config.dgp.sigma_v
+            * config.dgp.sigma_v
+            / (2.0 * config.dgp.kappa)
+        )
+        expected = gamma_v * (
+            frame["V"].astype(float).to_numpy() - config.dgp.vbar
+        ) / variance_state_std
+        actual = frame[VARIANCE_LINKED_FACTOR_COLUMN].astype(float).to_numpy()
+        checks["variance_factor_matches_latent_variance"] = bool(
+            np.allclose(actual, expected, rtol=1e-12, atol=1e-15)
+        )
+    else:
+        checks["variance_linked_factor_nullable_valid"] = bool(
+            frame[VARIANCE_LINKED_FACTOR_COLUMN].isna().all()
         )
     boolean_checks = [
         value
