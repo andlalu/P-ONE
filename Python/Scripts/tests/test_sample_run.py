@@ -20,11 +20,13 @@ from Scripts.experiment_config import load_experiment_config
 from Scripts.sample_run import (
     COMBINED_PANEL_COLUMNS,
     SCENARIO_ORDER,
+    TICK_COLUMNS,
     _estimate_is_complete,
     atomic_json,
     initialise_or_verify_run,
     run_sample,
     sha256_file,
+    panel_columns,
 )
 
 PRODUCTION_CONFIG = Path(__file__).resolve().parents[1] / "configs" / "heston_experiment_run_002.json"
@@ -252,6 +254,27 @@ def test_combined_panel_schema_values_factors_and_scenario_loading(tmp_path):
         load_option_panel(target, scenario="missing")
     with pytest.raises(ValueError, match="scenario must be selected"):
         load_option_panel(target)
+
+
+def test_tick_rounded_panel_schema_and_validation(tmp_path):
+    config = _mini_config(tmp_path)
+    ticked = replace(config, noise=replace(config.noise, tick_size=0.01))
+    record = run_sample(
+        config=ticked,
+        sample_id=0,
+        output_root=tmp_path / "tick_run",
+        generation_only=True,
+        log_level="ERROR",
+    )
+    frame = pd.read_parquet(tmp_path / "tick_run" / "sample_000" / "panels.parquet")
+    assert tuple(frame.columns) == panel_columns(ticked)
+    assert all(frame.loc[frame.scenario == "clean", name].isna().all() for name in TICK_COLUMNS)
+    assert all(frame.loc[frame.scenario != "clean", name].notna().all() for name in TICK_COLUMNS)
+    assert record["validation"]["panels"]["passed"]
+    assert all(
+        record["validation"]["panels"]["scenarios"][name]["tick_rounding_valid"]
+        for name in NOISE_SCENARIOS
+    )
 
 
 def test_failure_recording_and_overwrite_isolation(tmp_path, monkeypatch):

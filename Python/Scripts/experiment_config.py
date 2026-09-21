@@ -131,6 +131,7 @@ def _normalise_noise_settings(raw_noise: dict[str, Any] | None) -> NoiseSettings
         sigma_min=float(raw_noise["sigma_min"]),
         price_epsilon=float(raw_noise["price_epsilon"]),
         scenarios=scenarios,
+        tick_size=(None if raw_noise.get("tick_size") is None else float(raw_noise["tick_size"])),
     )
     validate_noise_settings(settings)
     return settings

@@ -63,6 +63,7 @@ NOISE_COLUMNS = (
     "cap_direction",
     "noise_seed",
 )
+TICK_COLUMNS = ("raw_price_before_rounding", "price_after_rounding")
 PERSISTENT_FACTOR_COLUMNS = (
     "persistent_factor_level",
     "persistent_factor_moneyness",
@@ -98,6 +99,18 @@ COMBINED_PANEL_COLUMNS = (
     *PERSISTENT_FACTOR_COLUMNS,
     VARIANCE_LINKED_FACTOR_COLUMN,
 )
+
+
+def panel_columns(config: ExperimentConfig) -> tuple[str, ...]:
+    """Keep run_002's schema unchanged; add tick diagnostics only when configured."""
+    if config.noise is None or config.noise.tick_size is None:
+        return COMBINED_PANEL_COLUMNS
+    index = COMBINED_PANEL_COLUMNS.index("raw_noisy_price") + 1
+    return COMBINED_PANEL_COLUMNS[:index] + TICK_COLUMNS + COMBINED_PANEL_COLUMNS[index:]
+
+
+def panel_format_version(config: ExperimentConfig) -> int:
+    return 3 if config.noise is not None and config.noise.tick_size is not None else FORMAT_VERSION
 
 _LOG_STAGE = contextvars.ContextVar("sample_run_stage", default="initialising")
 _LOG_SCENARIO = contextvars.ContextVar("sample_run_scenario", default="-")
@@ -163,7 +176,7 @@ def _package_version(distribution: str) -> str:
 def _run_payload(config: ExperimentConfig) -> dict[str, Any]:
     git_sha, git_dirty = _git_state()
     return {
-        "format_version": FORMAT_VERSION,
+        "format_version": panel_format_version(config),
         "run_id": config.run_id,
         "git_sha": git_sha,
         "git_dirty": git_dirty,
@@ -265,7 +278,7 @@ def _initial_record(
     } if config.noise is not None else {}
     git_sha, _ = _git_state()
     return {
-        "format_version": FORMAT_VERSION,
+        "format_version": panel_format_version(config),
         "run_id": config.run_id,
         "sample_id": sample_id,
         "configuration_hash": config.experiment_config_hash,
@@ -465,7 +478,8 @@ def _write_combined_panel(
     import pyarrow as pa  # type: ignore[import-not-found]
     import pyarrow.parquet as pq  # type: ignore[import-not-found]
 
-    frame = pd.DataFrame(rows, columns=COMBINED_PANEL_COLUMNS)
+    columns = panel_columns(config)
+    frame = pd.DataFrame(rows, columns=columns)
     frame["noise_seed"] = pd.array(frame["noise_seed"], dtype="Int64")
     table = pa.Table.from_pandas(frame, preserve_index=False)
     metadata = dict(table.schema.metadata or {})
@@ -475,7 +489,7 @@ def _write_combined_panel(
             b"p_one.sample_id": str(sample_id).encode("ascii"),
             b"p_one.configuration_hash": config.experiment_config_hash.encode("ascii"),
             b"p_one.git_sha": git_sha.encode("ascii"),
-            b"p_one.format_version": str(FORMAT_VERSION).encode("ascii"),
+            b"p_one.format_version": str(panel_format_version(config)).encode("ascii"),
             b"p_one.scenario_order": json.dumps(SCENARIO_ORDER).encode("utf-8"),
             b"p_one.cos_basis": json.dumps(
                 cos_specification_metadata(config.cos_basis),
@@ -491,7 +505,7 @@ def _write_combined_panel(
     if published.num_rows != len(rows):
         temporary.unlink(missing_ok=True)
         raise RuntimeError("atomic Parquet row-count validation failed before publication")
-    if published.column_names != list(COMBINED_PANEL_COLUMNS):
+    if published.column_names != list(columns):
         temporary.unlink(missing_ok=True)
         raise RuntimeError("atomic Parquet schema validation failed before publication")
     os.replace(temporary, target)
@@ -677,6 +691,10 @@ def _scenario_validation(frame: Any, config: ExperimentConfig, sample_id: int, s
             and not frame["was_price_capped"].astype(bool).any()
             and (frame["cap_direction"].astype(str) == "none").all()
         )
+        if config.noise is not None and config.noise.tick_size is not None:
+            checks["clean_tick_fields_nullable_valid"] = bool(
+                all(frame[name].isna().all() for name in TICK_COLUMNS)
+            )
     else:
         required = [
             "noise_draw",
@@ -697,6 +715,17 @@ def _scenario_validation(frame: Any, config: ExperimentConfig, sample_id: int, s
         checks["n_capped_lower"] = int(np.count_nonzero(directions == "lower"))
         checks["n_capped_upper"] = int(np.count_nonzero(directions == "upper"))
         checks["n_capped_total"] = int(np.count_nonzero(capped))
+        if config.noise is not None and config.noise.tick_size is not None:
+            raw = frame["raw_price_before_rounding"].astype(float).to_numpy()
+            rounded = frame["price_after_rounding"].astype(float).to_numpy()
+            alias = frame["raw_noisy_price"].astype(float).to_numpy()
+            expected = config.noise.tick_size * np.rint(raw / config.noise.tick_size)
+            checks["tick_rounding_valid"] = bool(
+                np.isfinite(raw).all()
+                and np.isfinite(rounded).all()
+                and np.array_equal(raw, alias)
+                and np.allclose(rounded, expected, rtol=0.0, atol=1e-12)
+            )
     if scenario in {"persistent_factor", "variance_linked_factor"}:
         factor_frame = frame[["week_index", *PERSISTENT_FACTOR_COLUMNS]]
         checks["factor_rows_cover_all_dates"] = (
@@ -784,7 +813,7 @@ def validate_panel_artifact(
     import pandas as pd  # type: ignore[import-not-found]
 
     frame = pd.read_parquet(panel_file)
-    missing = set(COMBINED_PANEL_COLUMNS) - set(frame.columns)
+    missing = set(panel_columns(config)) - set(frame.columns)
     if missing:
         raise AssertionError(f"combined panel is missing columns: {sorted(missing)}")
     sample_ids = set(frame["sample_id"].astype(int))

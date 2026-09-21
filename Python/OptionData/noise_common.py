@@ -36,6 +36,7 @@ class NoiseSettings:
     sigma_min: float
     price_epsilon: float
     scenarios: dict[str, dict[str, Any]]
+    tick_size: float | None = None
 
     def scenario_names(self) -> tuple[str, ...]:
         return tuple(name for name in NOISE_SCENARIOS if name in self.scenarios)
@@ -120,6 +121,34 @@ def apply_price_projection(
     return observed, False, "none"
 
 
+def apply_price_mechanics(
+    *,
+    raw_price: float,
+    spot: float,
+    strike: float,
+    tau: float,
+    rate: float,
+    dividend_yield: float,
+    option_type: str,
+    tick_size: float,
+    price_epsilon: float,
+) -> tuple[float, float, bool, str]:
+    """Run the original run_001 tick rounding followed by price projection."""
+
+    rounded = tick_size * round(raw_price / tick_size)
+    observed, was_capped, cap_direction = apply_price_projection(
+        raw_price=rounded,
+        spot=spot,
+        strike=strike,
+        tau=tau,
+        rate=rate,
+        dividend_yield=dividend_yield,
+        option_type=option_type,
+        price_epsilon=price_epsilon,
+    )
+    return rounded, observed, was_capped, cap_direction
+
+
 def apply_noise_to_rows(
     rows: list[dict[str, Any]],
     *,
@@ -151,16 +180,30 @@ def apply_noise_to_rows(
             discount_factor=discount,
             option_type=option_type,
         )
-        observed_price, was_capped, cap_direction = apply_price_projection(
-            raw_price=raw_price,
-            spot=spot,
-            strike=strike,
-            tau=tau,
-            rate=rate,
-            dividend_yield=dividend_yield,
-            option_type=option_type,
-            price_epsilon=config.price_epsilon,
-        )
+        rounded = None
+        if config.tick_size is None:
+            observed_price, was_capped, cap_direction = apply_price_projection(
+                raw_price=raw_price,
+                spot=spot,
+                strike=strike,
+                tau=tau,
+                rate=rate,
+                dividend_yield=dividend_yield,
+                option_type=option_type,
+                price_epsilon=config.price_epsilon,
+            )
+        else:
+            rounded, observed_price, was_capped, cap_direction = apply_price_mechanics(
+                raw_price=raw_price,
+                spot=spot,
+                strike=strike,
+                tau=tau,
+                rate=rate,
+                dividend_yield=dividend_yield,
+                option_type=option_type,
+                tick_size=config.tick_size,
+                price_epsilon=config.price_epsilon,
+            )
         observed_iv = implied_vol_black76(
             price=observed_price,
             forward=forward,
@@ -176,6 +219,8 @@ def apply_noise_to_rows(
                 "noise_scenario": scenario,
                 "raw_noisy_iv": float(raw_noisy_iv[index]),
                 "raw_noisy_price": float(raw_price),
+                "raw_price_before_rounding": None if rounded is None else float(raw_price),
+                "price_after_rounding": None if rounded is None else float(rounded),
                 "observed_price": float(observed_price),
                 "observed_iv": max(float(observed_iv), config.sigma_min),
                 "was_price_capped": bool(was_capped),
