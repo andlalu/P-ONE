@@ -5,6 +5,28 @@ path simulation, clean option panels, four noise scenarios and first-step
 IS-CGMM estimation. `heston_experiment_run_001.json` remains the frozen
 historical 100-sample configuration.
 
+`heston_experiment_run_003.json` is a separate, local 250-sample generation
+configuration. It restores the original run_001 cent tick: noisy Black prices
+are rounded to $0.01 before no-arbitrage projection and IV inversion. Samples
+0-99 must be imported with `prepare_run_003.py` from the checksum-verified
+run_001 archive; their clean/A/B/C rows and path bytes are preserved, and only
+the variance-linked design D is added. Samples 100-249 are freshly generated
+with all five designs. No run_001 estimates are carried over.
+
+```bash
+PYTHONPATH=Python python Python/Scripts/prepare_run_003.py \
+  --config Python/Scripts/configs/heston_experiment_run_003.json \
+  --source-root outputs/run_003_source_run_001 --sample-workers 4
+PYTHONPATH=Python python Python/Scripts/run_heston_samples.py \
+  --config Python/Scripts/configs/heston_experiment_run_003.json \
+  --output-root outputs/run_003 \
+  --sample-start 100 --sample-end 250 --sample-workers 4 \
+  --generation-only --resume
+```
+
+The frozen source under `outputs/run_003_source_run_001` is local provenance,
+separate from the run_003 sample payload for a later AWS estimation upload.
+
 ## Production runners
 
 The single-sample runner remains the numerical entry point for local debugging:

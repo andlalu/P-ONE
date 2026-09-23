@@ -67,7 +67,7 @@
 \author{ %name under title %email in footnote \thanks{a.lalu@tinbergen.nl} 
 	    }
 \title{\vspace*{-55pt} Risk Premium Inference from (Noisy) Option Price Panels \vspace*{-35pt}}
-\date{\item First version: June 16, 2018 \item Previous Version: July 21, 2026 \item This version: August 6, 2026}
+\date{\item First version: June 16, 2018 \item Previous Version: August 6, 2026 \item This version: September 25, 2026}
 %start file content
 \begin{document}
 \maketitle
@@ -102,14 +102,14 @@ Compare the finite sample performance of implied state vs. particle filtering wh
 We consider a filtered probability space $\left(\Omega, \mathcal{F}, \lbrace\mathcal{F}\rbrace_{t\geq0}, \mathbb{P} \right)$ satisfying the usual conditions\footnote{See e.g., \citet{protterstochastic}, p. 3.}. Under the historical probability measure, $\mathbb{P}$, the dynamics of the log-price process $\log(S_t)$ and of the stochastic volatility process $V_t$, which make up the state vector $X_t = [\log(S_t), V_t]$, are assumed to be described by the pair of s.d.e.:
 \begin{align}
 	\dif{\log(S_t)} &= \left((r_t-q_t)+ \left(\eta-1/2\right) V_t \right)\dif t + \sqrt{V_t} \dif W_{t,1}^\mathbb{P}; \label{PHestonS}\\
-	\dif{V_t} &= \kappa(\bar{V}-V_t)\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{P} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{P}\right). \label{PHestonV}
+	\dif{V_t} &= \kappa(\bar{V}-V_t)\dif t + \sigma_V\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{P} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{P}\right). \label{PHestonV}
 \end{align}
-$\left(\dif W_{t,1}^\mathbb{P}, \dif W_{t,2}^\mathbb{P}\right)$ are $\mathcal{F}_t$-adapted Brownian motion processes. $\lbrace r \rbrace_{t\geq 0}$  and  $\lbrace q \rbrace_{t\geq 0}$ are $\mathcal{F}_t$-adapted processes (e.g., deterministic) which describe the risk-free rate of interest and the continuous dividend yield respectively. $\eta$ is a parameter which governs the size of the equity risk premium. The local stochastic volatility process mean reverts at a mean reversion rate $\kappa$ to the long run mean level $\bar{V}$. $\sigma_v$ governs the volatility of volatility and $\rho$ represents the instantaneous correlation between returns and volatility.
+$\left(\dif W_{t,1}^\mathbb{P}, \dif W_{t,2}^\mathbb{P}\right)$ are $\mathcal{F}_t$-adapted Brownian motion processes. $\lbrace r \rbrace_{t\geq 0}$  and  $\lbrace q \rbrace_{t\geq 0}$ are $\mathcal{F}_t$-adapted processes (e.g., deterministic) which describe the risk-free rate of interest and the continuous dividend yield respectively. $\eta$ is a parameter which governs the size of the equity risk premium. The local stochastic volatility process mean reverts at a mean reversion rate $\kappa$ to the long run mean level $\bar{V}$. $\sigma_V$ governs the volatility of volatility and $\rho$ represents the instantaneous correlation between returns and volatility.
 
 Under the risk neutral probability measure, $\mathbb{Q}$, the model dynamics are assumed to be: 
 \begin{align}
 	\dif{\log(S_t)} &= \left( (r_t-q_t) - 1/2 V_t\right) \dif t + \sqrt{V_t} \dif W_{t,1}^\mathbb{Q};\label{QHestonS}\\
-	\dif{V_t} &= \kappa(\bar{V}-V_t)\dif t + \eta_{V}V_t\dif t + \sigma_v\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{Q} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{Q}\right).\label{QHestonV}
+	\dif{V_t} &= \kappa(\bar{V}-V_t)\dif t + \eta_{V}V_t\dif t + \sigma_V\sqrt{V_t}\left(\rho \dif W_{t,1}^\mathbb{Q} + \sqrt{1-\rho^2}\dif W_{t,2}^\mathbb{Q}\right).\label{QHestonV}
 \end{align}
 $\left(\dif W_{t,1}^\mathbb{Q}, \dif W_{t,2}^\mathbb{Q}\right)$ are Brownian motions under the (equivalent) martingale pricing measure $\mathbb{Q}$.
 
@@ -119,7 +119,7 @@ Given the focus of the study, attention is restricted to the simplistic set-up o
 Secondly, extensions come with specific estimation challenges which typically require tailored estimation designs to obtain well-behaved parameter estimates therefore limiting the comparability of results obtained throughout the study. 
 
 \subsection{Parameter Sets}
-Let $\theta$ denote the vector of parameters featured in the model. We assume $\theta \in \Theta$ where $\Theta$ is a compact set from the domain of valid data-generating process parameters. For the Heston model specification previously introduced, the value of $\theta$ corresponding to the data-generating process introduced in \eqref{PHestonS} - \eqref{QHestonV} is $\theta = \left[\eta, \kappa, \bar{v}, \sigma_v, \rho, \eta_v\right]$. Note that subsets of the parameter set play a role in either the $\mathbb{P}$-measure specification, the $\mathbb{Q}$-measure specification or in both. E.g., the Heston parameter set can be decomposed into 3 disjoint subsets: $\theta = \left[\theta^\mathbb{P}, \theta^{\mathbb{P}\cap\mathbb{Q}}, \theta^\mathbb{Q}\right]$, where $\theta^\mathbb{P} = \eta$,~ $\theta^{\mathbb{P}\cap\mathbb{Q}} = \left[\kappa, \bar{v}, \sigma_v, \rho\right]$, and $\theta^\mathbb{Q} = \eta_v$. 
+Let $\theta$ denote the vector of parameters featured in the model. We assume $\theta \in \Theta$ where $\Theta$ is a compact set from the domain of valid data-generating process parameters. For the Heston model specification previously introduced, the value of $\theta$ corresponding to the data-generating process introduced in \eqref{PHestonS} - \eqref{QHestonV} is $\theta = \left[\eta, \kappa, \bar{V}, \sigma_V, \rho, \eta_v\right]$. Note that subsets of the parameter set play a role in either the $\mathbb{P}$-measure specification, the $\mathbb{Q}$-measure specification or in both. E.g., the Heston parameter set can be decomposed into 3 disjoint subsets: $\theta = \left[\theta^\mathbb{P}, \theta^{\mathbb{P}\cap\mathbb{Q}}, \theta^\mathbb{Q}\right]$, where $\theta^\mathbb{P} = \eta$,~ $\theta^{\mathbb{P}\cap\mathbb{Q}} = \left[\kappa, \bar{V}, \sigma_V, \rho\right]$, and $\theta^\mathbb{Q} = \eta_v$. 
 
 \subsection{State Vector}
 Assuming we have a time series of state vector observations:\footnote{In practice such a series never exists as the volatility, $V_t$, is an unobservable, i.e., latent state process} $X_1, \dots, X_T$, observed at  equally-spaced timepoints $t_1,\dots,t_T$ with $t_{i+1} - t_i = \Delta >0, \forall i\geq 1 $. Denote by $f(X_{i+1} |X_i; \theta^\mathbb{P},  \theta^{\mathbb{P} \cap \mathbb{Q}})$ the transition density of the state vector $X_t$ under the historical probability measure. Note that the transition density depends on $\theta^\mathbb{P}$ and $\theta^{\mathbb{P} \cap \mathbb{Q}}$ which represent the subset of parameters that describe the model dynamics under $\mathbb{P}$.
@@ -139,10 +139,10 @@ be the vector of corresponding model-based prices implied by
 $P(X_i,T,K;\theta^{\mathbb{P}\cap\mathbb{Q}};\theta^\mathbb{Q})$. Let $\sigma_i^{0} = \left(\sigma_i^{(1),0},\dots,\sigma_i^{(q_i),0}\right)^\top$ denote the corresponding Black-Scholes implied volatility vector.
 
 The difference between $p_i^{\mathrm{obs}}$ and $p_i^{\mathrm{model}}$ is interpreted as option observation error.
-This difference can be, inter alia, attributed to microstructure effects, stale quotes or price discreteness due to minimum tick sizing or quote rounding conventions. \citet{duarte2024very}
+This difference can be, inter alia, attributed to microstructure effects or stale quotes. \citet{duarte2024very}
 suggests that such frictions can be quantitatively important for inference involving option-implied risk premia. 
 
-The proposed simulation design therefore does not commit ex-ante to a single parametric error law but instead considers three observed-panel specifications generated from the same clean model-implied panel. Each specification is meant to reflect empirical concerns raised by the recent literature while keeping the data generating exercise tractable. The three specifications are introduced in implied-volatility space. The corresponding noisy prices are then obtained through the Black-Scholes pricing formula, rounded to the relevant tick size and projected back into the no-arbitrage price interval. This keeps the treatment of all three observation error specifications internally consistent while preserving both price and implied-volatility representations of the noisy option panel.
+The proposed simulation design therefore does not commit ex-ante to a single parametric error law but instead considers four observed-panel specifications generated from the same clean model-implied panel. Each specification is meant to reflect empirical concerns raised by the recent literature while keeping the data generating exercise tractable. The four specifications are introduced in implied-volatility space. The corresponding noisy prices are then obtained through the Black-Scholes pricing formula and projected back into the no-arbitrage price interval. This keeps the treatment of all four observation error specifications internally consistent while preserving both price and implied-volatility representations of the noisy option panel.
 
 \paragraph{Design A: Low I.I.D. noise}
 First, a low-noise benchmark is introduced in which observation errors are independent across contracts, but the marginal scale of the error is allowed to vary with moneyness and maturity. This reflects the fact that option observation errors need not have the same relative impact across the surface and can enter the behaviour of option-based estimators through local features of the panel, in particular for contracts close to the spot or forward price as discussed in \cite{chongtodorov2024vov}.
@@ -265,21 +265,46 @@ The first component acts as a common level error, the second component as a mone
 
 Compared to Designs A and B, the persistent-factor design C induces serially dependent quote distortions through (several) common component(s). Appendix~B reports the realised factor paths and their effect on representative option contracts.
 
-For all three specifications, the raw noisy price is obtained from the Black-Scholes pricing function:
-\begin{align}
-\tilde p_i^{(j)}
+\paragraph{Design D: Variance dependent noise}
+The fourth observation error design extends Design C by allowing part of the temporally persistent common observation error to depend directly on the latent variance state. The purpose of this specification is to examine whether the implied-state estimator is more sensitive to observation errors which move systematically with the state being recovered from the option panel, while keeping the unconditional magnitude of the observation error comparable to that of Designs A--C.
+
+Let
+\[
+z_{V,i}
 =
-B^{\mathrm{BS}}
-\left(
-S_i,K_i^{(j)},\mathcal T_i^{(j)},r_i,q_i,\tilde\sigma_i^{(j)}
-\right).
-\label{eq:raw_contaminated_price}
+\frac{V_i-\bar V}{s_V},
+\qquad
+s_V^2
+=
+\frac{\bar V\sigma_V^2}{2\kappa},
+\]
+denote the standardised latent variance state under the stationary distribution of the variance process. Design D adds to the factor specification of Design C a fourth, variance linked common component,
+\[
+f_{V,i}
+=
+\gamma_V z_{V,i},
+\]
+where $\gamma_V$ determines the magnitude of the dependence between the option observation error and the latent variance state.
+
+The noisy implied volatility is then generated as
+\begin{align}
+\tilde\sigma_i^{(j),D}
+=
+\max\left\{
+\sigma_{\min},
+\sigma_i^{(j),0}
++
+\left(b_i^{(j)}\right)^\top f_i
++
+\gamma_V z_{V,i}
++
+u_i^{(j),D}
+\right\}.
+\label{eq:state_dependent_iv_noise}
 \end{align}
-The raw noisy price $\tilde p_i^{(j),}$ is then rounded to the relevant tick size and projected back into the no-arbitrage price interval for the corresponding European option. The observed implied volatility $\sigma_i^{(j),\mathrm{obs}}$ is obtained by inverting the Black-Scholes pricing formula at the resulting observed price $p_i^{(j),\mathrm{obs}}$. This final step ensures that the noisy panel contains both observed prices and observed implied volatilities, and that invalid prices generated by the noise mechanism are handled by capping rather than by re-sampling.
 
-The detailed calibration of the noise parameters and the contract design $\mathcal{C}_i$ are deferred to Appendix~\ref{app:option_noise_specs}.
+Thus, Designs C and D share the same persistent level, moneyness-slope and maturity-slope factors, while Design D additionally allows a common component of the observation error to vary with the contemporaneous latent variance state. The residual idiosyncratic scale is adjusted so that the unconditional pointwise implied-volatility observation error remains comparable to that of the other designs. Design D therefore changes the dependence structure of the observation error without increasing its overall magnitude.
 
-Note that the three observation error specifications are written in terms of model prices and Black-Scholes implied volatilities. Black-Scholes vegas are stored alongside the generated panels so that the same noisy panels can also be used in vega-scaled estimation exercises if required.
 
 \subsubsection{Implied-State C-GMM Estimation}
 \label{sec:is_cgmm_estimation}
@@ -300,7 +325,7 @@ denote the subset of parameters which enters the risk-neutral option pricing pro
 \theta_{\mathbb Q}
 =
 \left[
-\kappa,\bar V,\sigma_v,\rho,\eta_V
+\kappa,\bar V,\sigma_V,\rho,\eta_V
 \right].
 \]
 Given a candidate value of \(\theta_{\mathbb Q}\), the observed option panel at date \(t_i\) can be used to construct an implied variance state. Let
@@ -444,7 +469,7 @@ Q_T^{(1)}(\theta).
 \end{equation}
 The numerical evaluation of \eqref{eq:is_cgmm_estimator}, including the construction of the implied variance states, the conditional characteristic function and the integration rule for the continuum of moments, is described in Appendix~\ref{app:is_cgmm_implementation}.
 
-The distinction between the clean and noisy option panels is particularly relevant for this estimator. In Design A, independent contract-level observation errors perturb the implied variance state locally through the cross-sectional inversion in \eqref{eq:is_implied_state}. In Design B, cross-sectional dependence in the observation errors can generate coherent distortions across nearby moneyness and maturity points, which may be partially absorbed as changes in the implied state. In Design C, persistent common factors in the option observation error may generate serially dependent distortions in the recovered implied variance sequence. The Monte Carlo comparison therefore evaluates not only how the estimator behaves under small independent quote errors, but also how sensitive it is to cross-sectional and temporal dependence in the option panel observation errors.
+The distinction between the clean and noisy option panels is particularly relevant for this estimator. In Design A, independent contract-level observation errors perturb the implied variance state locally through the cross-sectional inversion in \eqref{eq:is_implied_state}. In Design B, cross-sectional dependence in the observation errors can generate coherent distortions across nearby moneyness and maturity points, which may be partially absorbed as changes in the implied state. In Design C, persistent common factors in the option observation error may generate serially dependent distortions in the recovered implied variance sequence. Design D additionally allows the common level component of the observation error to depend on the latent variance state itself, providing a stress test in which part of the measurement error can move systematically with the state being recovered. The Monte Carlo comparison therefore evaluates sensitivity not only to the magnitude of option observation error, but also to its cross-sectional, temporal and state-dependent structure.
 
  
 \subsubsection{Particle Filter Based Estimation}
@@ -489,7 +514,7 @@ A sample-design estimate is included when its record, simulated path and option 
 
 \input{generated/structural_parameter_table.tex}
 
-For the clean panel, the estimates of $\kappa$ and $\bar V$ are close to their true values on average, while the estimates of $\eta$ show more variation. Relative to the clean benchmark, the three observation-error designs also move the mean estimate of $\bar V$ below its true value and increase the RMSE of $\sigma_v$.
+For the clean panel, the estimates of $\kappa$ and $\bar V$ are close to their true values on average, while the estimates of $\eta$ show more variation. Relative to the clean benchmark, the three observation-error designs also move the mean estimate of $\bar V$ below its true value and increase the RMSE of $\sigma_V$.
 
 \subsection{Accuracy of implied variance states}
 
@@ -562,8 +587,8 @@ We simulate $V_{i+1}$ using the quadratic-exponential scheme of \citet{andersen2
 Let $e_i=\exp(-\kappa\Delta)$. Conditional on $V_i$, the first two moments of the square-root variance transition are
 \begin{align}
 m_i &= \bar V+(V_i-\bar V)e_i, \\
-s_i^2 &= \frac{V_i\sigma_v^2e_i(1-e_i)}{\kappa}
-+\frac{\bar V\sigma_v^2(1-e_i)^2}{2\kappa},
+s_i^2 &= \frac{V_i\sigma_V^2e_i(1-e_i)}{\kappa}
++\frac{\bar V\sigma_V^2(1-e_i)^2}{2\kappa},
 \qquad
 \psi_i=\frac{s_i^2}{m_i^2}.
 \label{eq:qe_moments}
@@ -605,7 +630,7 @@ the log-price increment is simulated as
 &:= y_{i+1}-y_i \nonumber\\
 &= (r_{t_i}-q_{t_i})\Delta
 + \left(\eta-\frac{1}{2}\right)\widehat{I}_i
-+ \frac{\rho}{\sigma_v}\left[\left(V_{i+1}-V_i\right)-\kappa\left(\bar{V}\Delta-\widehat{I}_i\right)\right] \nonumber\\
++ \frac{\rho}{\sigma_V}\left[\left(V_{i+1}-V_i\right)-\kappa\left(\bar{V}\Delta-\widehat{I}_i\right)\right] \nonumber\\
 &\quad + \sqrt{1-\rho^2}\sqrt{\widehat{I}_i}\,Z_{i+1}.
 \label{eq:logS_update}
 \end{align}
@@ -620,14 +645,14 @@ p_{i}^{\mathrm{model}}(T_i^{(j)},K_i^{(j)})
 \qquad j=1,\dots,q_i,
 \label{eq:panel_model_prices}
 \end{align}
-with $\theta=[\eta,\kappa,\bar V,\sigma_v,\rho,\eta_V]$ and the partitioning used in the main text.
+with $\theta=[\eta,\kappa,\bar V,\sigma_V,\rho,\eta_V]$ and the partitioning used in the main text.
 Under $\mathbb{Q}$, the variance drift \eqref{QHestonV} can be written in standard Heston form by defining
 \begin{align}
 \kappa_{\mathbb{Q}} := \kappa-\eta_V,
 \qquad
 \bar V_{\mathbb{Q}} := \frac{\kappa\bar V}{\kappa-\eta_V},
 \end{align}
-so that $dV_t=\kappa_{\mathbb{Q}}(\bar V_{\mathbb{Q}}-V_t)\,dt+\sigma_v\sqrt{V_t}\,dW^{\mathbb{Q}}_{t,v}$.
+so that $dV_t=\kappa_{\mathbb{Q}}(\bar V_{\mathbb{Q}}-V_t)\,dt+\sigma_V\sqrt{V_t}\,dW^{\mathbb{Q}}_{t,v}$.
 
 \subsubsection{COS pricing}
 European option prices in \eqref{eq:panel_model_prices} are evaluated using the Fourier-cosine (COS)
@@ -660,7 +685,7 @@ The historical-measure parameter values used in the data generating process are
 \eta=5.0,\qquad
 \kappa=7.0,\qquad
 \bar V=0.0225,\qquad
-\sigma_v=0.4,\qquad
+\sigma_V=0.4,\qquad
 \rho=-0.5,
 \]
 with (r=0.02) and (q=0). The risk-neutral variance risk-premium parameter is set to
@@ -680,17 +705,10 @@ Clean option prices are computed using the COS method. The corresponding Black-S
 
 This appendix details the functional forms used to generate noisy option panels from the clean model-implied option panel. The purpose is to introduce observation error structures which are simple enough to be implemented in a large-scale Monte Carlo design, but sufficiently close to observed option-market features to provide a meaningful stress-test of PF and IS estimation.
 
-Noisy option panels are constructed from the clean model-implied panels generated in Appendix~\ref{app:sim_heston} using the observation error designs introduced in the main text. The clean panel at date \(t_i\) consists of model prices \(p_i^0\), Black-Scholes implied volatilities \(\sigma_i^0\), contract characteristics and Black-Scholes vegas. The observation-error functional is applied to the clean implied-volatility value before the corresponding raw noisy price is obtained from the Black-Scholes pricing formula. Tick rounding and no-arbitrage projection are then applied to the price, followed by implied-volatility inversion to recover the observed noisy implied volatility, using the same procedure for all three designs.
+Noisy option panels are constructed from the clean model-implied panels generated in Appendix~\ref{app:sim_heston} using the observation error designs introduced in the main text. The clean panel at date \(t_i\) consists of model prices \(p_i^0\), Black-Scholes implied volatilities \(\sigma_i^0\), contract characteristics and Black-Scholes vegas. The observation-error functional is applied to the clean implied-volatility value before the corresponding raw noisy price is obtained from the Black-Scholes pricing formula. No-arbitrage projection is then applied to the price when required, followed by implied-volatility inversion to recover the observed noisy implied volatility, using the same procedure for all four designs.
 
 
-\subsection{Tick rounding, price validity and implied-volatility inversion}
-For each raw noisy price $\tilde p_i^{(j)}$, tick rounding is applied through
-\[
-\mathcal{R}_{\delta_{\mathrm{tick}}}(x)
-=
-\delta_{\mathrm{tick}}
-\mathrm{round}\left(\frac{x}{\delta_{\mathrm{tick}}}\right).
-\]
+\subsection{Price validity and implied-volatility inversion}
 Let $L_i^{(j)}$ and $U_i^{(j)}$ denote the no-arbitrage lower and upper bounds for the corresponding European
 option. For a call option,
 \[
@@ -704,7 +722,7 @@ L_i^{(j)}=\max\left(K_i^{(j)}e^{-r\mathcal T_i^{(j)}}-S_ie^{-q\mathcal T_i^{(j)}
 \qquad
 U_i^{(j)}=K_i^{(j)}e^{-r\mathcal T_i^{(j)}}.
 \]
-The observed price is obtained by projecting the rounded price into the admissible interval:
+The observed price is obtained by projecting the raw noisy price into the admissible interval:
 \begin{align}
 p_i^{(j),\mathrm{obs}}
 =
@@ -712,7 +730,7 @@ p_i^{(j),\mathrm{obs}}
 U_i^{(j)}-\epsilon_p,
 \max\left[
 L_i^{(j)}+\epsilon_p,
-\mathcal{R}_{\delta_{\mathrm{tick}}}\left(\tilde p_i^{(j)}\right)
+\tilde p_i^{(j)}
 \right]
 \right\}.
 \label{eq:app_price_projection}
@@ -729,7 +747,7 @@ approach of \citet{jaeckel2015lets}, which is designed for fast and robust impli
 
 \subsection{Implementation of noisy option panels}
 The implementation records, for each contract, the clean model price, the clean Black-Scholes implied volatility,
-the raw noisy price before validity enforcement, the rounded and capped observed price, the observed implied
+the raw noisy price before validity enforcement, the capped observed price, the observed implied
 volatility, the noise scenario and indicators for whether lower- or upper-bound capping was applied.
 
 The same implied-volatility inversion routine is used for clean and noisy panels. This is important because
@@ -807,19 +825,18 @@ s_{\sigma,u,i}^{(j)}
 \right]
 }.
 \]
-Thus, the common component introduces temporal dependence and common variation across moneyness and maturity, while the total marginal implied-volatility observation error remains comparable to that of Designs A and B. This makes the comparison across the three designs depend mainly on the dependence structure of the observation error rather than on a mechanical increase in its absolute scale.
+Thus, the common component introduces temporal dependence and common variation across moneyness and maturity, while the total marginal implied-volatility observation error remains comparable to that of Designs A and B. This makes the comparison across the four designs depend mainly on the dependence structure of the observation error rather than on a mechanical increase in its absolute scale.
+
+For Design D, the parameters governing the persistent-factor specification are kept equal to those used for Design C. The additional variance-linked component is specified as
+\[
+f_{V,i}=\gamma_V z_{V,i},
+\]
+where $z_{V,i}$ is the standardised latent variance state. The parameter $\gamma_V$ controls the magnitude of the state-dependent component. Its numerical value is chosen to generate mild dependence between option observation errors and the latent variance state. The idiosyncratic residual variance is reduced accordingly so that the unconditional pointwise error scale remains comparable to that of Designs A--C.
 
 \subsection{Illustration of the Observation Error Specifications}
 \label{app:noise_visualisations}
 
 This subsection reports results based on all 100 samples. Signed implied-volatility error is defined as observed minus model implied volatility. The surface results retain the common moneyness and maturity points. The two dependence measures in Figure~\ref{fig:app_noise_dependence} are calculated separately within each sample, so the boxes show how they vary across the 100 samples.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.90\textwidth]{generated/noise_mechanics_diagnostics.pdf}
-    \caption{Noise size and price-rounding effects across the 100 samples. The left panel reports the 95\% quantile of the absolute raw implied-volatility error before price rounding, in implied-volatility basis points. The right panel reports the percentage of prices adjusted to the lower price bound after rounding. The results are pooled across Designs A--C, which have matched marginal observation-error scales. Each maturity and moneyness point contains 157,800 observations.}
-    \label{fig:app_noise_mechanics}
-\end{figure}
 
 \begin{figure}[H]
     \centering
@@ -887,7 +904,7 @@ u_k(\mathcal T)
 \end{equation}
 where \([-L_{\mathcal T},L_{\mathcal T}]\) is the effective interval for log-forward moneyness. The interval does not depend on the candidate variance value. The payoff expansion and the affine coefficients \(A_k(\mathcal T)\) and \(B_k(\mathcal T)\) are therefore prepared once for each maturity and risk-neutral parameter vector and reused across strikes and dates.
 
-The variance domain is \(V\in[10^{-6},0.15]\). The parameter ranges are \(\kappa_{\mathbb Q}\in[1.5,4.0]\), \(\bar V_{\mathbb Q}\in[0.012,0.24]\), \(\sigma_v\in[0.20,0.65]\) and \(\rho\in[-0.80,-0.20]\). The calibration uses a seeded Latin-hypercube design together with the true DGP, the initial parameter value and two moderate perturbations. A Carr--Madan Fourier inversion is used to validate an 8192-term COS reference. Table~\ref{tab:app_fixed_cos_calibration} reports the selected specification. Prices with Black-Scholes vega below \(5\times10^{-6}\) are reported separately because numerical price differences close to \(10^{-10}\) produce unstable implied-volatility differences. There are no invalid prices or implied-volatility inversions in the calibration design.
+The variance domain is \(V\in[10^{-6},0.15]\). The parameter ranges are \(\kappa_{\mathbb Q}\in[1.5,4.0]\), \(\bar V_{\mathbb Q}\in[0.012,0.24]\), \(\sigma_V\in[0.20,0.65]\) and \(\rho\in[-0.80,-0.20]\). The calibration uses a seeded Latin-hypercube design together with the true DGP, the initial parameter value and two moderate perturbations. A Carr--Madan Fourier inversion is used to validate an 8192-term COS reference. Table~\ref{tab:app_fixed_cos_calibration} reports the selected specification. Prices with Black-Scholes vega below \(5\times10^{-6}\) are reported separately because numerical price differences close to \(10^{-10}\) produce unstable implied-volatility differences. There are no invalid prices or implied-volatility inversions in the calibration design.
 
 \begin{table}[H]
 \centering
@@ -941,11 +958,11 @@ is_R\left(\eta-\frac{1}{2}\right)
 \qquad
 b
 =
--\kappa+\rho\sigma_v is_R,
+-\kappa+\rho\sigma_V is_R,
 \qquad
 c
 =
-\frac{1}{2}\sigma_v^2 .
+\frac{1}{2}\sigma_V^2 .
 \]
 The corresponding \(A\) coefficient satisfies
 \[
@@ -986,7 +1003,7 @@ The first-step estimator minimises \(Q_T^{(1)}(\theta)\) over the admissible par
 \eta,
 \log\kappa,
 \log\bar V,
-\log\sigma_v,
+\log\sigma_V,
 \operatorname{atanh}\rho,
 \log\kappa_{\mathbb Q}
 \right),

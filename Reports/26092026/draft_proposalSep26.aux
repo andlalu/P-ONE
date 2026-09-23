@@ -17,8 +17,8 @@
 \citation{duarte2024very}
 \citation{chongtodorov2024vov}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {1.3.1}Option Prices with Observation Errors}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.1.1}Design A: Low I.I.D. noise}{4}{}\protected@file@percent }
 \citation{andersen2021spatial}
-\@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.1.1}Design A: Low I.I.D. noise}{5}{}\protected@file@percent }
 \newlabel{eq:iv_error_scale}{{1.5}{5}{Design A: Low I.I.D. noise}{equation.1.5}{}}
 \newlabel{eq:noise_liquid}{{1.6}{5}{Design A: Low I.I.D. noise}{equation.1.6}{}}
 \@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.1.2}Design B: Cross-sectionally correlated noise}{5}{}\protected@file@percent }
@@ -31,8 +31,9 @@
 \citation{cont2002dynamics}
 \citation{avellaneda2020pca}
 \newlabel{eq:factor_iv_noise}{{1.11}{7}{Design C: Temporally persistent noise}{equation.1.11}{}}
-\newlabel{eq:raw_contaminated_price}{{1.12}{7}{Design C: Temporally persistent noise}{equation.1.12}{}}
+\@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.1.4}Design D: Variance dependent noise}{7}{}\protected@file@percent }
 \citation{boswijk2015asset}
+\newlabel{eq:state_dependent_iv_noise}{{1.12}{8}{Design D: Variance dependent noise}{equation.1.12}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {1.3.2}Implied-State C-GMM Estimation}{8}{}\protected@file@percent }
 \newlabel{sec:is_cgmm_estimation}{{1.3.2}{8}{Implied-State C-GMM Estimation}{subsubsection.1.3.2}{}}
 \newlabel{eq:is_implied_state}{{1.13}{9}{Implied-State C-GMM Estimation}{equation.1.13}{}}
@@ -47,8 +48,8 @@
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {1.3.3}Particle Filter Based Estimation}{11}{}\protected@file@percent }
 \newlabel{LikelihoodContribTheo}{{1.16}{12}{Particle Filter Based Estimation}{equation.1.16}{}}
 \newlabel{SamplingDensityTheo}{{1.17}{12}{Particle Filter Based Estimation}{equation.1.17}{}}
-\@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.3.1}Current computational implementation.}{12}{}\protected@file@percent }
 \citation{boswijk2024estimating}
+\@writefile{toc}{\contentsline {paragraph}{\numberline {1.3.3.1}Current computational implementation.}{13}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2}Monte Carlo Results for the Implied-State Estimator}{13}{}\protected@file@percent }
 \newlabel{sec:is_cgmm_results}{{2}{13}{Monte Carlo Results for the Implied-State Estimator}{section.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Monte Carlo design and reporting conventions}{13}{}\protected@file@percent }
@@ -85,37 +86,35 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Parameter values used for clean sample generation}{20}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {B}Option Panel Observation Error Specifications}{20}{}\protected@file@percent }
 \newlabel{app:option_noise_specs}{{B}{20}{Option Panel Observation Error Specifications}{section.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Tick rounding, price validity and implied-volatility inversion}{21}{}\protected@file@percent }
-\newlabel{eq:app_price_projection}{{B.1}{21}{Tick rounding, price validity and implied-volatility inversion}{equation.2.1}{}}
 \citation{jaeckel2015lets}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Price validity and implied-volatility inversion}{21}{}\protected@file@percent }
+\newlabel{eq:app_price_projection}{{B.1}{21}{Price validity and implied-volatility inversion}{equation.2.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Implementation of noisy option panels}{22}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Parameter Choices for the Observation Error Specifications}{22}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {B.4}Illustration of the Observation Error Specifications}{24}{}\protected@file@percent }
 \newlabel{app:noise_visualisations}{{B.4}{24}{Illustration of the Observation Error Specifications}{subsection.2.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Noise size and price-rounding effects across the 100 samples. The left panel reports the 95\% quantile of the absolute raw implied-volatility error before price rounding, in implied-volatility basis points. The right panel reports the percentage of prices adjusted to the lower price bound after rounding. The results are pooled across Designs A--C, which have matched marginal observation-error scales. Each maturity and moneyness point contains 157,800 observations.}}{25}{}\protected@file@percent }
-\newlabel{fig:app_noise_mechanics}{{2}{25}{Noise size and price-rounding effects across the 100 samples. The left panel reports the 95\% quantile of the absolute raw implied-volatility error before price rounding, in implied-volatility basis points. The right panel reports the percentage of prices adjusted to the lower price bound after rounding. The results are pooled across Designs A--C, which have matched marginal observation-error scales. Each maturity and moneyness point contains 157,800 observations}{figure.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Dependence in the observation errors across the 100 samples. For each sample, the left panel averages the pairwise correlations between the error series for the 15 contracts. The right panel reports the first-order autocorrelation of the error series for the at-the-money three-month contract. Each box summarises the resulting sample-level values; the centre line is the median and the whiskers show the 10th and 90th percentiles.}}{25}{}\protected@file@percent }
-\newlabel{fig:app_noise_dependence}{{3}{25}{Dependence in the observation errors across the 100 samples. For each sample, the left panel averages the pairwise correlations between the error series for the 15 contracts. The right panel reports the first-order autocorrelation of the error series for the at-the-money three-month contract. Each box summarises the resulting sample-level values; the centre line is the median and the whiskers show the 10th and 90th percentiles}{figure.3}{}}
 \citation{boswijk2015asset}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Implied-volatility observation errors across the 100 samples, measured in implied-volatility basis points. Signed error is observed minus model implied volatility, and the 95\% quantile is calculated from the absolute errors. For each design, the statistics combine the errors from all 100 samples, 526 dates and 15 contracts, giving 789,000 observations. The clean benchmark is zero by construction.}}{26}{}\protected@file@percent }
-\newlabel{tab:mc_noise_summary}{{4}{26}{Implied-volatility observation errors across the 100 samples, measured in implied-volatility basis points. Signed error is observed minus model implied volatility, and the 95\% quantile is calculated from the absolute errors. For each design, the statistics combine the errors from all 100 samples, 526 dates and 15 contracts, giving 789,000 observations. The clean benchmark is zero by construction}{table.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {C}Risk-Premium Definitions}{26}{}\protected@file@percent }
-\newlabel{app:risk_premia}{{C}{26}{Risk-Premium Definitions}{section.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Dependence in the observation errors across the 100 samples. For each sample, the left panel averages the pairwise correlations between the error series for the 15 contracts. The right panel reports the first-order autocorrelation of the error series for the at-the-money three-month contract. Each box summarises the resulting sample-level values; the centre line is the median and the whiskers show the 10th and 90th percentiles.}}{25}{}\protected@file@percent }
+\newlabel{fig:app_noise_dependence}{{2}{25}{Dependence in the observation errors across the 100 samples. For each sample, the left panel averages the pairwise correlations between the error series for the 15 contracts. The right panel reports the first-order autocorrelation of the error series for the at-the-money three-month contract. Each box summarises the resulting sample-level values; the centre line is the median and the whiskers show the 10th and 90th percentiles}{figure.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Implied-volatility observation errors across the 100 samples, measured in implied-volatility basis points. Signed error is observed minus model implied volatility, and the 95\% quantile is calculated from the absolute errors. For each design, the statistics combine the errors from all 100 samples, 526 dates and 15 contracts, giving 789,000 observations. The clean benchmark is zero by construction.}}{25}{}\protected@file@percent }
+\newlabel{tab:mc_noise_summary}{{4}{25}{Implied-volatility observation errors across the 100 samples, measured in implied-volatility basis points. Signed error is observed minus model implied volatility, and the 95\% quantile is calculated from the absolute errors. For each design, the statistics combine the errors from all 100 samples, 526 dates and 15 contracts, giving 789,000 observations. The clean benchmark is zero by construction}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {C}Risk-Premium Definitions}{25}{}\protected@file@percent }
+\newlabel{app:risk_premia}{{C}{25}{Risk-Premium Definitions}{section.3}{}}
 \newlabel{eq:app_average_variance_p}{{C.1}{26}{Risk-Premium Definitions}{equation.3.1}{}}
 \newlabel{eq:app_average_variance_q}{{C.3}{26}{Risk-Premium Definitions}{equation.3.3}{}}
 \newlabel{eq:app_risk_premia}{{C.5}{26}{Risk-Premium Definitions}{equation.3.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {D}Implementation of the IS C-GMM Estimator}{27}{}\protected@file@percent }
-\newlabel{app:is_cgmm_implementation}{{D}{27}{Implementation of the IS C-GMM Estimator}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.1}Construction of implied variance states}{27}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.2}Fixed COS basis}{28}{}\protected@file@percent }
-\newlabel{eq:app_fixed_cos_grid}{{D.1}{28}{Fixed COS basis}{equation.4.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {D}Implementation of the IS C-GMM Estimator}{26}{}\protected@file@percent }
+\newlabel{app:is_cgmm_implementation}{{D}{26}{Implementation of the IS C-GMM Estimator}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.1}Construction of implied variance states}{26}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.2}Fixed COS basis}{27}{}\protected@file@percent }
+\newlabel{eq:app_fixed_cos_grid}{{D.1}{27}{Fixed COS basis}{equation.4.1}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Selected fixed COS basis. The generation and estimation term counts are both 576. The selection uses the lowest term count and then the narrowest interval satisfying the zero-failure error conditions.}}{28}{}\protected@file@percent }
 \newlabel{tab:app_fixed_cos_calibration}{{5}{28}{Selected fixed COS basis. The generation and estimation term counts are both 576. The selection uses the lowest term count and then the narrowest interval satisfying the zero-failure error conditions}{table.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {D.3}Heston transition characteristic function under \(\mathbb  P\)}{28}{}\protected@file@percent }
+\newlabel{eq:app_heston_transition_ccf}{{D.3}{28}{Heston transition characteristic function under \(\mathbb P\)}{subsection.4.3}{}}
 \citation{boswijk2015asset}
-\newlabel{eq:app_heston_transition_ccf}{{D.3}{29}{Heston transition characteristic function under \(\mathbb P\)}{subsection.4.3}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {D.4}Evaluation of the continuum GMM criterion}{29}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {D.5}Parameter transformation and numerical minimisation}{30}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {D.5}Parameter transformation and numerical minimisation}{29}{}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {D.6}Production computing arrangement}{30}{}\protected@file@percent }
 \bibstyle{apalike}
 \citation{*}
@@ -140,4 +139,4 @@
 \bibcite{pan2002jump}{{18}{2002}{{Pan}}{{}}}
 \bibcite{protterstochastic}{{19}{2005}{{Protter}}{{}}}
 \bibcite{sundaresan2000continuous}{{20}{2000}{{Sundaresan}}{{}}}
-\gdef \@abspage@last{33}
+\gdef \@abspage@last{32}

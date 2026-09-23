@@ -1,4 +1,5 @@
 import math
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -9,6 +10,7 @@ from Models.Heston.parameters import HestonPhysicalParameters
 from OptionData.add_noise import generate_noisy_panel_rows, validate_noise_settings
 from OptionData.noise_common import (
     NoiseSettings,
+    apply_price_mechanics,
     apply_price_projection,
     marginal_scale,
     price_bounds,
@@ -154,6 +156,46 @@ def test_low_iid_noise_is_deterministic():
     assert [row["raw_noisy_iv"] for row in first] == [row["raw_noisy_iv"] for row in second]
     assert all(row["noise_scenario"] == "low_iid" for row in first)
     assert all(row["observed_iv"] >= config.sigma_min for row in first)
+
+
+def test_run_001_tick_rounding_is_optional_and_precedes_projection():
+    clean = _clean_rows()
+    unrounded, _ = generate_noisy_panel_rows(
+        clean, scenario="low_iid", seed=123, config=_noise_settings()
+    )
+    tick_config = replace(_noise_settings(), tick_size=0.01)
+    rounded, _ = generate_noisy_panel_rows(
+        clean, scenario="low_iid", seed=123, config=tick_config
+    )
+    assert [row["raw_noisy_iv"] for row in rounded] == [
+        row["raw_noisy_iv"] for row in unrounded
+    ]
+    assert any(
+        row["observed_price"] != plain["observed_price"]
+        for row, plain in zip(rounded, unrounded)
+    )
+    for row in rounded:
+        expected = apply_price_mechanics(
+            raw_price=row["raw_price_before_rounding"],
+            spot=row["S"],
+            strike=row["strike"],
+            tau=row["maturity_years"],
+            rate=row["r"],
+            dividend_yield=row["q"],
+            option_type=row["option_type"],
+            tick_size=0.01,
+            price_epsilon=tick_config.price_epsilon,
+        )
+        assert row["raw_noisy_price"] == row["raw_price_before_rounding"]
+        assert row["price_after_rounding"] == expected[0]
+        assert row["observed_price"] == expected[1]
+        assert row["was_price_capped"] == expected[2]
+        assert row["cap_direction"] == expected[3]
+
+
+def test_invalid_tick_size_is_rejected():
+    with pytest.raises(ValueError, match="tick_size"):
+        validate_noise_settings(replace(_noise_settings(), tick_size=0.0))
 
 
 def test_spatial_corr_noise_has_contract_level_draws():

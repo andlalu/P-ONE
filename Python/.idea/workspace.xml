@@ -5,25 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b3c7ffc8-92b8-4e96-8c62-e9f2997abcbe" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.aux" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.aux" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.log" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.pdf" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.pdf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.synctex.gz" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.synctex.gz" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.tex" beforeDir="false" afterPath="$PROJECT_DIR$/../Reports/18062026/draft_proposalJun26.tex" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/calibration_domain.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/calibration_selected.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/calibration_summary.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/jacobian_validation.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/jacobian_validation_summary.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/reference_crosscheck.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/state_solver_benchmark.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../outputs/calibration/fixed_cos/state_solver_benchmark_summary.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Scripts/configs/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/Scripts/configs/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.aux" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.bbl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.blg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.fdb_latexmk" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.fls" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.log" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.synctex.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Reports/26092026/draft_proposalAug26.tex" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -171,7 +164,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "lalu/run-003-tick-rounding",
     "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "/Users/andrei/Library/Mobile Documents/com~apple~CloudDocs/Dropbox iCloud/P-ONE/Python",
     "node.js.detected.package.eslint": "true",

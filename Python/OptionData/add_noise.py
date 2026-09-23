@@ -24,6 +24,8 @@ from OptionData.noise_variance_linked import (
 def validate_noise_settings(config: NoiseSettings) -> None:
     if config.sigma_min <= 0.0 or config.price_epsilon <= 0.0:
         raise ValueError("noise sigma_min and price_epsilon must be positive")
+    if config.tick_size is not None and (not np.isfinite(config.tick_size) or config.tick_size <= 0.0):
+        raise ValueError("noise tick_size must be finite and positive")
     invalid = set(config.scenarios) - set(NOISE_SCENARIOS)
     if invalid:
         raise ValueError(f"unsupported noise scenarios: {', '.join(sorted(invalid))}")
