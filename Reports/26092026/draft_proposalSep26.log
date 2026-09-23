@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.20)  6 AUG 2026 08:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.20)  21 SEP 2026 22:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**draft_proposalAug26.tex
-(./draft_proposalAug26.tex
+**draft_proposalSep26.tex
+(./draft_proposalSep26.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
 (/usr/local/texlive/2026/texmf-dist/tex/latex/base/article.cls
@@ -542,8 +542,8 @@ Package: titlesec 2025/01/04 v2.17 Sectioning titles
 (/usr/local/texlive/2026/texmf-dist/tex/latex/tools/indentfirst.sty
 Package: indentfirst 2023/07/02 v1.03 Indent first paragraph (DPC)
 )
-(./draft_proposalAug26.aux)
-\openout1 = `draft_proposalAug26.aux'.
+(./draft_proposalSep26.aux)
+\openout1 = `draft_proposalSep26.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 72.
 LaTeX Font Info:    ... okay on input line 72.
@@ -641,50 +641,30 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: generated/implied_state_rmse_boxplot.pdf Graphic file (type pdf)
 <use generated/implied_state_rmse_boxplot.pdf>
 Package pdftex.def Info: generated/implied_state_rmse_boxplot.pdf  used on inpu
-t line 502.
+t line 527.
 (pdftex.def)             Requested size: 301.14316pt x 142.21283pt.
  [15 <./generated/implied_state_rmse_boxplot.pdf>] (./generated/risk_premium_ta
 ble.tex) [16] [17] [18] [19]
 [20] [21] [22] [23]
-<generated/noise_mechanics_diagnostics.pdf, id=99, 520.34402pt x 242.10449pt>
-File: generated/noise_mechanics_diagnostics.pdf Graphic file (type pdf)
-<use generated/noise_mechanics_diagnostics.pdf>
-Package pdftex.def Info: generated/noise_mechanics_diagnostics.pdf  used on inp
-ut line 819.
-(pdftex.def)             Requested size: 376.42575pt x 175.14998pt.
- [24]
-<generated/noise_dependence.pdf, id=103, 520.34402pt x 274.626pt>
+<generated/noise_dependence.pdf, id=99, 520.34402pt x 274.626pt>
 File: generated/noise_dependence.pdf Graphic file (type pdf)
 <use generated/noise_dependence.pdf>
-Package pdftex.def Info: generated/noise_dependence.pdf  used on input line 826
+Package pdftex.def Info: generated/noise_dependence.pdf  used on input line 843
 .
 (pdftex.def)             Requested size: 342.97107pt x 181.01904pt.
- (./generated/noise_summary_table.tex) [25 <./generated/noise_mechanics_diagnos
-tics.pdf> <./generated/noise_dependence.pdf>] [26]
-[27]
-
-LaTeX Warning: Reference `tab:app_fixed_cos_calibration' on page 28 undefined o
-n input line 890.
-
-[28] [29] [30] [31] (./draft_proposalAug26.bbl [32]) [33]
-(./draft_proposalAug26.aux)
+ [24] (./generated/noise_summary_table.tex) [25 <./generated/noise_dependence.p
+df>] [26] [27] [28] [29] [30] (./draft_proposalSep26.bbl
+[31]) [32] (./draft_proposalSep26.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
  ) 
 Here is how much of TeX's memory you used:
- 9755 strings out of 467525
- 163890 string characters out of 5418982
- 627316 words of memory out of 5000000
- 38449 multiletter control sequences out of 15000+600000
+ 9744 strings out of 467525
+ 163415 string characters out of 5418982
+ 626884 words of memory out of 5000000
+ 38438 multiletter control sequences out of 15000+600000
  639537 words of font info for 86 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  84i,12n,93p,1248b,382s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -708,10 +688,10 @@ mf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2026/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2026/texmf
 -dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2026/t
 exmf-dist/fonts/type1/public/amsfonts/symbols/msbm7.pfb>
-Output written on draft_proposalAug26.pdf (33 pages, 348324 bytes).
+Output written on draft_proposalSep26.pdf (32 pages, 342994 bytes).
 PDF statistics:
- 223 PDF objects out of 1000 (max. 8388607)
- 143 compressed objects within 2 object streams
+ 216 PDF objects out of 1000 (max. 8388607)
+ 138 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 16 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

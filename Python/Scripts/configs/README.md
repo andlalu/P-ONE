@@ -16,15 +16,16 @@ with all five designs. No run_001 estimates are carried over.
 ```bash
 PYTHONPATH=Python python Python/Scripts/prepare_run_003.py \
   --config Python/Scripts/configs/heston_experiment_run_003.json \
-  --source-root outputs/run_003/source_run_001 --sample-workers 4
+  --source-root outputs/run_003_source_run_001 --sample-workers 4
 PYTHONPATH=Python python Python/Scripts/run_heston_samples.py \
   --config Python/Scripts/configs/heston_experiment_run_003.json \
+  --output-root outputs/run_003 \
   --sample-start 100 --sample-end 250 --sample-workers 4 \
   --generation-only --resume
 ```
 
-The frozen source under `outputs/run_003/source_run_001` is local provenance,
-not part of the run_003 sample payload for a later AWS estimation upload.
+The frozen source under `outputs/run_003_source_run_001` is local provenance,
+separate from the run_003 sample payload for a later AWS estimation upload.
 
 ## Production runners
 
